@@ -6,9 +6,16 @@ This repository contains the implementation for **Project 2**. The goal is to in
 * `/baselines` - Implementations of fixed-strategy agents (ReAct, best-of-N, Reflexion).
 * `/strategy_schema` - Pydantic models and configurations representing the versioned agent strategies.
 * `/adaptation_engine` - The first-order and second-order loops for diagnosing failures and mutating strategies.
-* `/evaluation` - Integration with benchmarks (e.g., SWE-bench Lite, WebArena) and scoring scripts.
+* `/evaluation` - Integration with benchmarks (choice under discussion, see below) and scoring scripts.
 
 ## Tech Stack
-* **Agent Orchestration:** LangGraph
+* **Agent Orchestration:** LangGraph (a minimal custom loop is also being considered; see the technical plan)
 * **Tracking & Logging:** MLflow / LangSmith
-* **Evaluation Benchmarks:** SWE-bench / WebArena
+* **Evaluation Benchmarks:** under discussion (see below)
+
+## Documents
+* [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) - Initial architecture and tooling plan.
+* [`docs/TECHNICAL_PLAN.md`](docs/TECHNICAL_PLAN.md) - Detailed technical plan: strategy object, baselines, first- and second-order adaptation, evaluation design, budget, timeline and open decisions.
+* [`docs/PRIOR_WORK.md`](docs/PRIOR_WORK.md) - Closest prior work and a comparison of candidate benchmarks.
+
+**Benchmark choice is under discussion.** The architecture note names SWE-bench Lite and WebArena; the technical plan instead proposes Terminal-Bench 2.0 as the primary benchmark, with AppWorld for transfer, pending Prof. Abdelrazek's view.
