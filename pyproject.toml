@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools==84.0.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "adaptive-agent-strategies"
+version = "0.0.1"
+description = "Strategy adaptation for LLM agents with a frozen model (Project 2)"
+requires-python = ">=3.11"
+dependencies = ["pydantic==2.13.5"]
+
+[project.optional-dependencies]
+test = ["pytest==9.1.1"]
+
+[tool.setuptools]
+packages = ["adaptation_engine", "baselines", "environments", "evaluation", "llm", "strategy_schema"]
+
+[tool.setuptools.package-data]
+evaluation = ["price_table.json"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-p no:cacheprovider"
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]

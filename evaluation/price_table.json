@@ -1,0 +1,16 @@
+[
+  {
+    "model": "gpt-5-mini",
+    "input_usd_per_m": 0.25,
+    "output_usd_per_m": 2.0,
+    "source": "https://developers.openai.com/api/docs/pricing",
+    "seen_on": "2026-10-02"
+  },
+  {
+    "model": "gpt-oss-120b",
+    "input_usd_per_m": 0.15,
+    "output_usd_per_m": 0.6,
+    "source": "https://www.together.ai/models/gpt-oss-120b",
+    "seen_on": "2026-10-02"
+  }
+]
