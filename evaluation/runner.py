@@ -19,7 +19,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict
 
 from baselines.baselines import Baseline, TaskOutcome
-from baselines.cost import Cost, PriceTable
+from baselines.cost import Cost, PriceNotSetError, PriceTable
 from environments.base import Environment, Task
 from evaluation.splits import HELD_OUT, Split
 from llm import ChatModel
@@ -42,6 +42,8 @@ class RunBudget:
     def __post_init__(self) -> None:
         if self.max_dollars is not None and self.prices is None:
             raise ValueError("max_dollars needs a price table")
+        if self.prices is not None and self.prices.placeholder:
+            raise PriceNotSetError(f"the price entry for {self.prices.model!r} is a placeholder")
 
     def exhausted(self, spent: Cost) -> bool:
         return (

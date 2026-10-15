@@ -312,6 +312,8 @@ Trivedi, Khot, Hartmann, et al. "AppWorld: A Controllable World of Apps and Peop
 
 ## 3. Other works cited in the technical plan
 
+- **On the Measure of Intelligence**. François Chollet. arXiv 1911.01547, Nov 2019. https://arxiv.org/abs/1911.01547
+  - Defines intelligence as skill-acquisition efficiency: how much new skill a system gains per unit of experience and prior knowledge. The adaptation efficiency index in the technical plan (section 7.6, added 2026-10-15) is an operationalisation of this idea, to be confirmed with Prof. Abdelrazek.
 - **Reflexion: Language Agents with Verbal Reinforcement Learning**. Noah Shinn, Federico Cassano, Edward Berman, et al. (last author Shunyu Yao). arXiv 2303.11366, Mar 2023. https://arxiv.org/abs/2303.11366
   - Agents "verbally reflect on task feedback" and keep reflections in an episodic memory buffer, with no weight updates. This is the basis of baseline B1.
   - Venue: NeurIPS 2023 is widely reported, but the arXiv page does not show it, so it is not verified here.

@@ -12,6 +12,17 @@ No experiments have been run. All costs and timings below are estimates and are 
 
 **A note on the word "steering".** In this plan, *steering* means changing how the agent behaves by editing its explicit, versioned strategy object (section 3). It does **not** mean activation or representation steering, that is, adding vectors to a model's hidden states as in Representation Engineering (Zou et al., 2023). The model is used as a frozen black box through an API, so activation steering is out of scope. To avoid the confusion, the rest of this document says "strategy adaptation" rather than "steering".
 
+### Amendments 2026-10-15
+
+After the meeting with Prof. Abdelrazek on 2026-10-14 ([MEETING_2026-10-14.md](MEETING_2026-10-14.md)). Changed headings are marked "(amended 2026-10-15)" or "(added 2026-10-15)".
+
+1. **Model** (section 2). Small open-weight models served locally are now the primary candidates; GPT-5-mini is the fallback. The 20–40% starting-score requirement is unchanged. Candidates are in [SMALL_MODELS.md](SMALL_MODELS.md). Meeting item 6.
+2. **Cost per task reporting** (new section 4.3). Mean and median cost per task in tokens, wall-clock seconds and dollars, and pass rate per dollar, for every baseline and the adapted strategy. Meeting item 1.
+3. **Strategy switching** (new section 5.4). A library of strategy versions with a per-task selector, as an extra condition against the single global strategy. Meeting item 5; the reading is to be confirmed.
+4. **Adaptation efficiency index** (new section 7.6). Held-out gain over B0 per unit of cost spent to get it. Meeting item 4; the reading is to be confirmed.
+5. **Budget** (section 9). A note that the dollar figures assume API prices and will be re-estimated for local models.
+6. **Open decisions** (section 11). Items 2 and 5 updated; items 13 and 14 added for the two readings to confirm.
+
 ---
 
 ## 1. The project in my words
@@ -63,12 +74,11 @@ The project asks two things:
 
 **Why not SWE-bench Lite and WebArena, as in the architecture note.** SWE-bench needs at least 120 GB disk, 16 GB RAM and 8 cores for local evaluation. WebArena needs several self-hosted websites (the map data alone is about 180 GB) and a reset between runs. Neither fits a shared machine, and WebArena is not a terminal benchmark. Sources are in [PRIOR_WORK.md](PRIOR_WORK.md), section 2.
 
-**Model.** One inexpensive mid-tier model, held fixed for the whole project. Two candidates:
+**Model (amended 2026-10-15).** One model, held fixed for the whole project. After the meeting of 2026-10-14 ([MEETING_2026-10-14.md](MEETING_2026-10-14.md), item 6), the primary candidates are **small open-weight models served locally**, so that anyone can rerun the experiments on their own machine. The candidates and their published scores are in [SMALL_MODELS.md](SMALL_MODELS.md).
 
-- **GPT-5-mini**: $0.25 per M input, $0.025 cached, $2.00 per M output (OpenAI pricing, 2026-10-02).
-- **gpt-oss-120b**, open weights: $0.15 / $0.60 per M tokens on Together AI.
-
-Terminal-Bench reports that the cheapest models (GPT-5-Nano, GPT-OSS-20B) sit near the floor. That would leave nothing to adapt, so the model should solve roughly 20–40% of tasks at the start. This is a judgement, to be checked in Phase 0. The same chart places GPT-OSS-120B near the bottom as well, which is why it is only the second candidate; its starting score has to be checked before it is used.
+- **Starting score, unchanged.** Terminal-Bench reports that the cheapest models (GPT-5-Nano, GPT-OSS-20B) sit near the floor. That would leave nothing to adapt, so the model should solve roughly 20–40% of tasks at the start. This is a judgement, to be checked in Phase 0. For small models it is the main risk.
+- **Fallback: GPT-5-mini**, used if no local candidate reaches the starting score: $0.25 per M input, $0.025 cached, $2.00 per M output (OpenAI pricing, 2026-10-02).
+- **gpt-oss-120b**, open weights: $0.15 / $0.60 per M tokens on Together AI. It stays a possible second model for a robustness check. The same chart places it near the bottom as well, so its starting score has to be checked before it is used.
 
 **Agent loop.** A small custom loop, similar in spirit to mini-SWE-agent or Terminus 2 (both used in the Terminal-Bench paper), running as a custom agent inside Harbor. Every strategy field must change behaviour *in code* (section 3.3).
 
@@ -170,6 +180,20 @@ All baselines use the same model, the same agent loop and the same tools.
 - **Total-cost view.** Adaptation has a one-time cost, which is reported too, along with the number of future tasks after which it pays for itself.
 - **Compute caution.** "To Backtrack or Not to Backtrack" (Qin et al., 2025) found sequential correction loses to parallel sampling on one of its tasks (Countdown). This is why best-of-N at equal cost is the comparison that matters.
 
+### 4.3 Cost per task reporting (added 2026-10-15)
+
+From the meeting of 2026-10-14 ([MEETING_2026-10-14.md](MEETING_2026-10-14.md), item 1). For every baseline (B0–B4) and for the adapted strategy, on every split where they are run and in the final evaluation on H, report:
+
+- **mean and median cost per task**, in:
+  - tokens (input and output separately);
+  - wall-clock seconds;
+  - dollars;
+- **pass rate per dollar**: pass rate divided by mean dollars per task.
+
+**Dollars.** For an API model, dollars are tokens times the frozen price table (4.2). For a locally served model, dollars are compute hours times a GPU rate per hour. The rate is fixed at project start like the price table, and its source and the hardware are recorded with it. Wall-clock time for local models depends on that hardware, so it is reported with the hardware named.
+
+Means are used for cost matching (4.2). Medians are reported as well because cost per task is skewed: the Terminal-Bench paper reports most trials under 20 minutes but some up to 2 hours. The one-time adaptation cost is reported separately and is not spread over the per-task figures; section 7.6 combines the two.
+
 ---
 
 ## 5. First-order adaptation (objective 3)
@@ -215,6 +239,23 @@ The current strategy is S_r. One round has six steps.
 ### 5.3 The two models
 
 D and P use the same model as the agent in the main results. Using a stronger model for D and P is run as a variant and reported separately. Otherwise gains could come from the stronger model's knowledge rather than from adaptation (see Open decisions).
+
+### 5.4 Strategy switching (added 2026-10-15)
+
+From the meeting of 2026-10-14 ([MEETING_2026-10-14.md](MEETING_2026-10-14.md), item 5). The reading below is to be confirmed with Prof. Abdelrazek (open decision 14).
+
+An additional condition, next to the single global strategy of 5.1–5.3:
+
+- **Library.** A small library of strategy versions, at most 4 (estimate), taken from the adaptation log. For example, the best version on V for each task category.
+- **Selector.** For each task, the selector picks one version, either:
+  - from task features (category, instruction text, files in the working directory), or
+  - from the results of early probes: run the `exploration.probes` first, then choose.
+
+  The selector is a rule table or an LLM call. It is built from A and V only.
+- **Comparison.** The library with its selector against the single global strategy S*, on H, at matched cost per task (4.2). An oracle selector, which picks the best version per task with the hidden tests, is reported separately as an upper bound, like oracle pass@N.
+- **Cost.** The selector adds cost: its own model calls and any probes it needs. These are counted in the per-task cost (4.3). Building the library is counted in the adaptation cost.
+
+No change to the strategy schema is needed: the library is a list of existing versions. Switching strategy in the middle of a task, the other reading, would need a new value of `recovery.on_repeated_failure` and is not planned until confirmed.
 
 ---
 
@@ -336,6 +377,22 @@ Two transfer tests:
 
 Terminal-Bench is public and relies on a canary string only. Compare S0's score with published numbers for the same model, and state the caveat. Contamination affects all methods equally, so comparisons *between* methods are less exposed than absolute scores.
 
+### 7.6 Adaptation efficiency index (added 2026-10-15)
+
+From the meeting of 2026-10-14 ([MEETING_2026-10-14.md](MEETING_2026-10-14.md), item 4). The reading below is to be confirmed with Prof. Abdelrazek (open decision 13).
+
+One number for how much held-out improvement a method buys per unit of cost. For a method X evaluated on T held-out tasks:
+
+- **Gain.** Δp(X) = pass rate of X on H minus pass rate of B0 on H, in percentage points.
+- **Cost.** C(X, T) = the one-time adaptation cost of X + T × (mean cost per task of X − mean cost per task of B0).
+  - For the adapted strategy, B3 and B4, the one-time part is everything spent on A and V, including diagnosis and proposal calls.
+  - For B1 and B2 it is zero; their extra cost is all at test time. This is the baselines' equivalent.
+- **Index.** E(X, T) = Δp(X) / C(X, T), in percentage points per $100 (or per GPU hour for local models).
+
+Report E at T = 37 (the size of H) and as a curve over T. When test-time costs are matched (4.2), the second term of C is close to zero and E is the held-out gain divided by the total adaptation cost. E is undefined when C(X, T) ≤ 0, so Δp and C are always reported next to it.
+
+This is an operationalisation of Chollet's idea of intelligence as skill-acquisition efficiency (F. Chollet, *On the Measure of Intelligence*, arXiv 1911.01547, 2019). It is not his formal measure. His definition also weighs priors and generalisation difficulty. Here the model, and so the priors, is the same for every method, and generalisation is handled by measuring only on H.
+
 ---
 
 ## 8. Where backtracking fits
@@ -358,6 +415,8 @@ The literature makes the second half essential:
 ---
 
 ## 9. Budget (estimate; assumptions shown)
+
+**Note (2026-10-15).** The dollar figures below assume API prices for a model like GPT-5-mini. With a locally served small model (section 2), the main cost becomes GPU hours rather than API calls. The budget will be re-estimated after the Phase 0 starting-score check ([MEETING_2026-10-14.md](MEETING_2026-10-14.md), item 6).
 
 **Assumptions.**
 
@@ -412,14 +471,16 @@ These are questions for discussion. Some are Prof. Abdelrazek's to decide, and t
 
 1. **Duration, start date, hours per week and supervision rhythm.** To agree together.
    - Suggestion: about 24 weeks part-time, with a short weekly update.
-2. **Who pays for API calls and sandboxes, and what is the cap?** Prof. Abdelrazek's decision.
-   - Suggestion: a fixed cap agreed in Phase 0, around the lower half of the estimate in section 9, with a review after Phase 2.
+2. **Who pays for compute and sandboxes, and what is the cap?** Prof. Abdelrazek's decision. *(Amended 2026-10-15.)*
+   - With local small models (section 2), the main need is a GPU machine to serve the model, plus sandboxes for the tasks. API calls are needed only for the GPT-5-mini fallback or a stronger diagnoser variant.
+   - Suggestion: agree in Phase 0 who provides the GPU, and a fixed cap for any API and sandbox spend, with a review after Phase 2.
 3. **Which benchmark pair and version?**
    - Suggestion: Terminal-Bench 2.0, pinned, as primary, and AppWorld for transfer. The continuous Terminal-Bench (4.0, 8-hour timeouts) is current but a moving target. τ²-bench is the fallback transfer family.
 4. **Should the task pool be enlarged?**
    - Suggestion: check `terminal-bench-pro` in Phase 0. Use it for A/M only if it is comparable, and keep Terminal-Bench 2.0 as the held-out set.
-5. **Which model?**
-   - Suggestion: one cheap mid-tier model that solves about 20–40% at the start (GPT-5-mini is the first candidate). gpt-oss-120b, open weights, as a second model for a robustness check, if its starting score is high enough.
+5. **Which model?** *(Amended 2026-10-15; [MEETING_2026-10-14.md](MEETING_2026-10-14.md), item 6.)*
+   - Agreed direction: small open-weight models served locally, from the candidates in [SMALL_MODELS.md](SMALL_MODELS.md).
+   - Suggestion: pick the one with the best starting score, provided it solves about 20–40% at the start. GPT-5-mini is the fallback if none does. gpt-oss-120b stays a possible second model for a robustness check.
 6. **Same model for the diagnoser and proposer, or a stronger one?**
    - Suggestion: the same model for the main claims, and a stronger model as a labelled variant.
 7. **How much free text may the strategy contain?**
@@ -433,3 +494,9 @@ These are questions for discussion. Some are Prof. Abdelrazek's to decide, and t
 11. **Publication target and authorship.** Prof. Abdelrazek's decision.
 12. **Naming.**
     - Suggestion: avoid "steering" in titles, since it is easily read as activation steering. "Strategy adaptation" says what is meant.
+13. **What does "intelligence index" mean?** *(Added 2026-10-15; to confirm with Prof. Abdelrazek.)*
+    - (a) Chollet's skill-acquisition efficiency: held-out gain per unit of adaptation cost. **Adopted for now** as section 7.6.
+    - (b) A composite score over several benchmarks, like the Artificial Analysis Intelligence Index. This would mainly inform the model choice.
+14. **What does "strategy switching" mean?** *(Added 2026-10-15; to confirm with Prof. Abdelrazek.)*
+    - (a) A library of strategy versions and a selector that picks one per task. **Adopted for now** as section 5.4.
+    - (b) Switching strategy in the middle of a task when progress stalls. This would be a new `recovery.on_repeated_failure` value.

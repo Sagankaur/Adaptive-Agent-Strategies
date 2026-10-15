@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 from collections import Counter
 from pathlib import Path
@@ -87,3 +88,21 @@ def test_cli_writes_split_file(tmp_path: Path, capsys: pytest.CaptureFixture[str
     main(["--tasks", str(tasks), "--benchmark", "toy", "--seed", "3", "--sizes", "A=10,V=4,H=6", "--out", str(out)])
     assert {k: len(v) for k, v in load_split(out).splits.items()} == {"A": 10, "V": 4, "H": 6}
     assert "A=10" in capsys.readouterr().out
+
+
+ROOT = Path(__file__).resolve().parent.parent
+
+
+def test_committed_terminal_bench_split_matches_the_task_list() -> None:
+    split = load_split(ROOT / "splits" / "terminal-bench-2.0.json")
+    lines = (ROOT / "evaluation" / "data" / "tb2_tasks.jsonl").read_text().splitlines()
+    rows = [json.loads(line) for line in lines if line.strip()]
+    task_ids = [r["task_id"] for r in rows]
+    assigned = [t for ids in split.splits.values() for t in ids]
+    assert split.benchmark == "terminal-bench@2.0"
+    assert split.seed == 20261015
+    assert len(task_ids) == 89
+    assert len(assigned) == len(set(assigned))  # disjoint
+    assert sorted(assigned) == sorted(task_ids)  # covers every task
+    assert {name: len(ids) for name, ids in split.splits.items()} == TERMINAL_BENCH_2_SIZES
+    assert split.task_ids_sha256 == hashlib.sha256("\n".join(sorted(task_ids)).encode()).hexdigest()

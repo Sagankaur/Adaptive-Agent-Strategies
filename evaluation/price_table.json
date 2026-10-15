@@ -12,5 +12,35 @@
     "output_usd_per_m": 0.6,
     "source": "https://www.together.ai/models/gpt-oss-120b",
     "seen_on": "2026-10-02"
+  },
+  {
+    "model": "qwen3.6:35b-a3b-q4_K_M",
+    "input_usd_per_m": 0.0,
+    "output_usd_per_m": 0.0,
+    "compute_usd_per_hour": null,
+    "hardware": null,
+    "placeholder": true,
+    "source": "placeholder: a locally served model has no per-token price; set compute_usd_per_hour and hardware from docs/SMALL_MODELS.md section 3.2, then set placeholder to false",
+    "seen_on": "2026-10-15"
+  },
+  {
+    "model": "nemotron-terminal:32b-q4_K_M",
+    "input_usd_per_m": 0.0,
+    "output_usd_per_m": 0.0,
+    "compute_usd_per_hour": null,
+    "hardware": null,
+    "placeholder": true,
+    "source": "placeholder: a locally served model has no per-token price; set compute_usd_per_hour and hardware from docs/SMALL_MODELS.md section 3.2, then set placeholder to false",
+    "seen_on": "2026-10-15"
+  },
+  {
+    "model": "qwen3.5:35b-a3b-q4_K_M",
+    "input_usd_per_m": 0.0,
+    "output_usd_per_m": 0.0,
+    "compute_usd_per_hour": null,
+    "hardware": null,
+    "placeholder": true,
+    "source": "placeholder: a locally served model has no per-token price; set compute_usd_per_hour and hardware from docs/SMALL_MODELS.md section 3.2, then set placeholder to false",
+    "seen_on": "2026-10-15"
   }
 ]

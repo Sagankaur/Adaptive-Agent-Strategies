@@ -1,15 +1,15 @@
 # Phase 0 checklist
 
-Status of the Phase 0 items in [TECHNICAL_PLAN.md](TECHNICAL_PLAN.md), section 10, as of 2026-10-04. Phase 0 is "Setup" (weeks 1–2). Its deliverables are a split file, the price table and a smoke-test report.
+Status of the Phase 0 items in [TECHNICAL_PLAN.md](TECHNICAL_PLAN.md), section 10, as of 2026-10-04 (the two split rows updated 2026-10-15). Phase 0 is "Setup" (weeks 1–2). Its deliverables are a split file, the price table and a smoke-test report.
 
 No agent has been run on any real benchmark, and no model API has been called.
 
 | Item | Status |
 |---|---|
-| Pin the benchmark version | **Proposed, not confirmed by a run.** Pins are listed below. |
-| Fix the splits and commit the split file | **Tool implemented; real task ids not yet pinned.** `evaluation/splits.py` makes a seeded split, stratified by category and difficulty, and refuses to overwrite a committed split file. No Terminal-Bench split file exists yet, because the 89 task ids and their category/difficulty metadata have not been extracted. |
+| Pin the benchmark version | **Done for the task source (2026-10-15).** `laude-institute/terminal-bench-2` at commit `2fd12b88aafdd04a52c298e3940bcb189f9766d6`; the 89 task directories were read. The Harbor pin (v0.23.0) is still proposed and not confirmed by a run. See [`evaluation/data/tb2_tasks.README.md`](../evaluation/data/tb2_tasks.README.md). |
+| Fix the splits and commit the split file | **Done (2026-10-15), not yet committed to git.** `splits/terminal-bench-2.0.json` was made from `evaluation/data/tb2_tasks.jsonl` with seed 20261015 and the default sizes A=25, V=12, M=15, H=37. A test in `tests/test_splits.py` checks that the file is disjoint, covers all 89 ids and matches the task list. The split is stratified by category and difficulty; there are 16 categories, 5 of them with one task, so small categories are not represented in every split. |
 | Get Harbor running in a cloud sandbox | **Not done.** Needs a sandbox provider account and budget. |
-| Choose the model: run S0 on 20 tasks from A∪V (starting-score check) | **Not done; needs API budget.** `llm.ProviderModel` is the slot for the real client, and it refuses to run until one is wired up. |
+| Choose the model: run S0 on 20 tasks from A∪V (starting-score check) | **Not done; needs a machine with a GPU (updated 2026-10-15).** Candidates are now small open-weight models served locally (`docs/SMALL_MODELS.md`, section 4); the client for them is `llm.OpenAICompatibleModel` (`docs/LOCAL_MODELS.md`). No model has been called yet. |
 | Check `terminal-bench-pro` | **Not done.** Its 200 tasks have not been examined. |
 | Check snapshot support | **Done (source and docs check, nothing run).** See below. |
 | Agree the budget | **Not done.** This is Prof. Abdelrazek's decision (open decision 2). |
