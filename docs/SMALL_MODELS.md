@@ -318,7 +318,7 @@ Both should run on a 16 GB laptop or a base Apple Silicon machine. That is an in
 
 - Run S0 with Qwen3.6-35B-A3B on 20 tasks from A∪V, on the target hardware, with the default TB2 timeouts. Confirm that the score is near 24.6%, not near 51.5%.
 - Record per-trial wall-clock and tokens as set out in section 3.2.
-- Fix the context length and container CPU/RAM limits, and record them in the split file.
+- Fix the context length and container CPU/RAM limits, and record them in a separate frozen run-settings file, proposed as `evaluation/run_settings.json`, to be created in Phase 0. *(Updated 2026-10-20.)* They cannot go in the split file: the `Split` model in `evaluation/splits.py` forbids extra fields, and `save_split` refuses to overwrite a committed split with a different one.
 
 ---
 
