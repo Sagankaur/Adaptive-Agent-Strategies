@@ -24,7 +24,7 @@
     "seen_on": "2026-10-15"
   },
   {
-    "model": "nemotron-terminal:32b-q4_K_M",
+    "model": "hf.co/mradermacher/Nemotron-Terminal-32B-GGUF:Q4_K_M",
     "input_usd_per_m": 0.0,
     "output_usd_per_m": 0.0,
     "compute_usd_per_hour": null,

@@ -21,7 +21,7 @@ Each reply carries the token counts the server reports in `usage.prompt_tokens` 
 | Server | `base_url` in its own docs | Source |
 |---|---|---|
 | Ollama | `http://localhost:11434/v1` | [Ollama OpenAI compatibility](https://docs.ollama.com/api/openai-compatibility) |
-| llama.cpp (`llama-server`) | `http://127.0.0.1:<port>/v1`; the README gives 9931 as the default port | [llama.cpp server README](https://github.com/ggml-org/llama.cpp/blob/master/tools/server/README.md) |
+| llama.cpp (`llama-server`) | `http://127.0.0.1:<port>/v1`; the README gives 9931 as the default port (checked 2026-10-20; its Docker examples set `--port 8080` explicitly) | [llama.cpp server README](https://github.com/ggml-org/llama.cpp/blob/master/tools/server/README.md) |
 | vLLM (`vllm serve`) | `http://localhost:8000/v1` in its client example | [vLLM OpenAI-compatible server](https://docs.vllm.ai/en/latest/serving/online_serving/openai_compatible_server/) |
 | LM Studio | `http://localhost:1234/v1` | [LM Studio OpenAI compatibility](https://lmstudio.ai/docs/app/api/endpoints/openai) |
 
@@ -118,4 +118,9 @@ input_tokens * input_usd_per_m / 1e6 + output_tokens * output_usd_per_m / 1e6 + 
 
 A local model has zero token prices, so its dollars are its model-call hours times the compute rate. `model_s` is the time spent inside model calls, not the episode's `wall_s`, which also covers time in the environment. If a GPU is rented for a whole run, the rental for idle time is not in these per-task figures. Entries without `compute_usd_per_hour`, such as the API models, are priced on tokens only.
 
-The local entries in the price table (`gpt-oss:20b`, `qwen3.6:35b-a3b-q4_K_M`, `devstral:24b`) are placeholders: zero token price, no compute rate, `placeholder: true`. They are to be replaced with the models and rates chosen from [SMALL_MODELS.md](SMALL_MODELS.md). Until then, pricing with them raises `PriceNotSetError`, and so does `RunBudget(prices=...)`, so no run records a dollar figure of zero by mistake. The entry is looked up by the client's `name`, so set `LLM_NAME` if the server's model id differs from the price-table name.
+The local entries in the price table (`qwen3.6:35b-a3b-q4_K_M`, `hf.co/mradermacher/Nemotron-Terminal-32B-GGUF:Q4_K_M`, `qwen3.5:35b-a3b-q4_K_M`) are placeholders: zero token price, no compute rate, `placeholder: true`. They are the three candidates of [SMALL_MODELS.md](SMALL_MODELS.md), section 4.2. They are to be replaced with the models and rates chosen there. Until then, pricing with them raises `PriceNotSetError`, and so does `RunBudget(prices=...)`, so no run records a dollar figure of zero by mistake. The entry is looked up by the client's `name`, so set `LLM_NAME` if the server's model id differs from the price-table name.
+
+The names are the ones Ollama uses:
+
+- The two Qwen names are Ollama library tags (`ollama pull qwen3.6:35b-a3b-q4_K_M`).
+- Nemotron-Terminal-32B is not in the Ollama library (checked 2026-10-20). Ollama pulls the community GGUF from Hugging Face by that name, for example `ollama run hf.co/mradermacher/Nemotron-Terminal-32B-GGUF:Q4_K_M` ([Hugging Face, Use Ollama with any GGUF Model](https://huggingface.co/docs/hub/en/ollama)). With llama.cpp, download `Nemotron-Terminal-32B.Q4_K_M.gguf` from that repository and set `LLM_NAME=hf.co/mradermacher/Nemotron-Terminal-32B-GGUF:Q4_K_M`.

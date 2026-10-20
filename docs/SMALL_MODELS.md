@@ -185,7 +185,7 @@ Ollama sizes were read from https://ollama.com/library/<model>/tags. Hugging Fac
 | Qwen3.5-35B-A3B | 22 GB | same |
 | Qwen3.6-35B-A3B | 24 GB (`qwen3.6:35b-a3b-q4_K_M`). Little-coder ran it with 8 GB VRAM + 32 GB RAM, by offloading MoE layers to the CPU (`--n-cpu-moe`) | Ollama qwen3.6 tags; little-coder README (summary) |
 | Qwen3.6-27B | 17 GB | Ollama qwen3.6 tags |
-| Nemotron-Terminal-8B / 14B / 32B | 5.03 / 9.0 / 19.76 GB (Q4_K_M, community GGUF by mradermacher) | HF file listings |
+| Nemotron-Terminal-8B / 14B / 32B | 5.03 / 9.0 / 19.76 GB (Q4_K_M, community GGUF by mradermacher). Not in the Ollama library (checked 2026-10-20); Ollama pulls the GGUF from Hugging Face as `hf.co/mradermacher/Nemotron-Terminal-32B-GGUF:Q4_K_M` | HF file listings; [Hugging Face, Use Ollama with any GGUF Model](https://huggingface.co/docs/hub/en/ollama) |
 | Gemma 3 12B / 27B | 8.2 / 17 GB | Ollama gemma3 tags |
 | Gemma 4 26B-A4B / 31B | 18 / 20 GB | Ollama gemma4 tags (subagent reading, not re-checked) |
 | Devstral Small 2 (24B) | 15 GB | Ollama devstral-small-2 tags |
