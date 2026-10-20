@@ -2,13 +2,13 @@
 
 Sagandeep Kaur, draft for discussion with Prof. Mohamed Abdelrazek (Deakin A2I2), October 2026.
 
-**Status.** This is a plan, not a progress report. What exists today:
+**Status (updated 2026-10-20).** This is a plan, not a progress report. What exists today:
 
 - an architecture note ([ARCHITECTURE.md](ARCHITECTURE.md));
-- the empty package scaffold in this repository;
+- the Phase 0 code in this repository: the strategy schema, baselines B0–B2, seeded task splits (the Terminal-Bench 2.0 split is committed), the evaluation runner and a client for locally served models, with 84 offline tests. Progress is tracked in [PHASE0_CHECKLIST.md](PHASE0_CHECKLIST.md);
 - this document and a survey of prior work and benchmarks ([PRIOR_WORK.md](PRIOR_WORK.md)).
 
-No experiments have been run. All costs and timings below are estimates and are marked as such.
+No experiments have been run. No agent has run on a real benchmark, and no model has been called. All costs and timings below are estimates and are marked as such.
 
 **A note on the word "steering".** In this plan, *steering* means changing how the agent behaves by editing its explicit, versioned strategy object (section 3). It does **not** mean activation or representation steering, that is, adding vectors to a model's hidden states as in Representation Engineering (Zou et al., 2023). The model is used as a frozen black box through an API, so activation steering is out of scope. To avoid the confusion, the rest of this document says "strategy adaptation" rather than "steering".
 
@@ -60,6 +60,8 @@ The project asks two things:
 ## 2. Setting (recommended; see Open decisions)
 
 **Primary benchmark: Terminal-Bench 2.0** (89 tasks, pinned version), run through its Harbor harness in cloud sandboxes.
+
+*Note (updated 2026-10-20).* Cloud sandboxes are one option, not the only one. A custom Harbor agent runs in the harness process and sends commands to the task container. The model can then be served on the same host, and the task containers can run in local Docker. The little-coder runs in [SMALL_MODELS.md](SMALL_MODELS.md) (section 4.1) ran the model and the task containers (local Docker) on one laptop. The cloud option stays open for tasks that need more CPU or RAM than the local machine has.
 
 - It matches the example in the project description (long-horizon terminal tasks with environment setup and builds).
 - Pass/fail is decided automatically by tests that check the final container state.
@@ -410,7 +412,7 @@ The literature makes the second half essential:
 - A 2026 study ("Decomposing LLM Self-Correction") reports that location hints can even hurt.
 - Rollback for agents has very recent close work: Rollback-Induced Reflection (Sep 2026) and AgentRewind (Aug 2026). These must be compared against.
 
-**Implementation.** Rollback needs a snapshot of the task environment. The simplest version keeps the working directory under git inside the container and rolls back files and context together. Whether Harbor's cloud sandboxes support full container snapshots needs checking in Phase 0. This is a technical risk.
+**Implementation.** Rollback needs a snapshot of the task environment. The simplest version keeps the working directory under git inside the container and rolls back files and context together. *(Updated 2026-10-20.)* This was checked on 2026-10-04 ([PHASE0_CHECKLIST.md](PHASE0_CHECKLIST.md), "Snapshot support in Harbor"). Harbor gives an agent no snapshot, checkpoint or restore operation. Rollback is therefore done with git inside the container, and it covers files only: installed packages, running services and files outside the working directory are not rolled back. `restart_task` is the only full reset. This stays a technical risk, and the limitation should be stated wherever the rollback results are reported.
 
 ---
 

@@ -67,6 +67,7 @@ make test CPUS=0.5 MEMORY=512m
 * [`docs/PRIOR_WORK.md`](docs/PRIOR_WORK.md) - Closest prior work and a comparison of candidate benchmarks.
 * [`docs/PHASE0_CHECKLIST.md`](docs/PHASE0_CHECKLIST.md) - Status of each Phase 0 item, the snapshot-support check, and proposed benchmark pins.
 * [`docs/LOCAL_MODELS.md`](docs/LOCAL_MODELS.md) - Pointing the agent loop at a locally served model, and how its cost is counted.
+* [`docs/SMALL_MODELS.md`](docs/SMALL_MODELS.md) - Small open-weight model candidates, their published Terminal-Bench 2.0 scores, and what it takes to run them locally.
 * [`docs/MEETING_2026-10-14.md`](docs/MEETING_2026-10-14.md) - Record of the 2026-10-14 meeting with Prof. Abdelrazek and the resulting follow-ups.
 
 **Benchmark choice is under discussion.** The architecture note names SWE-bench Lite and WebArena; the technical plan instead proposes Terminal-Bench 2.0 as the primary benchmark, with AppWorld for transfer, pending Prof. Abdelrazek's view.
