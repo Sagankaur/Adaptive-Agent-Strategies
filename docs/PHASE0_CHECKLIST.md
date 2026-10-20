@@ -12,7 +12,7 @@ No agent has been run on any real benchmark, and no model API has been called.
 | Choose the model: run S0 on 20 tasks from A∪V (starting-score check) | **Not done; needs a machine with a GPU (updated 2026-10-15).** Candidates are now small open-weight models served locally (`docs/SMALL_MODELS.md`, section 4); the client for them is `llm.OpenAICompatibleModel` (`docs/LOCAL_MODELS.md`). No model has been called yet. |
 | Check `terminal-bench-pro` | **Not done.** Its 200 tasks have not been examined. |
 | Check snapshot support | **Done (source and docs check, nothing run).** See below. |
-| Agree the budget | **Not done.** This is Prof. Abdelrazek's decision (open decision 2). |
+| Agree the budget | **Not done.** This is Prof. Abdelrazek's decision (Q5 in [DECISIONS.md](DECISIONS.md#q5-compute-meeting-point-6); formerly open decision 2). |
 | Price table | **Drafted, not frozen.** `evaluation/price_table.json` holds the GPT-5-mini and gpt-oss-120b prices from [PRIOR_WORK.md](PRIOR_WORK.md), seen on 2026-10-02 and not re-checked, and placeholder entries for three local models without a compute rate ([LOCAL_MODELS.md](LOCAL_MODELS.md)). It is to be frozen once the model is chosen. |
 | Smoke-test report | **Not done.** It depends on the Harbor and model items above. The offline test suite (`make test`) runs every component on a toy environment with a mock model; that is a software check, not a smoke test of the benchmark. |
 
