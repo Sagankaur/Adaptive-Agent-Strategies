@@ -51,6 +51,7 @@ class Step:
     observation: str
     exit_code: int
     elapsed_s: float
+    model_seed: int | None = None
 
 
 @dataclass
@@ -65,6 +66,7 @@ class Attempt:
     own_check_passed: bool | None
     success: bool
     cost: Cost = field(default_factory=Cost)
+    judgments: list[dict[str, object]] = field(default_factory=list)
 
 
 def parse_reply(text: str) -> Action | None:
@@ -96,6 +98,8 @@ def run_episode(
     model: ChatModel,
     strategy: Strategy,
     extra_context: list[str] | None = None,
+    *,
+    reset_environment: bool = True,
 ) -> Attempt:
     """Run ``task`` once under ``strategy`` and return the trajectory, outcome and cost."""
     start = time.perf_counter()
@@ -103,14 +107,18 @@ def run_episode(
     steps: list[Step] = []
     tools, verification, budget = strategy.tool_policy, strategy.verification, strategy.budget
 
-    def add_step(kind: StepKind, action: Action, obs: Observation) -> str:
+    def add_step(kind: StepKind, action: Action, obs: Observation, model_seed: int | None = None) -> str:
         shown = _truncate(obs.text, tools.max_observation_chars)
         steps.append(
-            Step(len(steps), kind, action.tool, action.argument, shown, obs.exit_code, time.perf_counter() - start)
+            Step(
+                len(steps), kind, action.tool, action.argument, shown, obs.exit_code,
+                time.perf_counter() - start, model_seed,
+            )
         )
         return f"[{action.tool} {action.argument}] exit={obs.exit_code}\n{shown}"
 
-    env.reset(task)
+    if reset_environment:
+        env.reset(task)
     user = task.instruction
     if extra_context:
         user += "\n\n" + "\n\n".join(extra_context)
@@ -141,26 +149,32 @@ def run_episode(
         action = parse_reply(reply.text)
 
         if action is None:
-            text = add_step("invalid", Action("none", ""), Observation("No action found. " + ACTION_FORMAT, 2))
+            text = add_step(
+                "invalid", Action("none", ""), Observation("No action found. " + ACTION_FORMAT, 2), reply.seed
+            )
         elif action.tool == "submit":
             if verification.verification_required and verification.checks:
                 passed, detail = _own_checks(env, strategy, action.argument)
                 if passed is False and verify_cycles < verification.max_verify_cycles:
                     verify_cycles += 1
-                    text = add_step("verify", action, Observation("Checks failed: " + detail, 1))
+                    text = add_step("verify", action, Observation("Checks failed: " + detail, 1), reply.seed)
                     messages.append(Message("user", text))
                     continue
-                add_step("verify", action, Observation(detail, 0 if passed is not False else 1))
-            add_step("submit", action, Observation("submitted", 0))
+                add_step("verify", action, Observation(detail, 0 if passed is not False else 1), reply.seed)
+            add_step("submit", action, Observation("submitted", 0), reply.seed)
             answer = action.argument
             stop = "submitted"
             break
         elif action.tool not in tools.tools_allowed:
-            text = add_step("action", action, Observation(f"tool {action.tool} is not allowed by the strategy", 126))
+            text = add_step(
+                "action", action, Observation(f"tool {action.tool} is not allowed by the strategy", 126), reply.seed
+            )
         elif any(p in action.argument for p in tools.forbidden_patterns):
-            text = add_step("action", action, Observation("refused: command matches a forbidden pattern", 126))
+            text = add_step(
+                "action", action, Observation("refused: command matches a forbidden pattern", 126), reply.seed
+            )
         else:
-            text = add_step("action", action, env.execute(action))
+            text = add_step("action", action, env.execute(action), reply.seed)
         messages.append(Message("user", text))
 
     own_check_passed: bool | None

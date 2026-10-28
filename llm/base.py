@@ -9,13 +9,15 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import asdict, dataclass
-from typing import Literal, Protocol
+from typing import Any, Literal, Protocol
 
 
 @dataclass(frozen=True)
 class Message:
-    role: Literal["system", "user", "assistant"]
-    content: str
+    role: Literal["system", "user", "assistant", "tool"]
+    content: str | None
+    tool_call_id: str | None = None
+    tool_calls: list[dict[str, Any]] | None = None
 
 
 @dataclass(frozen=True)
@@ -30,6 +32,7 @@ class ChatResponse:
     input_tokens: int
     output_tokens: int
     elapsed_s: float = 0.0
+    seed: int | None = None
 
 
 class ChatModel(Protocol):
@@ -41,7 +44,7 @@ class ChatModel(Protocol):
 
     name: str
 
-    def complete(self, messages: Sequence[Message]) -> ChatResponse: ...
+    def complete(self, messages: Sequence[Message], *, seed: int | None = None) -> ChatResponse: ...
 
 
 class Pricing(Protocol):

@@ -43,7 +43,7 @@ class MockModel:
     usage: Cost = field(default_factory=Cost, init=False)
     _replies: Iterator[str] | None = field(default=None, init=False, repr=False)
 
-    def complete(self, messages: Sequence[Message]) -> ChatResponse:
+    def complete(self, messages: Sequence[Message], *, seed: int | None = None) -> ChatResponse:
         self.calls.append(list(messages))
         if callable(self.script):
             text = self.script(messages)
@@ -56,8 +56,9 @@ class MockModel:
                 raise MockScriptExhausted(f"script has {len(self.script)} replies") from exc
         response = ChatResponse(
             text=text,
-            input_tokens=sum(approx_tokens(m.content) for m in messages),
+            input_tokens=sum(approx_tokens(m.content or "") for m in messages),
             output_tokens=approx_tokens(text),
+            seed=seed,
         )
         self.usage.record(response)
         return response
@@ -72,7 +73,7 @@ class ProviderModel:
     def __init__(self, name: str) -> None:
         self.name = name
 
-    def complete(self, messages: Sequence[Message]) -> ChatResponse:
+    def complete(self, messages: Sequence[Message], *, seed: int | None = None) -> ChatResponse:
         raise NotImplementedError(
             f"{self.name!r} is a ProviderModel, which never calls a model; use OpenAICompatibleModel for a server"
         )

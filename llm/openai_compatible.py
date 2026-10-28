@@ -20,6 +20,7 @@ import urllib.error
 import urllib.request
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
+from threading import Lock
 from typing import Any
 from urllib.parse import urlparse
 
@@ -46,8 +47,10 @@ class OpenAICompatibleModel:
     - ``api_key``: sent as a bearer token when given; local servers usually need none.
     - ``name``: the name used in result records and to look up the price
       table; defaults to ``model``.
-    - ``temperature`` and ``max_tokens``: sent when not ``None``. Some hosted
-      reasoning models reject either one, so both can be left out.
+    - ``temperature``, ``top_p``, ``top_k`` and ``max_tokens``: sent when not ``None``.
+      Some hosted reasoning APIs reject sampling controls, so callers can omit them explicitly.
+    - ``seed``: root for deterministic, unique per-request seeds. Each call uses
+      ``seed + request_index``; use a task/run-specific root for isolated trials.
     - ``headers``: extra HTTP headers, sent with every request.
 
     Each reply's ``elapsed_s`` is the wall-clock time of the HTTP round trip.
@@ -60,10 +63,15 @@ class OpenAICompatibleModel:
     api_key: str | None = field(default=None, repr=False)
     name: str = ""
     timeout_s: float = 120.0
-    temperature: float | None = 0.0
+    temperature: float | None = 0.6
+    top_p: float | None = 0.95
+    top_k: int | None = 20
+    seed: int = 20261015
     max_tokens: int | None = None
     headers: Mapping[str, str] = field(default_factory=dict)
     usage: Cost = field(default_factory=Cost, init=False)
+    _request_count: int = field(default=0, init=False, repr=False)
+    _seed_lock: Lock = field(default_factory=Lock, init=False, repr=False)
 
     def __post_init__(self) -> None:
         if urlparse(self.base_url).scheme not in ("http", "https"):
@@ -72,6 +80,12 @@ class OpenAICompatibleModel:
             raise ValueError("model must be the id the server knows the model by")
         if self.timeout_s <= 0:
             raise ValueError("timeout_s must be positive")
+        if isinstance(self.seed, bool) or not isinstance(self.seed, int) or self.seed < 0:
+            raise ValueError("seed must be a non-negative integer")
+        if self.top_p is not None and not 0 < self.top_p <= 1:
+            raise ValueError("top_p must be in (0, 1]")
+        if self.top_k is not None and self.top_k < 1:
+            raise ValueError("top_k must be positive")
         if not self.name:
             self.name = self.model
 
@@ -80,7 +94,8 @@ class OpenAICompatibleModel:
         """Build a client from ``{prefix}BASE_URL`` and ``{prefix}MODEL``.
 
         Optional: ``{prefix}API_KEY``, ``{prefix}NAME``, ``{prefix}TIMEOUT_S``,
-        ``{prefix}MAX_TOKENS``. ``environ`` defaults to ``os.environ``.
+        ``{prefix}MAX_TOKENS``, ``{prefix}TOP_P``, ``{prefix}TOP_K`` and ``{prefix}SEED``.
+        ``environ`` defaults to ``os.environ``.
         """
         env = os.environ if environ is None else environ
         missing = [prefix + key for key in ("BASE_URL", "MODEL") if not env.get(prefix + key)]
@@ -94,31 +109,50 @@ class OpenAICompatibleModel:
             name=env.get(prefix + "NAME", ""),
             timeout_s=float(env.get(prefix + "TIMEOUT_S", "120")),
             max_tokens=int(max_tokens) if max_tokens else None,
+            temperature=float(env.get(prefix + "TEMPERATURE", "0.6")),
+            top_p=float(env.get(prefix + "TOP_P", "0.95")),
+            top_k=int(env.get(prefix + "TOP_K", "20")),
+            seed=int(env.get(prefix + "SEED", "20261015")),
         )
 
     @property
     def endpoint(self) -> str:
         return self.base_url.rstrip("/") + "/chat/completions"
 
-    def _request_body(self, messages: Sequence[Message]) -> dict[str, Any]:
+    def _request_body(self, messages: Sequence[Message], seed: int) -> dict[str, Any]:
         body: dict[str, Any] = {
             "model": self.model,
-            "messages": [{"role": m.role, "content": m.content} for m in messages],
+            "messages": [
+                {
+                    **{"role": message.role, "content": message.content},
+                    **({"tool_call_id": message.tool_call_id} if message.tool_call_id is not None else {}),
+                    **({"tool_calls": message.tool_calls} if message.tool_calls is not None else {}),
+                }
+                for message in messages
+            ],
             "stream": False,
         }
         if self.temperature is not None:
             body["temperature"] = self.temperature
+        if self.top_p is not None:
+            body["top_p"] = self.top_p
+        if self.top_k is not None:
+            body["top_k"] = self.top_k
         if self.max_tokens is not None:
             body["max_tokens"] = self.max_tokens
+        body["seed"] = seed
         return body
 
-    def complete(self, messages: Sequence[Message]) -> ChatResponse:
+    def complete(self, messages: Sequence[Message], *, seed: int | None = None) -> ChatResponse:
+        with self._seed_lock:
+            request_seed = self.seed + self._request_count if seed is None else seed
+            self._request_count += 1
         headers = {"Content-Type": "application/json", "Accept": "application/json", **self.headers}
         if self.api_key:
             headers["Authorization"] = f"Bearer {self.api_key}"
         request = urllib.request.Request(
             self.endpoint,
-            data=json.dumps(self._request_body(messages)).encode(),
+            data=json.dumps(self._request_body(messages, request_seed)).encode(),
             headers=headers,
             method="POST",
         )
@@ -133,7 +167,7 @@ class OpenAICompatibleModel:
             raise ProviderError(f"could not reach {self.endpoint}: {exc}") from exc
         elapsed = time.perf_counter() - start
 
-        response = ChatResponse(*self._parse(raw), elapsed_s=elapsed)
+        response = ChatResponse(*self._parse(raw), elapsed_s=elapsed, seed=request_seed)
         self.usage.record(response)
         return response
 

@@ -36,19 +36,19 @@
 - [x] Copy the report, Slurm script, driver, summary JSON, and runner JSONL into the repository.
 - [x] Record model revision/hash, server image/build, source commit, GPU, runtime, Slurm allocation, and limitations.
 - [x] Update repository documentation to use in-repository links.
-- [ ] Verify links and consistency checks; commit the evidence with the documentation.
+- [x] Verify links and consistency checks; commit the evidence with the documentation.
 
 ### Task 2: G-BASE baseline repair
 
 **Files:** `llm/openai_compatible.py`, `llm/base.py`, `baselines/agent_loop.py`, `baselines/baselines.py`, new `baselines/judge.py`, tests.
 
-- [ ] Add pinned sampling and unique per-request seed logging.
-- [ ] Add a test proving request settings and distinct seeds.
-- [ ] Add blind judge scoring with no filesystem access to hidden tests.
-- [ ] Repair B1 in-episode retries, no-reset behavior, attempt limits, reflection and judge cost accounting.
-- [ ] Repair B2 post-trial selection with seeded tie-breaking and correct cost accounting.
-- [ ] Add exact pooled BoN expectation over all subsets with analytic random tie handling.
-- [ ] Verify all six G-BASE acceptance outcomes and the full offline suite.
+- [x] Add pinned sampling and unique per-request seed logging.
+- [x] Add a test proving request settings and distinct seeds.
+- [x] Add blind judge scoring with no filesystem access to hidden tests.
+- [x] Repair B1 in-episode retries, no-reset behavior, attempt limits, reflection and judge cost accounting.
+- [x] Repair B2 post-trial selection with seeded tie-breaking and correct cost accounting.
+- [x] Add exact pooled BoN expectation over all subsets with analytic random tie handling.
+- [ ] Verify all six G-BASE acceptance outcomes and the full offline suite; focused acceptance tests pass, but full-suite pytest setup remains blocked by Windows temporary-directory permissions.
 
 ### Task 3: G-INFRA Harbor integration
 
@@ -76,6 +76,13 @@
 ## Current ledger
 
 - The A2I2 L40S model-server smoke and one-task project-client/toy-runner smoke passed; see `docs/cluster/l40s-client-smoke/REPORT.md`.
-- The 15 tests in `tests/test_baselines.py` pass under the local Python 3.14 interpreter.
-- The full suite currently reaches 86 passes and 12 temporary-directory setup errors under Windows. The errors are `PermissionError` while pytest enumerates temporary directories; re-run under the cluster's supported Python 3.11 environment before diagnosing these as project failures.
+- Focused baseline, judge, OpenAI client, and async parser tests pass: 44 passed, 1 skipped from the focused command because it exercises a live model server. After the final baseline accounting and seed logging fixes, the baseline and judge tests pass 22/22.
+- Ruff passes across `llm`, `baselines`, `evaluation`, and the affected tests.
+- The full suite currently reaches 98 passes and 12 temporary-directory setup errors under Windows. The errors are `PermissionError` while pytest enumerates `C:\Users\sagan\AppData\Local\Temp\pytest-of-sagan`; rerun under the supported Python 3.11 environment before diagnosing these as project failures.
 - The Harbor adapter, route pilot, five-task smoke, and E-P0/G0 are still open.
+- An async OpenAI-compatible client slice now parses nullable content, reasoning, native tool calls, cached tokens, and top-level llama.cpp timings. It can send tool schemas, chat-template kwargs, and a task/run-specific seed root; tool-role messages round-trip through the shared request type. Fixture tests pass. This slice is not connected to the synchronous `ChatModel` cost records or an agent trajectory log. The Harbor agent adapter remains unimplemented because Harbor is not installed in this environment and cluster access currently fails DNS resolution for `login-f.ai.deakin.edu.au`.
+- Independent review confirmed the need for top-level timings (now corrected), per-task seed roots, and advertised tool schemas (now supported). It also confirmed that the overall G-INFRA gate remains open: no Harbor adapter or five-task smoke exists. B1's per-task/run attempt-cap mixture and cumulative cap enforcement also remain open beyond the current 1–3 cap validation.
+- B1/B2 judge elapsed time is now included in aggregate `extra_cost.wall_s`; B1 reflection instructions are trigger-neutral and include the judge's public score and reason. B1's seeded attempt-cap mixture and cumulative token-cap enforcement remain unfinished.
+- B1 reflection calls are recorded in each result's `extra_calls` field with their seed, text, and token/time cost so the seed audit trail includes non-trajectory calls.
+- The latest cluster SSH retry on 2026-10-28 failed before authentication: hostname resolution failed. No model or task run was started.
+- The five-task TB-Pro smoke remains gated on the approved provider, network route, budget, task licensing, and disk allocation; those approvals and route results are not recorded in the repository.

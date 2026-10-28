@@ -107,7 +107,10 @@ def test_successful_call_returns_reported_usage_and_time(stub: StubServer) -> No
         "model": "qwen3-coder:30b",
         "messages": [{"role": "system", "content": "be brief"}, {"role": "user", "content": "hello"}],
         "stream": False,
-        "temperature": 0.0,
+        "temperature": 0.6,
+        "top_p": 0.95,
+        "top_k": 20,
+        "seed": 20261015,
         "max_tokens": 64,
     }
     assert model.name == "qwen3-coder:30b"
@@ -118,11 +121,38 @@ def test_successful_call_returns_reported_usage_and_time(stub: StubServer) -> No
     assert model.usage.model_s > reply.elapsed_s
 
 
+def test_requests_use_pinned_sampling_and_distinct_logged_seeds(stub: StubServer) -> None:
+    model = OpenAICompatibleModel(base_url=stub.url, model="m", seed=100)
+    first = model.complete([Message("user", "one")])
+    second = model.complete([Message("user", "two")])
+
+    assert [r["body"]["temperature"] for r in stub.requests] == [0.6, 0.6]
+    assert [r["body"]["top_p"] for r in stub.requests] == [0.95, 0.95]
+    assert [r["body"]["top_k"] for r in stub.requests] == [20, 20]
+    assert [r["body"]["seed"] for r in stub.requests] == [100, 101]
+    assert (first.seed, second.seed) == (100, 101)
+
+
+def test_tool_message_and_assistant_tool_call_round_trip_in_request() -> None:
+    tool_call = {"id": "call-1", "type": "function", "function": {"name": "bash", "arguments": "{}"}}
+    messages = [
+        Message("assistant", None, tool_calls=[tool_call]),
+        Message("tool", "done", tool_call_id="call-1"),
+    ]
+
+    body = OpenAICompatibleModel(base_url="http://localhost:8080/v1", model="local")._request_body(messages, 7)
+
+    assert body["messages"] == [
+        {"role": "assistant", "content": None, "tool_calls": [tool_call]},
+        {"role": "tool", "content": "done", "tool_call_id": "call-1"},
+    ]
+
+
 def test_optional_fields_are_left_out_of_the_request(stub: StubServer) -> None:
     OpenAICompatibleModel(base_url=stub.url, model="m", temperature=None).complete([Message("user", "x")])
     sent = stub.requests[0]
     assert "Authorization" not in sent["headers"]
-    assert set(sent["body"]) == {"model", "messages", "stream"}
+    assert set(sent["body"]) == {"model", "messages", "stream", "top_p", "top_k", "seed"}
 
 
 @pytest.mark.parametrize(
@@ -176,6 +206,9 @@ def test_constructor_and_env_configuration() -> None:
             "LLM_NAME": "qwen3-coder:30b",
             "LLM_TIMEOUT_S": "600",
             "LLM_MAX_TOKENS": "2048",
+            "LLM_TOP_P": "0.9",
+            "LLM_TOP_K": "32",
+            "LLM_SEED": "42",
         }
     )
     assert (model.endpoint, model.name, model.timeout_s, model.max_tokens, model.api_key) == (
@@ -185,6 +218,7 @@ def test_constructor_and_env_configuration() -> None:
         2048,
         None,
     )
+    assert (model.top_p, model.top_k, model.seed) == (0.9, 32, 42)
 
 
 def test_mock_model_keeps_a_running_total() -> None:

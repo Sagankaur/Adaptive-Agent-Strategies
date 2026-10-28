@@ -14,7 +14,7 @@ It needs:
 - **`model`**: the id the server knows the model by;
 - **`api_key`** (optional): sent as `Authorization: Bearer <key>`.
 
-Optional settings are `name` (the name used in result records and to look up the price table; defaults to `model`), `timeout_s` (default 120), `temperature` (default 0; `None` leaves it out), `max_tokens` (default: not sent) and `headers` (extra HTTP headers).
+Optional settings are `name` (the name used in result records and to look up the price table; defaults to `model`), `timeout_s` (default 120), sampling controls (`temperature=0.6`, `top_p=0.95`, `top_k=20`), a root `seed` (default `20261015`), `max_tokens` (default: not sent) and `headers` (extra HTTP headers). Each call uses and returns a distinct seed (`root seed + request index`). Set `temperature`, `top_p` or `top_k` to `None` explicitly for servers that reject these controls.
 
 Each reply carries the token counts the server reports in `usage.prompt_tokens` and `usage.completion_tokens`, and the wall-clock seconds of the call. If the server's reply has no `usage`, the call raises `MissingUsageError`. Tokens are never estimated for a real model. `model.usage` keeps the running total of calls, tokens and seconds.
 
@@ -49,6 +49,10 @@ The reply should contain `"usage": {"prompt_tokens": ..., "completion_tokens": .
 | `LLM_NAME` | no | name for records and the price table; defaults to `LLM_MODEL` |
 | `LLM_TIMEOUT_S` | no | seconds per request; default 120 |
 | `LLM_MAX_TOKENS` | no | cap on output tokens per reply |
+| `LLM_TEMPERATURE` | no | sampling temperature; default 0.6 |
+| `LLM_TOP_P` | no | nucleus sampling value; default 0.95 |
+| `LLM_TOP_K` | no | top-k sampling value; default 20 |
+| `LLM_SEED` | no | root for logged per-request seeds; default 20261015 |
 
 Another prefix can be passed, for example `from_env("DIAGNOSER_")` for a second model.
 

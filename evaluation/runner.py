@@ -76,6 +76,8 @@ class ResultRecord(BaseModel):
     own_check_passed: bool | None = None
     selected_attempt: int | None = None
     cost: dict[str, float] | None = None
+    extra_cost: dict[str, float] | None = None
+    extra_calls: list[dict[str, Any]] = []
     dollars: float | None = None
     attempts: list[dict[str, Any]] = []
 
@@ -89,6 +91,7 @@ def _attempt_dict(outcome: TaskOutcome) -> list[dict[str, Any]]:
             "success": a.success,
             "cost": a.cost.to_dict(),
             "steps": [asdict(s) for s in a.steps],
+            "judgments": a.judgments,
         }
         for a in outcome.attempts
     ]
@@ -147,6 +150,8 @@ def evaluate(
                     own_check_passed=outcome.attempts[outcome.selected].own_check_passed,
                     selected_attempt=outcome.selected,
                     cost=cost.to_dict(),
+                    extra_cost=outcome.extra_cost.to_dict(),
+                    extra_calls=outcome.extra_calls,
                     dollars=cost.dollars(prices) if prices else None,
                     attempts=_attempt_dict(outcome),
                 )

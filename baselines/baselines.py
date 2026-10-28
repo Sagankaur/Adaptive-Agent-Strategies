@@ -14,10 +14,12 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
+from hashlib import sha256
 from typing import Any, Protocol
 
 from baselines.agent_loop import Attempt, run_episode
 from baselines.cost import Cost
+from baselines.judge import judge_attempt, select_best_index
 from environments.base import Environment, Task
 from llm import ChatModel, Message
 from strategy_schema.model import Strategy
@@ -34,6 +36,7 @@ class TaskOutcome:
     selected: int
     reflections: list[str] = field(default_factory=list)
     extra_cost: Cost = field(default_factory=Cost)
+    extra_calls: list[dict[str, Any]] = field(default_factory=list)
 
     @property
     def success(self) -> bool:
@@ -76,8 +79,8 @@ class FixedStrategy:
 
 
 REFLECTION_PROMPT = (
-    "Your own checks say the attempt below did not succeed. In at most three sentences, "
-    "say what went wrong and what to do differently next time."
+    "The attempt below was selected for reflection after a judge or agent check identified a possible problem. "
+    "In at most three sentences, say what went wrong and what to do differently next time."
 )
 
 
@@ -86,6 +89,9 @@ def _summarise_attempt(attempt: Attempt) -> str:
     for s in attempt.steps:
         first_line = s.observation.splitlines()[0] if s.observation else ""
         rows.append(f"{s.index}. {s.kind} {s.tool} {s.argument} -> exit {s.exit_code}: {first_line}")
+    judgment = attempt.judgments[-1] if attempt.judgments else None
+    if judgment is not None:
+        rows.append(f"in-run judge: score={judgment['score']}; reason={judgment['reason']}")
     return "\n".join([*rows, f"stop reason: {attempt.stop_reason}"])
 
 
@@ -101,8 +107,8 @@ class ReflectionRetry:
     name: str = "B1-reflection"
 
     def __post_init__(self) -> None:
-        if self.k < 1:
-            raise ValueError("k must be at least 1")
+        if not 1 <= self.k <= 3:
+            raise ValueError("B1 attempt cap must be between 1 and 3")
 
     @property
     def params(self) -> dict[str, Any]:
@@ -112,10 +118,29 @@ class ReflectionRetry:
         outcome = TaskOutcome(task.task_id, self.name, self.params, [], selected=0)
         for i in range(self.k):
             context = [f"Reflection on an earlier attempt: {r}" for r in outcome.reflections]
-            attempt = run_episode(task, env, model, strategy, extra_context=context)
+            attempt = run_episode(task, env, model, strategy, extra_context=context, reset_environment=(i == 0))
             outcome.attempts.append(attempt)
             outcome.selected = i
-            if attempt.own_check_passed is not False or i == self.k - 1:
+            judge = judge_attempt(model, task.instruction, attempt)
+            attempt.judgments.append(
+                {
+                    "score": judge.score,
+                    "passed": judge.passed,
+                    "reason": judge.reason,
+                    "seed": judge.response.seed,
+                    "cost": {
+                        "calls": 1,
+                        "input_tokens": judge.response.input_tokens,
+                        "output_tokens": judge.response.output_tokens,
+                        "model_s": judge.response.elapsed_s,
+                        "wall_s": judge.response.elapsed_s,
+                    },
+                }
+            )
+            outcome.extra_cost.record(judge.response)
+            outcome.extra_cost.wall_s += judge.response.elapsed_s
+            failed = not judge.passed or attempt.own_check_passed is False
+            if not failed or i == self.k - 1:
                 break
             start = time.perf_counter()
             reply = model.complete(
@@ -125,20 +150,36 @@ class ReflectionRetry:
                 ]
             )
             outcome.extra_cost.record(reply)
-            outcome.extra_cost.wall_s += time.perf_counter() - start
+            elapsed_s = time.perf_counter() - start
+            outcome.extra_cost.wall_s += elapsed_s
+            outcome.extra_calls.append(
+                {
+                    "kind": "reflection",
+                    "seed": reply.seed,
+                    "text": reply.text,
+                    "cost": {
+                        "calls": 1,
+                        "input_tokens": reply.input_tokens,
+                        "output_tokens": reply.output_tokens,
+                        "model_s": reply.elapsed_s,
+                        "wall_s": elapsed_s,
+                    },
+                }
+            )
             outcome.reflections.append(reply.text.strip())
         return outcome
 
 
 @dataclass
 class BestOfN:
-    """B2: ``n`` independent attempts; the first one that passes the agent's own checks is selected.
+    """B2: ``n`` independent attempts; a blind post-trial judge selects the highest score.
 
-    If none passes, the first attempt is selected. Selection by an LLM judge,
-    which the plan allows as an alternative, is not implemented.
+    The judge sees the instruction and recorded trajectory, never hidden tests
+    or the environment. Tied maximum scores are selected reproducibly.
     """
 
     n: int
+    seed: int = 20261015
     name: str = "B2-best-of-n"
 
     def __post_init__(self) -> None:
@@ -147,9 +188,32 @@ class BestOfN:
 
     @property
     def params(self) -> dict[str, Any]:
-        return {"n": self.n, "selector": "own_checks"}
+        return {"n": self.n, "selector": "blind_judge", "tie_seed": self.seed}
 
     def run(self, task: Task, env: Environment, model: ChatModel, strategy: Strategy) -> TaskOutcome:
         attempts = [run_episode(task, env, model, strategy) for _ in range(self.n)]
-        selected = next((i for i, a in enumerate(attempts) if a.own_check_passed), 0)
-        return TaskOutcome(task.task_id, self.name, self.params, attempts, selected)
+        outcome = TaskOutcome(task.task_id, self.name, self.params, attempts, selected=0)
+        scores: list[float] = []
+        for attempt in attempts:
+            judge = judge_attempt(model, task.instruction, attempt)
+            scores.append(judge.score)
+            attempt.judgments.append(
+                {
+                    "score": judge.score,
+                    "passed": judge.passed,
+                    "reason": judge.reason,
+                    "seed": judge.response.seed,
+                    "cost": {
+                        "calls": 1,
+                        "input_tokens": judge.response.input_tokens,
+                        "output_tokens": judge.response.output_tokens,
+                        "model_s": judge.response.elapsed_s,
+                        "wall_s": judge.response.elapsed_s,
+                    },
+                }
+            )
+            outcome.extra_cost.record(judge.response)
+            outcome.extra_cost.wall_s += judge.response.elapsed_s
+        task_seed = int.from_bytes(sha256(f"{self.seed}:{task.task_id}".encode()).digest()[:8], "big")
+        outcome.selected = select_best_index(scores, seed=task_seed)
+        return outcome
