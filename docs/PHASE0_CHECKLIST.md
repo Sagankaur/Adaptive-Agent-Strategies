@@ -1,20 +1,20 @@
 # Phase 0 checklist
 
-Status of the Phase 0 items in [TECHNICAL_PLAN.md](TECHNICAL_PLAN.md), section 10, as of 2026-10-20. The snapshot check is from 2026-10-04 and the split rows from 2026-10-15; the split commit, the task-source date and the pins table were updated on 2026-10-20. Phase 0 is "Setup" (weeks 1–2). Its deliverables are a split file, the price table and a smoke-test report.
+Status of the Phase 0 items in [TECHNICAL_PLAN.md](TECHNICAL_PLAN.md), section 10, as of 2026-10-28. The snapshot check is from 2026-10-04 and the split rows from 2026-10-15; the split commit, task-source date and pins table were updated on 2026-10-20. Phase 0 is "Setup" (weeks 1–2). Its deliverables are a split file, the price table and a smoke-test report.
 
-No agent has been run on any real benchmark, and no model API has been called.
+No agent has been run on a real benchmark. A low-level llama.cpp serving smoke and a one-task project-client/toy-runner smoke were completed on the A2I2 L40S on 2026-10-28/29. Harbor task execution remains untested. The portable project-client report, Slurm job, summary and result JSONL are in [`docs/cluster/l40s-client-smoke/`](cluster/l40s-client-smoke/).
 
 | Item | Status |
 |---|---|
 | Pin the benchmark version | **Done for the task source (2026-10-15).** `laude-institute/terminal-bench-2` at commit `2fd12b88aafdd04a52c298e3940bcb189f9766d6`; the 89 task directories were read. The Harbor pin (v0.23.0) is still proposed and not confirmed by a run. See [`evaluation/data/tb2_tasks.README.md`](../evaluation/data/tb2_tasks.README.md). |
 | Fix the splits and commit the split file | **Done (2026-10-15), committed in `92c1621`.** `splits/terminal-bench-2.0.json` was made from `evaluation/data/tb2_tasks.jsonl` with seed 20261015 and the default sizes A=25, V=12, M=15, H=37. A test in `tests/test_splits.py` checks that the file is disjoint, covers all 89 ids and matches the task list. The split is stratified by category and difficulty; there are 16 categories, 5 of them with one task, so small categories are not represented in every split. |
 | Get Harbor running in a cloud sandbox | **Not done.** Needs a sandbox provider account and budget. |
-| Choose the model: run S0 on 20 tasks from A∪V (starting-score check) | **Not done; needs a machine with a GPU (updated 2026-10-15).** Candidates are now small open-weight models served locally (`docs/SMALL_MODELS.md`, section 4); the client for them is `llm.OpenAICompatibleModel` (`docs/LOCAL_MODELS.md`). No model has been called yet. |
+| Choose the model: run S0 on 20 tasks from A∪V (starting-score check) | **Not done.** The project client has passed one direct call and one toy task on the L40S; Harbor, the task route, and budget gates remain open. Candidate models are listed in [`SMALL_MODELS.md`](SMALL_MODELS.md); see [`LOCAL_MODELS.md`](LOCAL_MODELS.md) for client status. |
 | Check `terminal-bench-pro` | **Not done.** Its 200 tasks have not been examined. |
 | Check snapshot support | **Done (source and docs check, nothing run).** See below. |
 | Agree the budget | **Not done.** This is Prof. Abdelrazek's decision (Q5 in [DECISIONS.md](DECISIONS.md#q5-compute-meeting-point-6); formerly open decision 2). |
 | Price table | **Drafted, not frozen.** `evaluation/price_table.json` holds the GPT-5-mini and gpt-oss-120b prices from [PRIOR_WORK.md](PRIOR_WORK.md), seen on 2026-10-02 and not re-checked, and placeholder entries for three local models without a compute rate ([LOCAL_MODELS.md](LOCAL_MODELS.md)). It is to be frozen once the model is chosen. |
-| Smoke-test report | **Not done.** It depends on the Harbor and model items above. The offline test suite (`make test`) runs every component on a toy environment with a mock model; that is a software check, not a smoke test of the benchmark. |
+| Smoke-test report | **Partly done.** Model serving and project-client/toy-runner smokes are recorded. The end-to-end Harbor/model smoke remains **not done**. The offline test suite (`make test`) runs every component on a toy environment with a mock model; that is a software check, not a benchmark smoke test. |
 
 ## Snapshot support in Harbor
 

@@ -1,0 +1,25 @@
+{
+  "task_id": "toy-000",
+  "task_category": "reverse_words",
+  "success": true,
+  "stop_reason": "submitted",
+  "calls": 2.0,
+  "input_tokens": 765.0,
+  "output_tokens": 323.0,
+  "model_usage_total": {
+    "calls": 3,
+    "input_tokens": 794,
+    "output_tokens": 423,
+    "model_s": 3.4956769663840532,
+    "wall_s": 0.0
+  },
+  "runner_summary": {
+    "completed": 1,
+    "not_run": 0,
+    "success_rate": 1.0,
+    "mean_calls": 2.0,
+    "mean_tokens": 1088.0,
+    "mean_dollars": null
+  },
+  "result_path": "/home/kasag/jobs/out/project_client_toy_4316173/toy_run.jsonl"
+}

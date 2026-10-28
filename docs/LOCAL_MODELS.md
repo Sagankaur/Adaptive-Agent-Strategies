@@ -2,7 +2,7 @@
 
 How to point the agent loop at a model served on your own machine (or any machine you control), and how cost is counted for it. Which small models to try, and their published scores, are in [SMALL_MODELS.md](SMALL_MODELS.md).
 
-**Status.** The client below is tested only against a stub server in the offline test suite (`tests/test_openai_compatible.py`). It has not been run against a real model server. The development machine has no GPU.
+**Status (2026-10-29).** The client passed one direct request and one task through the toy runner against llama.cpp on the A2I2 L40S. It reported provider token counts and the runner wrote a completed result record. This does not test Harbor or a real benchmark task; the offline unit tests remain the only automated tests of client error handling. See the portable [report, scripts and raw result](cluster/l40s-client-smoke/). The development machine has no GPU.
 
 ## The client
 
@@ -56,7 +56,7 @@ Another prefix can be passed, for example `from_env("DIAGNOSER_")` for a second 
 
 There is no command-line runner yet, so the example calls `evaluation.runner.evaluate` from a short script. It runs B0 with the starting strategy S0 on the toy environment's A split, which only checks that the model server, the client and the runner work together. The toy environment says nothing about agent performance.
 
-This has **not** been run against a real model. The script itself has been run against a stub server.
+The example has been exercised against a real Qwen llama.cpp server on the A2I2 L40S using one toy task. The reproducible job, settings and output are recorded in [the cluster smoke report](cluster/l40s-client-smoke/REPORT.md). The example still uses a toy environment, so it says nothing about benchmark performance.
 
 ```
 # 1. Start a model server, for example with Ollama:
