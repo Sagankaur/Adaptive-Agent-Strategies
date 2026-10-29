@@ -444,5 +444,3 @@ class HarborStrategyAgent(BaseAgent):
                 "elapsed_s": time.monotonic() - self._started,
             },
         )
-
-\n

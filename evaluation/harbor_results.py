@@ -83,11 +83,17 @@ def append_completed_trial(
     for step in steps:
         seed = step.get("seed")
         if isinstance(seed, int) and not isinstance(seed, bool):
-            request_usage[seed] = (
+            usage = (
                 int(step.get("input_tokens", 0)),
                 int(step.get("cached_tokens", 0)),
                 int(step.get("output_tokens", 0)),
             )
+            previous_usage = request_usage.get(seed)
+            if previous_usage is not None and previous_usage != usage:
+                raise HarborResultError(
+                    f"Harbor trial {reward.trial_id!r} has conflicting token usage for seed {seed}"
+                )
+            request_usage[seed] = usage
     record = {
         "harbor_trial_id": reward.trial_id,
         "task_id": reward.task_id,
@@ -110,5 +116,3 @@ def append_completed_trial(
         output.write(json.dumps(record, ensure_ascii=False, sort_keys=True) + "\n")
         output.flush()
     return record
-
-\n
