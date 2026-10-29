@@ -54,11 +54,13 @@
 
 **Files:** async model client, Harbor agent module, job configuration, JSONL step logging, fixture-based tests.
 
-- [ ] Implement the async per-trial client, including nullable content, reasoning, native tool calls, llama.cpp timings, cached tokens, and the `tool` message role.
-- [ ] Implement the async Harbor agent and source reward from the Harbor trial result.
-- [ ] Log strategy hash, provenance tag, seed, timings, and Harbor trial id per step.
-- [ ] Set Harbor concurrency equal to the pinned llama.cpp slot count and timeout multiplier to 2.
+- [x] Implement the async per-trial client, including nullable content, reasoning, native tool calls, llama.cpp timings, cached tokens, and the `tool` message role.
+- [x] Implement the async Harbor agent and a post-trial reader for reward from the Harbor trial result.
+- [x] Log strategy hash, provenance tag, seed, timings, and Harbor trial id per step; join step logs and Harbor reward into an episode JSONL record.
+- [x] Add a helper that sets Harbor concurrency equal to the supplied llama.cpp slot count and agent timeout multiplier to 2.
 - [ ] Verify the CPU scripted-agent Harbor toy run before using real task images.
+
+Implementation notes: [`docs/cluster/harbor-adapter/IMPLEMENTATION_2026-10-29.md`](../../cluster/harbor-adapter/IMPLEMENTATION_2026-10-29.md). Async-client parser fixtures exist, but there is no Harbor-adapter lifecycle test yet. Two Rohan CPU Slurm smoke attempts stopped before the agent action or verifier; the integration gate remains open.
 
 ### Task 4: P-M2 route pilot
 
@@ -79,10 +81,10 @@
 - Focused baseline, judge, OpenAI client, and async parser tests pass: 44 passed, 1 skipped from the focused command because it exercises a live model server. After the final baseline accounting and seed logging fixes, the baseline and judge tests pass 22/22.
 - Ruff passes across `llm`, `baselines`, `evaluation`, and the affected tests.
 - The full suite currently reaches 98 passes and 12 temporary-directory setup errors under Windows. The errors are `PermissionError` while pytest enumerates `C:\Users\sagan\AppData\Local\Temp\pytest-of-sagan`; rerun under the supported Python 3.11 environment before diagnosing these as project failures.
-- The Harbor adapter, route pilot, five-task smoke, and E-P0/G0 are still open.
-- An async OpenAI-compatible client slice now parses nullable content, reasoning, native tool calls, cached tokens, and top-level llama.cpp timings. It can send tool schemas, chat-template kwargs, and a task/run-specific seed root; tool-role messages round-trip through the shared request type. Fixture tests pass. This slice is not connected to the synchronous `ChatModel` cost records or an agent trajectory log. The Harbor agent adapter remains unimplemented because Harbor is not installed in this environment and cluster access currently fails DNS resolution for `login-f.ai.deakin.edu.au`.
-- Independent review confirmed the need for top-level timings (now corrected), per-task seed roots, and advertised tool schemas (now supported). It also confirmed that the overall G-INFRA gate remains open: no Harbor adapter or five-task smoke exists. B1's per-task/run attempt-cap mixture and cumulative cap enforcement also remain open beyond the current 1–3 cap validation.
+- The Harbor adapter implementation exists; the scripted Harbor CPU toy run and five-task smoke remain open. The P-M2 route pilot and E-P0/G0 are also open.
+- An async OpenAI-compatible client slice now parses nullable content, reasoning, native tool calls, cached tokens, and top-level llama.cpp timings. It can send tool schemas, chat-template kwargs, and a task/run-specific seed root; tool-role messages round-trip through the shared request type. Fixture tests pass. This client remains separate from the synchronous `ChatModel` cost records. The Harbor adapter code now exists, but Harbor is not installed in this environment and the adapter has not yet been exercised against a Harbor trial.
+- Independent review confirmed the need for top-level timings (now corrected), per-task seed roots, and advertised tool schemas (now supported). The Harbor adapter now exists, but the scripted Harbor toy run and five-task smoke remain open. B1's per-task/run attempt-cap mixture and cumulative cap enforcement also remain open beyond the current 1–3 cap validation.
 - B1/B2 judge elapsed time is now included in aggregate `extra_cost.wall_s`; B1 reflection instructions are trigger-neutral and include the judge's public score and reason. B1's seeded attempt-cap mixture and cumulative token-cap enforcement remain unfinished.
 - B1 reflection calls are recorded in each result's `extra_calls` field with their seed, text, and token/time cost so the seed audit trail includes non-trajectory calls.
-- The latest cluster SSH retry on 2026-10-28 failed before authentication: hostname resolution failed. No model or task run was started.
+- The 2026-10-28 cluster SSH retry failed before authentication because hostname resolution failed. A later SSH session reached Rohan's `login-f` host, installed Harbor 0.23.0 in a scratch venv, and attempted two bounded CPU Slurm smokes. Both failed before agent execution because of Singularity network-policy and writable-filesystem limitations; see [`docs/cluster/SSH_RETRY_2026-10-29.md`](../../cluster/SSH_RETRY_2026-10-29.md).
 - The five-task TB-Pro smoke remains gated on the approved provider, network route, budget, task licensing, and disk allocation; those approvals and route results are not recorded in the repository.

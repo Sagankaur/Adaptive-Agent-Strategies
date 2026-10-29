@@ -13,4 +13,4 @@ sbatch docs/cluster/l40s-client-smoke/03_project_toy_smoke.sh
 
 The Slurm script expects the files from the prior model-fetch step at `/scratch/$USER/models/Qwen3.6-35B-A3B-UD-Q4_K_M.gguf` and `/scratch/$USER/images/llama-server-cuda12-b11515.sif`, and the venv at `/scratch/$USER/venvs/aas-client-smoke`. Results are written to `$HOME/jobs/out/project_client_toy_<jobid>/`.
 
-The job is intentionally limited to one toy task. A successful rerun still does not close G-INFRA; that requires the Harbor adapter and a five-task TB-Pro infrastructure smoke.
+The job is intentionally limited to one toy task. A successful rerun still does not close G-INFRA; that requires the scripted Harbor CPU toy run and a five-task TB-Pro infrastructure smoke. The current adapter implementation is documented in [`../harbor-adapter/IMPLEMENTATION_2026-10-29.md`](../harbor-adapter/IMPLEMENTATION_2026-10-29.md).
