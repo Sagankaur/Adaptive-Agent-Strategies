@@ -376,7 +376,9 @@ class Strategy(_Frozen):
                 f"{r.rollback_target.replace('_', ' ')}, at most {r.max_rollbacks} times."
             )
 
-        lines.append(f"Budget: at most {b.max_steps} steps, {b.max_tokens} tokens and {b.max_wall_s} s.")
+        lines.append(
+            f"Budget: at most {b.max_steps} steps, {b.max_tokens:,} generated tokens and {b.max_wall_s} s."
+        )
 
         if self.notes:
             lines.append("")

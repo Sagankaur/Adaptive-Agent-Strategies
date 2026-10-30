@@ -75,6 +75,8 @@ class ResultRecord(BaseModel):
     oracle_success: bool | None = None
     own_check_passed: bool | None = None
     selected_attempt: int | None = None
+    budget_stop_reason: str | None = None
+    budget_overrun_tokens: int = 0
     cost: dict[str, float] | None = None
     extra_cost: dict[str, float] | None = None
     extra_calls: list[dict[str, Any]] = []
@@ -149,6 +151,8 @@ def evaluate(
                     oracle_success=outcome.oracle_success,
                     own_check_passed=outcome.attempts[outcome.selected].own_check_passed,
                     selected_attempt=outcome.selected,
+                    budget_stop_reason=outcome.budget_stop_reason,
+                    budget_overrun_tokens=outcome.budget_overrun_tokens,
                     cost=cost.to_dict(),
                     extra_cost=outcome.extra_cost.to_dict(),
                     extra_calls=outcome.extra_calls,

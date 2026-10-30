@@ -569,7 +569,7 @@ The planning MDE for H1 (S\* 10 runs vs S0 x10) is 4.5 pp. It assumes an effect-
 
 **Definition.** A method in which an agent writes a verbal reflection on its own failure and retries with that reflection in memory, without weight updates: Reflexion: Language Agents with Verbal Reinforcement Learning (Shinn et al., arXiv 2303.11366, Mar 2023), [link](https://arxiv.org/abs/2303.11366). It is the basis of baseline B1.
 
-**Example.** Planned B1 retries inside one Harbor trial when the in-run judge says "fail" or an agent-written test fails, never on hidden tests. It allows at most 3 attempts, with no environment reset between attempts. The 60-step and 64k-token budgets apply per attempt. The attempt cap is drawn per (task, run) from a mixture fixed at Stage 2, so that B1's mean cost matches S\*'s; the sum of caps is at most 1,024 episode-equivalents at x5.
+**Example.** Planned B1 retries inside one Harbor trial when the in-run judge says "fail" or an agent-written test fails, never on hidden tests. It allows at most 3 attempts, with no environment reset between attempts. The 60-step cap applies per attempt; one 64k generated-token cap is shared across agent, judge, and reflection calls for the task/run. The attempt cap is drawn per (task, run) from a mixture fixed at Stage 2 to match S*'s MCU, so the requested caps sum to at most 1,024 episode-equivalents at x5.
 
 **Common mistake.** A retry trigger that never fires. The current code retries only when the agent's own check returns `False`. Under Harbor the tests are uploaded only at verification, so visible-test checks often have nothing to run (an inference from Harbor's code). The check then returns `None`, and B1 does not retry.
 
@@ -1049,7 +1049,7 @@ The numbers in this group come from the [cost table](EXPERIMENTS.md#cost-table) 
 
 **Definition.** Hard limits on an episode set by the experimenter: maximum agent steps, maximum generated tokens, and a wall-clock timeout. Adaptation cannot edit them, or it could buy success by spending more.
 
-**Example.** Planned budgets, identical for every arm: max_steps = 60 (a logged change from S0's committed 40) and at most 64k generated tokens per episode, counted from `predicted_n` and including reasoning (per attempt for B1). Wall-clock is only a backstop, with Harbor's agent timeout multiplier set to 2 for all arms. For an approximately leaderboard-comparable number, S0 trials are censored at 1x the task timeout using the logged agent time. In the little-coder run, 1 of 8 timed-out trials still passed. Censoring turns that one pass into a failure, so it biases the score down by about 1/445 = 0.2 pp (derived).
+**Example.** Planned budgets: max_steps = 60 (a logged change from S0's committed 40) and at most 64k generated tokens per episode, counted from model-reported output tokens and including reasoning. B1 shares its episode cap across retries, judge, and reflection calls. Wall-clock is only a backstop, with Harbor's agent timeout multiplier set to 2 for all arms. For an approximately leaderboard-comparable number, S0 trials are censored at 1x the task timeout using the logged agent time. In the little-coder run, 1 of 8 timed-out trials still passed. Censoring turns that one pass into a failure, so it biases the score down by about 1/445 = 0.2 pp (derived).
 
 **Common mistake.** Using wall-clock as the binding limit. A faster GPU would then solve more tasks, and results would depend on hardware rather than strategy.
 

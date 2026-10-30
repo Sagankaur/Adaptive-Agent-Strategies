@@ -39,10 +39,14 @@ class _ScriptedModel:
         self.requests: list[list[dict[str, Any]]] = []
         self.tools: list[dict[str, Any]] | None = None
         self.timeout_s = 30.0
+        self.output_limits: list[int | None] = []
 
-    async def complete(self, messages: list[dict[str, Any]], *, tools: list[dict[str, Any]]):
+    async def complete(
+        self, messages: list[dict[str, Any]], *, tools: list[dict[str, Any]], max_output_tokens: int | None = None
+    ):
         self.requests.append([dict(message) for message in messages])
         self.tools = tools
+        self.output_limits.append(max_output_tokens)
         return self.responses.pop(0)
 
 
@@ -103,6 +107,7 @@ def test_agent_executes_terminal_then_submits_with_tool_result_and_telemetry(tmp
     asyncio.run(run_agent())
 
     assert len(environment.commands) == 1
+    assert model.output_limits == [1000, 996]
     assert environment.commands[0][0] == "printf smoke"
     assert 1 <= environment.commands[0][1] <= 90
     assert model.requests[1][-1] == {

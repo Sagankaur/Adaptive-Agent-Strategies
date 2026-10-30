@@ -119,7 +119,9 @@ class OpenAICompatibleModel:
     def endpoint(self) -> str:
         return self.base_url.rstrip("/") + "/chat/completions"
 
-    def _request_body(self, messages: Sequence[Message], seed: int) -> dict[str, Any]:
+    def _request_body(
+        self, messages: Sequence[Message], seed: int, max_output_tokens: int | None = None
+    ) -> dict[str, Any]:
         body: dict[str, Any] = {
             "model": self.model,
             "messages": [
@@ -138,12 +140,19 @@ class OpenAICompatibleModel:
             body["top_p"] = self.top_p
         if self.top_k is not None:
             body["top_k"] = self.top_k
-        if self.max_tokens is not None:
-            body["max_tokens"] = self.max_tokens
+        request_max = self.max_tokens
+        if max_output_tokens is not None:
+            if isinstance(max_output_tokens, bool) or max_output_tokens < 1:
+                raise ValueError("max_output_tokens must be a positive integer")
+            request_max = max_output_tokens if request_max is None else min(request_max, max_output_tokens)
+        if request_max is not None:
+            body["max_tokens"] = request_max
         body["seed"] = seed
         return body
 
-    def complete(self, messages: Sequence[Message], *, seed: int | None = None) -> ChatResponse:
+    def complete(
+        self, messages: Sequence[Message], *, seed: int | None = None, max_output_tokens: int | None = None
+    ) -> ChatResponse:
         with self._seed_lock:
             request_seed = self.seed + self._request_count if seed is None else seed
             self._request_count += 1
@@ -152,7 +161,7 @@ class OpenAICompatibleModel:
             headers["Authorization"] = f"Bearer {self.api_key}"
         request = urllib.request.Request(
             self.endpoint,
-            data=json.dumps(self._request_body(messages, request_seed)).encode(),
+            data=json.dumps(self._request_body(messages, request_seed, max_output_tokens)).encode(),
             headers=headers,
             method="POST",
         )

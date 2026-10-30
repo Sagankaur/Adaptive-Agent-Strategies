@@ -21,7 +21,7 @@ from baselines.agent_loop import Attempt, run_episode
 from baselines.cost import Cost
 from baselines.judge import judge_attempt, select_best_index
 from environments.base import Environment, Task
-from llm import ChatModel, Message
+from llm import ChatModel, GeneratedTokenBudget, GeneratedTokenBudgetError, Message
 from strategy_schema.model import Strategy
 
 
@@ -37,6 +37,8 @@ class TaskOutcome:
     reflections: list[str] = field(default_factory=list)
     extra_cost: Cost = field(default_factory=Cost)
     extra_calls: list[dict[str, Any]] = field(default_factory=list)
+    budget_stop_reason: str | None = None
+    budget_overrun_tokens: int = 0
 
     @property
     def success(self) -> bool:
@@ -116,12 +118,48 @@ class ReflectionRetry:
 
     def run(self, task: Task, env: Environment, model: ChatModel, strategy: Strategy) -> TaskOutcome:
         outcome = TaskOutcome(task.task_id, self.name, self.params, [], selected=0)
+        budgeted_model = GeneratedTokenBudget(model, strategy.budget.max_tokens)
         for i in range(self.k):
+            if budgeted_model.remaining == 0:
+                outcome.budget_stop_reason = "generated_token_limit"
+                break
             context = [f"Reflection on an earlier attempt: {r}" for r in outcome.reflections]
-            attempt = run_episode(task, env, model, strategy, extra_context=context, reset_environment=(i == 0))
+            attempt = run_episode(
+                task, env, budgeted_model, strategy, extra_context=context, reset_environment=(i == 0)
+            )
             outcome.attempts.append(attempt)
             outcome.selected = i
-            judge = judge_attempt(model, task.instruction, attempt)
+            if budgeted_model.overrun_tokens:
+                outcome.budget_stop_reason = "provider_output_overrun"
+                outcome.budget_overrun_tokens = budgeted_model.overrun_tokens
+                break
+            try:
+                judge = judge_attempt(budgeted_model, task.instruction, attempt)
+            except GeneratedTokenBudgetError as exc:
+                if exc.response is not None:
+                    outcome.extra_cost.record(exc.response)
+                    outcome.extra_cost.wall_s += exc.response.elapsed_s
+                    attempt.judgments.append(
+                        {
+                            "status": "budget_overrun",
+                            "reason": str(exc),
+                            "cost": {
+                                "calls": 1,
+                                "input_tokens": exc.response.input_tokens,
+                                "output_tokens": exc.response.output_tokens,
+                                "model_s": exc.response.elapsed_s,
+                                "wall_s": exc.response.elapsed_s,
+                            },
+                        }
+                    )
+                    outcome.budget_stop_reason = "provider_output_overrun"
+                    outcome.budget_overrun_tokens = budgeted_model.overrun_tokens
+                else:
+                    attempt.judgments.append(
+                        {"status": "skipped", "reason": "generated_token_limit", "cost": {"calls": 0}}
+                    )
+                    outcome.budget_stop_reason = "generated_token_limit"
+                break
             attempt.judgments.append(
                 {
                     "score": judge.score,
@@ -142,13 +180,48 @@ class ReflectionRetry:
             failed = not judge.passed or attempt.own_check_passed is False
             if not failed or i == self.k - 1:
                 break
+            if budgeted_model.remaining == 0:
+                attempt.judgments.append(
+                    {"reflection_status": "skipped", "reason": "generated_token_limit", "cost": {"calls": 0}}
+                )
+                outcome.budget_stop_reason = "generated_token_limit"
+                break
             start = time.perf_counter()
-            reply = model.complete(
-                [
-                    Message("system", REFLECTION_PROMPT),
-                    Message("user", task.instruction + "\n\n" + _summarise_attempt(attempt)),
-                ]
-            )
+            try:
+                reply = budgeted_model.complete(
+                    [
+                        Message("system", REFLECTION_PROMPT),
+                        Message("user", task.instruction + "\n\n" + _summarise_attempt(attempt)),
+                    ]
+                )
+            except GeneratedTokenBudgetError as exc:
+                if exc.response is not None:
+                    outcome.extra_cost.record(exc.response)
+                    elapsed_s = time.perf_counter() - start
+                    outcome.extra_cost.wall_s += elapsed_s
+                    outcome.extra_calls.append(
+                        {
+                            "kind": "reflection",
+                            "seed": exc.response.seed,
+                            "text": exc.response.text,
+                            "cost": {
+                                "calls": 1,
+                                "input_tokens": exc.response.input_tokens,
+                                "output_tokens": exc.response.output_tokens,
+                                "model_s": exc.response.elapsed_s,
+                                "wall_s": elapsed_s,
+                            },
+                            "status": "budget_overrun",
+                        }
+                    )
+                    outcome.budget_stop_reason = "provider_output_overrun"
+                    outcome.budget_overrun_tokens = budgeted_model.overrun_tokens
+                else:
+                    attempt.judgments.append(
+                        {"reflection_status": "skipped", "reason": "generated_token_limit", "cost": {"calls": 0}}
+                    )
+                    outcome.budget_stop_reason = "generated_token_limit"
+                break
             outcome.extra_cost.record(reply)
             elapsed_s = time.perf_counter() - start
             outcome.extra_cost.wall_s += elapsed_s
@@ -167,6 +240,9 @@ class ReflectionRetry:
                 }
             )
             outcome.reflections.append(reply.text.strip())
+            if budgeted_model.remaining == 0:
+                outcome.budget_stop_reason = "generated_token_limit"
+                break
         return outcome
 
 

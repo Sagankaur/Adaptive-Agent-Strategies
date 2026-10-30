@@ -13,6 +13,7 @@ from dataclasses import dataclass, field
 
 from llm.base import ChatModel, ChatResponse, Cost, Message, Pricing
 from llm.openai_compatible import MissingUsageError, OpenAICompatibleModel, ProviderError
+from llm.token_budget import GeneratedTokenBudget, GeneratedTokenBudgetError
 
 
 def approx_tokens(text: str) -> int:
@@ -43,7 +44,11 @@ class MockModel:
     usage: Cost = field(default_factory=Cost, init=False)
     _replies: Iterator[str] | None = field(default=None, init=False, repr=False)
 
-    def complete(self, messages: Sequence[Message], *, seed: int | None = None) -> ChatResponse:
+    def complete(
+        self, messages: Sequence[Message], *, seed: int | None = None, max_output_tokens: int | None = None
+    ) -> ChatResponse:
+        if max_output_tokens is not None and max_output_tokens < 1:
+            raise ValueError("max_output_tokens must be positive")
         self.calls.append(list(messages))
         if callable(self.script):
             text = self.script(messages)
@@ -54,6 +59,8 @@ class MockModel:
                 text = next(self._replies)
             except StopIteration as exc:
                 raise MockScriptExhausted(f"script has {len(self.script)} replies") from exc
+        if max_output_tokens is not None:
+            text = text[: max_output_tokens * 4]
         response = ChatResponse(
             text=text,
             input_tokens=sum(approx_tokens(m.content or "") for m in messages),
@@ -73,7 +80,9 @@ class ProviderModel:
     def __init__(self, name: str) -> None:
         self.name = name
 
-    def complete(self, messages: Sequence[Message], *, seed: int | None = None) -> ChatResponse:
+    def complete(
+        self, messages: Sequence[Message], *, seed: int | None = None, max_output_tokens: int | None = None
+    ) -> ChatResponse:
         raise NotImplementedError(
             f"{self.name!r} is a ProviderModel, which never calls a model; use OpenAICompatibleModel for a server"
         )
@@ -82,6 +91,8 @@ class ProviderModel:
 __all__ = [
     "ChatModel",
     "ChatResponse",
+    "GeneratedTokenBudget",
+    "GeneratedTokenBudgetError",
     "Cost",
     "Message",
     "MissingUsageError",

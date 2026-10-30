@@ -68,6 +68,16 @@ def test_request_serializes_tool_role_and_native_assistant_tool_calls():
     assert body["chat_template_kwargs"] == {"enable_thinking": True}
 
 
+def test_per_call_output_limit_lowers_but_never_raises_client_limit():
+    client = AsyncOpenAICompatibleModel(base_url="http://localhost:8080/v1", model="local", max_tokens=64)
+
+    lower = client._request_body([{"role": "user", "content": "hello"}], seed=44, max_output_tokens=7)
+    higher = client._request_body([{"role": "user", "content": "hello"}], seed=45, max_output_tokens=100)
+
+    assert lower["max_tokens"] == 7
+    assert higher["max_tokens"] == 64
+
+
 def test_explicit_trial_seed_is_used_as_the_root_for_distinct_requests():
     client = AsyncOpenAICompatibleModel(base_url="http://localhost:8080/v1", model="local")
 

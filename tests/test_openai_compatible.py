@@ -133,6 +133,15 @@ def test_requests_use_pinned_sampling_and_distinct_logged_seeds(stub: StubServer
     assert (first.seed, second.seed) == (100, 101)
 
 
+def test_per_call_output_limit_overrides_client_default(stub: StubServer) -> None:
+    model = OpenAICompatibleModel(base_url=stub.url, model="m", max_tokens=64)
+
+    model.complete([Message("user", "hello")], max_output_tokens=7)
+    model.complete([Message("user", "hello")], max_output_tokens=100)
+
+    assert [request["body"]["max_tokens"] for request in stub.requests] == [7, 64]
+
+
 def test_tool_message_and_assistant_tool_call_round_trip_in_request() -> None:
     tool_call = {"id": "call-1", "type": "function", "function": {"name": "bash", "arguments": "{}"}}
     messages = [

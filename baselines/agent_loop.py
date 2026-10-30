@@ -25,7 +25,7 @@ from typing import Literal
 
 from baselines.cost import Cost
 from environments.base import Action, Environment, Observation, Task
-from llm import ChatModel, Message
+from llm import ChatModel, GeneratedTokenBudgetError, Message
 from strategy_schema.model import Strategy
 
 ACTION_FORMAT = (
@@ -136,14 +136,20 @@ def run_episode(
         if len(steps) >= budget.max_steps:
             stop = "step_limit"
             break
-        if cost.tokens >= budget.max_tokens:
+        if cost.output_tokens >= budget.max_tokens:
             stop = "token_limit"
             break
         if time.perf_counter() - start >= budget.max_wall_s:
             stop = "time_limit"
             break
 
-        reply = model.complete(messages)
+        try:
+            reply = model.complete(messages, max_output_tokens=budget.max_tokens - cost.output_tokens)
+        except GeneratedTokenBudgetError as exc:
+            if exc.response is not None:
+                cost.record(exc.response)
+            stop = "token_limit"
+            break
         cost.record(reply)
         messages.append(Message("assistant", reply.text))
         action = parse_reply(reply.text)

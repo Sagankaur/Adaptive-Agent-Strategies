@@ -44,7 +44,9 @@ class ChatModel(Protocol):
 
     name: str
 
-    def complete(self, messages: Sequence[Message], *, seed: int | None = None) -> ChatResponse: ...
+    def complete(
+        self, messages: Sequence[Message], *, seed: int | None = None, max_output_tokens: int | None = None
+    ) -> ChatResponse: ...
 
 
 class Pricing(Protocol):

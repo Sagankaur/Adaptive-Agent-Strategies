@@ -24,6 +24,32 @@ class CountingToyTextEnvironment(ToyTextEnvironment):
         super().reset(task)
 
 
+class FixedUsageModel:
+    def __init__(self, replies: list[tuple[str, int]]) -> None:
+        self.name = "fixed-usage"
+        self.replies = iter(replies)
+        self.limits: list[int | None] = []
+        self.calls = []
+
+    def complete(self, messages, *, seed=None, max_output_tokens=None):
+        from llm import ChatResponse
+
+        self.calls.append(list(messages))
+        self.limits.append(max_output_tokens)
+        text, output_tokens = next(self.replies)
+        return ChatResponse(text, input_tokens=100, output_tokens=output_tokens, seed=seed)
+
+
+class CountingExecuteEnvironment(CountingToyTextEnvironment):
+    def __init__(self) -> None:
+        super().__init__()
+        self.execute_calls = 0
+
+    def execute(self, action: Action) -> Observation:
+        self.execute_calls += 1
+        return super().execute(action)
+
+
 def _sort_task(tasks: list[Task]) -> Task:
     task = next(t for t in tasks if t.payload["operation"] == "sort_words")
     assert task.payload["input"] != correct_answer(task)
@@ -102,6 +128,97 @@ def test_step_limit_stops_the_episode(tasks: list[Task], strategy: Strategy) -> 
     assert not attempt.success and attempt.own_check_passed is False and attempt.answer is None
 
 
+def test_episode_token_limit_counts_generated_not_prompt_tokens(tasks: list[Task], strategy: Strategy) -> None:
+    task = tasks[0].model_copy(update={"instruction": "Find the answer. " + "context " * 1000})
+    no_probes = edited(strategy, ("replace", "/exploration/probes", []))
+    no_checks = edited(
+        no_probes,
+        ("replace", "/verification/checks", []),
+        ("replace", "/verification/verification_required", False),
+    )
+    tight = with_budget(no_checks, max_tokens=24)
+    model = MockModel(["ACTION: file_view README", f"SUBMIT: {correct_answer(task)}"])
+
+    attempt = run_episode(task, ToyTextEnvironment(), model, tight)
+
+    assert attempt.success
+    assert attempt.cost.input_tokens > tight.budget.max_tokens
+    assert attempt.cost.output_tokens < tight.budget.max_tokens
+
+
+def test_b1_shares_generated_token_budget_across_agent_judge_and_reflection(
+    tasks: list[Task], strategy: Strategy
+) -> None:
+    task = tasks[0]
+    no_checks = edited(
+        _no_checks_strategy(strategy),
+        ("replace", "/exploration/probes", []),
+    )
+    tight = with_budget(no_checks, max_tokens=14)
+    model = FixedUsageModel(
+        [
+            (f"SUBMIT: {wrong_answer(task)}", 4),
+            ('{"score": 0.1, "reason": "fail"}', 6),
+            ("Try one clearer answer.", 4),
+        ]
+    )
+    env = CountingToyTextEnvironment()
+
+    outcome = ReflectionRetry(k=3).run(task, env, model, tight)
+
+    assert len(outcome.attempts) == 1
+    assert outcome.budget_stop_reason == "generated_token_limit"
+    assert outcome.budget_overrun_tokens == 0
+    assert model.limits == [14, 10, 4]
+    assert outcome.attempts[0].cost.output_tokens == 4
+    assert outcome.extra_cost.output_tokens == 10
+    assert outcome.cost.output_tokens == 14
+    assert env.reset_calls == 1
+
+
+def test_b1_budget_exhausted_by_attempt_skips_judge_and_retry(tasks: list[Task], strategy: Strategy) -> None:
+    task = tasks[0]
+    no_checks = edited(
+        _no_checks_strategy(strategy),
+        ("replace", "/exploration/probes", []),
+    )
+    tight = with_budget(no_checks, max_tokens=4)
+    model = FixedUsageModel([(f"SUBMIT: {wrong_answer(task)}", 4)])
+    env = CountingToyTextEnvironment()
+
+    outcome = ReflectionRetry(k=3).run(task, env, model, tight)
+
+    assert len(outcome.attempts) == 1
+    assert model.limits == [4]
+    assert outcome.attempts[0].judgments == [
+        {"status": "skipped", "reason": "generated_token_limit", "cost": {"calls": 0}}
+    ]
+    assert outcome.budget_stop_reason == "generated_token_limit"
+    assert outcome.cost.output_tokens == 4
+    assert env.reset_calls == 1
+
+
+def test_b1_provider_overrun_is_charged_without_executing_action(tasks: list[Task], strategy: Strategy) -> None:
+    task = tasks[0]
+    no_checks = edited(
+        _no_checks_strategy(strategy),
+        ("replace", "/exploration/probes", []),
+    )
+    tight = with_budget(no_checks, max_tokens=1)
+    model = FixedUsageModel([("ACTION: file_view input.txt", 2)])
+    env = CountingExecuteEnvironment()
+
+    outcome = ReflectionRetry(k=1).run(task, env, model, tight)
+
+    assert outcome.budget_stop_reason == "provider_output_overrun"
+    assert outcome.budget_overrun_tokens == 1
+    assert outcome.attempts[0].cost.output_tokens == 2
+    assert outcome.cost.output_tokens == 2
+    assert outcome.attempts[0].steps == []
+    assert env.execute_calls == 0
+    assert env.reset_calls == 1
+
+
 def test_verification_sends_the_agent_back_to_fix(tasks: list[Task], strategy: Strategy) -> None:
     attempt = run_episode(tasks[0], ToyTextEnvironment(), MockModel(solver(sloppy_first=True)), strategy)
     assert attempt.success
@@ -123,8 +240,10 @@ def test_b1_reflects_and_retries_when_own_checks_fail(tasks: list[Task], strateg
     reflection = "I should follow the requested transformation exactly."
     env = CountingToyTextEnvironment()
     class SeededMockModel(MockModel):
-        def complete(self, messages, *, seed=None):
-            return super().complete(messages, seed=500 + len(self.calls) + 1)
+        def complete(self, messages, *, seed=None, max_output_tokens=None):
+            return super().complete(
+                messages, seed=500 + len(self.calls) + 1, max_output_tokens=max_output_tokens
+            )
 
     model = SeededMockModel(
         [

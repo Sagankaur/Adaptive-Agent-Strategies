@@ -226,7 +226,11 @@ class HarborStrategyAgent(BaseAgent):
                 break
             model.timeout_s = min(model.timeout_s, strategy.budget.max_wall_s - elapsed)
             try:
-                response = await model.complete(messages, tools=_TOOLS)
+                response = await model.complete(
+                    messages,
+                    tools=_TOOLS,
+                    max_output_tokens=strategy.budget.max_tokens - self._tokens,
+                )
             except Exception as exc:
                 self._write_step(None, "model_error", None, f"{type(exc).__name__}: {exc}", None)
                 raise

@@ -82,6 +82,7 @@ class AsyncOpenAICompatibleModel:
         messages: Sequence[Mapping[str, Any]],
         seed: int,
         tools: Sequence[Mapping[str, Any]] | None = None,
+        max_output_tokens: int | None = None,
     ) -> dict[str, Any]:
         body: dict[str, Any] = {
             "model": self.model,
@@ -92,8 +93,13 @@ class AsyncOpenAICompatibleModel:
             "seed": seed,
             "stream": False,
         }
-        if self.max_tokens is not None:
-            body["max_tokens"] = self.max_tokens
+        request_max = self.max_tokens
+        if max_output_tokens is not None:
+            if isinstance(max_output_tokens, bool) or max_output_tokens < 1:
+                raise ValueError("max_output_tokens must be a positive integer")
+            request_max = max_output_tokens if request_max is None else min(request_max, max_output_tokens)
+        if request_max is not None:
+            body["max_tokens"] = request_max
         if self.chat_template_kwargs:
             body["chat_template_kwargs"] = dict(self.chat_template_kwargs)
         if tools:
@@ -112,22 +118,24 @@ class AsyncOpenAICompatibleModel:
         *,
         seed: int | None = None,
         tools: Sequence[Mapping[str, Any]] | None = None,
+        max_output_tokens: int | None = None,
     ) -> AsyncChatResponse:
         request_seed = self._next_seed(seed)
-        return await asyncio.to_thread(self._complete_sync, messages, request_seed, tools)
+        return await asyncio.to_thread(self._complete_sync, messages, request_seed, tools, max_output_tokens)
 
     def _complete_sync(
         self,
         messages: Sequence[Mapping[str, Any]],
         seed: int,
         tools: Sequence[Mapping[str, Any]] | None,
+        max_output_tokens: int | None,
     ) -> AsyncChatResponse:
         headers = {"Content-Type": "application/json", "Accept": "application/json", **self.headers}
         if self.api_key:
             headers["Authorization"] = f"Bearer {self.api_key}"
         request = urllib.request.Request(
             self.endpoint,
-            data=json.dumps(self._request_body(messages, seed, tools)).encode(),
+            data=json.dumps(self._request_body(messages, seed, tools, max_output_tokens)).encode(),
             headers=headers,
             method="POST",
         )

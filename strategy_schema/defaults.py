@@ -72,5 +72,5 @@ def s0(strategy_id: str = "s0") -> Strategy:
             rollback_target=RollbackTarget.LAST_CHECKPOINT,
             max_rollbacks=0,
         ),
-        budget=Budget(max_steps=40, max_tokens=200_000, max_wall_s=1200),
+        budget=Budget(max_steps=60, max_tokens=64_000, max_wall_s=1200),
     )
