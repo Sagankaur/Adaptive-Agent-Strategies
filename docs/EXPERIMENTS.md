@@ -2,7 +2,7 @@
 
 Sagandeep Kaur, draft for discussion with Prof. Mohamed Abdelrazek (Deakin A2I2), 2026-10-20.
 
-**Status (updated 2026-10-30).** No planned benchmark experiment or real-model episode has run. A one-task scripted Harbor smoke on Rohan passed with Apptainer 1.3.3; this infrastructure check is not a planned experiment or performance result. Every episode count and GPU-day figure below is an estimate. This file lists each planned experiment as a card, with its design, cost and decision rules. Where this file and [TECHNICAL_PLAN.md](TECHNICAL_PLAN.md) sections 7 and 9 disagree, this file holds the later decisions (2026-10-20).
+**Status (updated 2026-10-30).** No planned benchmark experiment or real-model episode has run. A one-task scripted Harbor smoke on Rohan passed with Apptainer 1.3.3; this infrastructure check is not a planned experiment or performance result. P-M2 source/resource preflight has started, but the Alibaba base-image registry is unreachable from Rohan, so no task image build or Oracle trial has run. Every episode count and GPU-day figure below is an estimate. This file lists each planned experiment as a card, with its design, cost and decision rules. Where this file and [TECHNICAL_PLAN.md](TECHNICAL_PLAN.md) sections 7 and 9 disagree, this file holds the later decisions (2026-10-20).
 
 Some choices below depend on Prof. Abdelrazek's answers to open questions. Those choices are marked **to confirm with Prof. Abdelrazek**. Each has a stated default, which applies only if there is no answer by the Stage-1 freeze, and is then logged in the decision log, [DECISIONS.md](DECISIONS.md#3-decision-log) section 3. The questions are in [DECISIONS.md](DECISIONS.md#1-open-decisions) section 1, under the ids used in the [Open questions](#open-questions-for-prof-abdelrazek) table below.
 
@@ -192,7 +192,7 @@ Each decision threshold has one of three sources: a **simulation** or arithmetic
 - **Survivor floor (estimate).** With 120 survivors, 105 tasks enter E0. If TB-Pro difficulty resembles TB2's (unverified), a task is contested at k=5 with probability 0.308. Then the expected C5 is about 32, P(C5 ≥ 30) is about 0.7 and P(C5 < 20) is below 0.01.
 - **Risks.** TB-Pro is a different source, so RQ2 becomes "cross-source (TB-Pro to TB2)". Some TB-Pro tasks may be related to TB2 tasks without being copies; dedup is by owner review. TB-Pro's difficulty is unknown. TB-Pro and the Qwen models share a provider, which could inflate calibration scores; the memorisation probe in E0 reports this.
 - **Paper slot.** A1 (TB-Pro routing table); Table 7 (pools); A3 (allowlist fork diff and per-task host lists); A7 (dedup removal list).
-- **Status.** planned. Replacing the committed split is **to confirm with Prof. Abdelrazek** (Q3; see [Open questions](#open-questions-for-prof-abdelrazek)).
+- **Status.** Preflight underway as of 2026-10-30; the custom Alibaba base-image registry is unreachable from Rohan, so builds and Oracle checks have not run. See [`P-M2-preflight-2026-10-30.md`](experiments/P-M2-preflight-2026-10-30.md). Replacing the committed split is **to confirm with Prof. Abdelrazek** (Q3; see [Open questions](#open-questions-for-prof-abdelrazek)).
 - **Meeting points.** 2.
 
 ### E-P0 Bring-up and throughput sweep
