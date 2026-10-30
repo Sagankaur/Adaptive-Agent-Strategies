@@ -56,11 +56,11 @@ The current [GitHub README](https://github.com/alibaba/terminal-bench-pro/blob/m
 
 Slurm job `4413248` on `cpu-f-01` confirmed that Apptainer 1.3.3 can pull both public Laude Institute Terminal-Bench base images from GHCR in a CPU job:
 
-| Image reference | SIF SHA-256 | Result |
+| Image reference (linux/amd64 manifest digest) | SIF SHA-256 | Result |
 |---|---|---|
-| `ghcr.io/laude-institute/t-bench/ubuntu-24-04:20250624` | `559e0f87a4527eabe1806b289aa00d632ea80bc3803cd4fa50404df022c660f3` | Pulled and inspected successfully |
-| `ghcr.io/laude-institute/t-bench/python-3-13:20250620` | `29f3efdddcc3c2cf9fcc94debca031ef9e1dc4e164f043802350596ebb809b31` | Pulled and inspected successfully |
+| `ghcr.io/laude-institute/t-bench/ubuntu-24-04:20250624@sha256:9ae5033b4f62fbffd63896353f2c8e02939764fac81311608e4e731f0b4a8db5` | `559e0f87a4527eabe1806b289aa00d632ea80bc3803cd4fa50404df022c660f3` | Tag pull and inspection succeeded; immutable digest identified on package page |
+| `ghcr.io/laude-institute/t-bench/python-3-13:20250620@sha256:10dd0648b5339468ba39b2df90c1a28745faf8622e7552f85446611e2e992110` | `29f3efdddcc3c2cf9fcc94debca031ef9e1dc4e164f043802350596ebb809b31` | Tag pull and inspection succeeded; immutable digest identified on package page |
 
-The job took 47 seconds. The SIF labels record these GHCR references as their origins. The GHCR package registry lists both images as public Laude Institute packages ([package listing](https://github.com/orgs/laude-institute/packages)); the Ubuntu 24.04 package publishes the `20250624` tag, including an immutable linux/amd64 manifest digest ([package page](https://github.com/orgs/laude-institute/packages/container/package/t-bench%2Fubuntu-24-04)).
+The job took 47 seconds. The SIF labels record these GHCR references as their origins. The GHCR package registry lists both images as public Laude Institute packages ([package listing](https://github.com/orgs/laude-institute/packages)); the package pages publish the listed tags and immutable linux/amd64 manifest digests for [Ubuntu 24.04](https://github.com/orgs/laude-institute/packages/container/package/t-bench%2Fubuntu-24-04) and [Python 3.13](https://github.com/orgs/laude-institute/packages/container/package/t-bench%2Fpython-3-13). Job 4413248 pulled by tag, so these digests pin any repeat probe but were not the explicit pull references in that job.
 
 This establishes a reachable candidate route, not equivalence with TB-Pro's custom Aliyun images. No source Dockerfile/config comparison or filesystem diff has established that the two images contain the same packages, setup scripts, or state. Do not substitute these images in benchmark tasks without maintainer confirmation or a reproducibility/equivalence audit. The probe did not build or execute any task and did not satisfy the licensing, image-equivalence, network-isolation, or P-M2 gates.
