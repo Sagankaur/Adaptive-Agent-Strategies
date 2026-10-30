@@ -51,3 +51,16 @@ After an accessible base-image route is established, continue P-M2 with the full
 ## Public repository recheck — 2026-10-30
 
 The current [GitHub README](https://github.com/alibaba/terminal-bench-pro/blob/main/README.md) still declares Apache-2.0 and identifies `yanquan.xx@alibaba-inc.com` for public-set results. The current [repository root](https://github.com/alibaba/terminal-bench-pro) does not show a separate root `LICENSE` file; the pinned v1.0 release still has no such file. This confirms the README declaration but does not satisfy this plan's stricter written-author-confirmation-or-LICENSE requirement. A request for written confirmation and official base-image mirrors/exports has been drafted in [`docs/cluster/OUTREACH_DRAFTS_2026-10-30.md`](../cluster/OUTREACH_DRAFTS_2026-10-30.md); it has not been sent.
+
+## Official GHCR route probe — 2026-10-30
+
+Slurm job `4413248` on `cpu-f-01` confirmed that Apptainer 1.3.3 can pull both public Laude Institute Terminal-Bench base images from GHCR in a CPU job:
+
+| Image reference | SIF SHA-256 | Result |
+|---|---|---|
+| `ghcr.io/laude-institute/t-bench/ubuntu-24-04:20250624` | `559e0f87a4527eabe1806b289aa00d632ea80bc3803cd4fa50404df022c660f3` | Pulled and inspected successfully |
+| `ghcr.io/laude-institute/t-bench/python-3-13:20250620` | `29f3efdddcc3c2cf9fcc94debca031ef9e1dc4e164f043802350596ebb809b31` | Pulled and inspected successfully |
+
+The job took 47 seconds. The SIF labels record these GHCR references as their origins. The GHCR package registry lists both images as public Laude Institute packages ([package listing](https://github.com/orgs/laude-institute/packages)); the Ubuntu 24.04 package publishes the `20250624` tag, including an immutable linux/amd64 manifest digest ([package page](https://github.com/orgs/laude-institute/packages/container/package/t-bench%2Fubuntu-24-04)).
+
+This establishes a reachable candidate route, not equivalence with TB-Pro's custom Aliyun images. No source Dockerfile/config comparison or filesystem diff has established that the two images contain the same packages, setup scripts, or state. Do not substitute these images in benchmark tasks without maintainer confirmation or a reproducibility/equivalence audit. The probe did not build or execute any task and did not satisfy the licensing, image-equivalence, network-isolation, or P-M2 gates.

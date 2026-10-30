@@ -65,7 +65,7 @@ Implementation notes: [`docs/cluster/harbor-adapter/IMPLEMENTATION_2026-10-29.md
 
 ### Task 4: P-M2 route pilot
 
-- [ ] Confirm task license, provider, budget, network policy, and disk allocation.
+- [ ] Confirm task license, provider, budget, network policy, and disk allocation. GHCR is reachable from a CPU Slurm job for the public Laude Terminal-Bench bases, but equivalence with TB-Pro's custom Aliyun bases is unverified; see [`P-M2 preflight`](../../experiments/P-M2-preflight-2026-10-30.md).
 - [ ] Build census, resource filtering, dedup review, Oracle/network pilot, license check, and routing-table export.
 - [ ] Apply the published GO rule and record the route decision.
 
@@ -88,4 +88,4 @@ Implementation notes: [`docs/cluster/harbor-adapter/IMPLEMENTATION_2026-10-29.md
 - B1/B2 judge elapsed time is included in aggregate `extra_cost.wall_s`; B1 reflection instructions are trigger-neutral and include the judge's public score and reason. The six acceptance checks are mapped in the G-BASE audit, but the B1 run-budget contract and attempt-cap mixture remain open.
 - B1 reflection calls are recorded in each result's `extra_calls` field with their seed, text, and token/time cost so the seed audit trail includes non-trajectory calls.
 - The 2026-10-28 cluster SSH retry failed before authentication because hostname resolution failed. A later SSH session reached Rohan's `login-f` host, installed Harbor 0.23.0 in a scratch venv, and attempted two bounded CPU Slurm smokes. Both failed before agent execution because of Singularity network-policy and writable-filesystem limitations; see [`docs/cluster/SSH_RETRY_2026-10-29.md`](../../cluster/SSH_RETRY_2026-10-29.md).
-- The five-task TB-Pro smoke remains gated on the approved runtime/network route, budget, task licensing, accessible base images, G-BASE completion, and disk allocation. See [`P-M2 preflight`](../../experiments/P-M2-preflight-2026-10-30.md) and [`outreach drafts`](../../cluster/OUTREACH_DRAFTS_2026-10-30.md); the requests have not been sent.
+- The five-task TB-Pro smoke remains gated on the approved runtime/network route, budget, task licensing, equivalent base images, G-BASE completion, and disk allocation. GHCR reachability is confirmed, but image equivalence and author confirmation are open; see [`P-M2 preflight`](../../experiments/P-M2-preflight-2026-10-30.md) and [`outreach drafts`](../../cluster/OUTREACH_DRAFTS_2026-10-30.md); the requests have not been sent.
