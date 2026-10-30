@@ -4,7 +4,7 @@ This repository contains the implementation for **Project 2**. The goal is to in
 
 ## Status
 
-**Design review of 2026-10-20.** The plan was reviewed and its decisions frozen on 2026-10-20. Start with [`docs/OVERVIEW.md`](docs/OVERVIEW.md). The review is in [`docs/DESIGN_REVIEW_2026-10.md`](docs/DESIGN_REVIEW_2026-10.md), the decisions and open questions for Prof. Abdelrazek are in [`docs/DECISIONS.md`](docs/DECISIONS.md), and the risks are in [`docs/RISK_REGISTER.md`](docs/RISK_REGISTER.md). Where these files and the technical plan disagree, the 2026-10-20 files hold. No experiment has been run and no model has been called.
+**Design review of 2026-10-20.** The plan was reviewed and its decisions frozen on 2026-10-20. Start with [`docs/OVERVIEW.md`](docs/OVERVIEW.md). The review is in [`docs/DESIGN_REVIEW_2026-10.md`](docs/DESIGN_REVIEW_2026-10.md), the decisions and open questions for Prof. Abdelrazek are in [`docs/DECISIONS.md`](docs/DECISIONS.md), and the risks are in [`docs/RISK_REGISTER.md`](docs/RISK_REGISTER.md). Where these files and the technical plan disagree, the 2026-10-20 files hold. No planned benchmark experiment or real-model episode has run. A one-task scripted Harbor smoke on Rohan passed using Apptainer 1.3.3; it validates the integration path only, not agent performance.
 
 **Meeting of 2026-10-14.** Notes and follow-ups are in [`docs/MEETING_2026-10-14.md`](docs/MEETING_2026-10-14.md). The main change: the agent's model is a small open-weight model served locally. The primary is Qwen3.6-35B-A3B. Local fallbacks come before any API model, and GPT-5-mini is used only if Prof. Abdelrazek decides so. API spend for paper 1 is $0 ([`docs/DECISIONS.md`](docs/DECISIONS.md), Q6). Candidates are in [`docs/SMALL_MODELS.md`](docs/SMALL_MODELS.md).
 
@@ -33,7 +33,7 @@ This repository contains the implementation for **Project 2**. The goal is to in
 
 **What does not exist yet.**
 
-- No run on any real benchmark. Terminal-Bench and AppWorld are not integrated, and Harbor is not set up.
+- No run on any real benchmark. The TB-Pro route pilot and benchmark integration remain unfinished. Harbor 0.23.0 is installed on Rohan and passed one synthetic scripted Apptainer smoke; the planned five-task TB-Pro infrastructure smoke has not run.
 - No run against a real model. The OpenAI-compatible client is tested only against a stub server, no model server or API has been called, and no result in this repository is about agent performance. The price entries for local models are placeholders without a compute rate.
 - The agent loop reads only some strategy fields as behaviour; the others reach the agent only through the rendered instructions. The full `compile(strategy)`, with a unit test per compiled field, is gate G1, which must pass before Stage 1 of the experiments.
 - No LLM diagnoser or proposer, and no B3/B4 baselines. The second-order loop has not been started.
