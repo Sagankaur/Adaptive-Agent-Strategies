@@ -2,7 +2,7 @@
 
 How to point the agent loop at a model served on your own machine (or any machine you control), and how cost is counted for it. Which small models to try, and their published scores, are in [SMALL_MODELS.md](SMALL_MODELS.md).
 
-**Status (2026-10-29).** The client passed one direct request and one task through the toy runner against llama.cpp on the A2I2 L40S. It reported provider token counts and the runner wrote a completed result record. This does not test Harbor or a real benchmark task; the offline unit tests remain the only automated tests of client error handling. See the portable [report, scripts and raw result](cluster/l40s-client-smoke/). The development machine has no GPU.
+**Status (2026-10-30).** The project client passed one direct request and one task through the toy runner against llama.cpp on the A2I2 L40S. A separate one-trial Harbor smoke with real Qwen also passed on an L40S and exercised native tool calls; both tasks were synthetic and neither is benchmark evidence. The offline unit tests remain the only automated tests of client error handling. See the [client smoke artifacts](cluster/l40s-client-smoke/) and the [Qwen Harbor smoke report](experiments/Qwen-Harbor-real-model-smoke-2026-10.md). The development machine has no GPU.
 
 ## The client
 
