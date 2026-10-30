@@ -1,10 +1,10 @@
-# Professor update draft — 30 October 2026
+# Professor update draft â€” 30 October 2026
 
 **Status: draft for Sagandeep to send or adapt; not sent.**
 
 ## What we have established
 
-- **The cluster model path works on a synthetic task.** On Rohan job `4410693`, Qwen3.6-35B-A3B Q4_K_M served by llama.cpp on an L40S returned a native terminal tool call and completed one Harbor 0.23.0 trial under Apptainer 1.3.3. Harbor reported reward 1.0, one completed trial, zero errors, and no retries. The task was synthetic and internet access was allowed. This validates the integration path only; it is not a benchmark result and says nothing about TB-Pro performance. This cluster smoke predates the current per-call token-cap change; that change has passed offline tests but has not yet been rerun against the cluster model.
+- **The cluster model path works on a synthetic task.** On Rohan job `4410693`, Qwen3.6-35B-A3B Q4_K_M served by llama.cpp on an L40S returned a native terminal tool call and completed one Harbor 0.23.0 trial under Apptainer 1.3.3. Harbor reported reward 1.0, one completed trial, zero errors, and no retries. The task was synthetic and internet access was allowed. This validates the integration path only; it is not a benchmark result and says nothing about TB-Pro performance. This cluster smoke predates the current per-call token-cap change. A repeat on source commit `8902548` was prepared, but both Rohan and Gondor hostnames failed DNS resolution before any job could be submitted; the new cap is covered by offline tests only.
 - **A scripted Harbor CPU smoke also completed** on synthetic data (job `4407435`), reward 1.0. This is setup evidence only.
 - **Rohan can reach the public Laude Terminal-Bench GHCR packages.** CPU job `4413248` pulled and inspected Ubuntu 24.04 and Python 3.13 base images in 47 seconds. Their package references and manifest/SIF hashes are recorded in the [P-M2 preflight](P-M2-preflight-2026-10-30.md). These are candidate routes only: equivalence to TB-Pro's custom Aliyun images has not been established.
 - **Baseline accounting is more consistent now.** G-BASE repair added pinned sampling/seeds, blind judging, B1 retry accounting, and exact B2 selection. This update also makes S0's default 60-step/64k generated-token budget match the plan, counts generated output rather than prompt plus output against token caps, and shares B1's 64k allowance across agent, judge, and reflection calls. The full offline suite passes 132 tests; Ruff passes on the changed source and tests.
