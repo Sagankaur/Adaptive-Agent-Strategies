@@ -12,9 +12,8 @@ Do not start TB-Pro task builds, Oracle runs, or agent episodes yet. The blocker
 
 ### 1. Close G-BASE
 
-- Freeze the seeded B1 attempt-cap mixture using the planned compute-matching evidence; do not choose it arbitrarily.
 - Audit the six acceptance criteria against concrete tests and assertions, including retries, attempt selection, sampling/seeds, judge cost accounting, hidden-test isolation, and B0/S0 judge behavior.
-- Record the evidence map and any added test IDs in the G-BASE audit. G-BASE is green only after both the mixture and all six checks are resolved.
+- Record the evidence map and test IDs in the G-BASE audit. Close G-BASE against its six registered baseline checks; freeze the numerical B1 cap mixture at Stage 2 from E1/E-P0 and S* MCU evidence, as specified in the preregistration. Do not invent mixture probabilities early to satisfy G-BASE.
 
 ### 2. Resolve the task and cluster route (P-M2)
 
@@ -45,7 +44,7 @@ Only after the smoke passes should the team start E0 on the reserved TB-Pro non-
 
 1. Retrieve job `4433963` status and artifacts from Rohan; update this record with terminal state and clearly label it as synthetic integration evidence.
 2. Check `df -h /scratch`, create the RDS Activity/Collection, and configure/test access. Follow up with A2I2 on runtime and egress facilities; ask Mohamed about Harbor-specific requirements. The TB-Pro author license/base-image request remains unsent; status and response notes are in [`OUTREACH_DRAFTS_2026-10-30.md`](../cluster/OUTREACH_DRAFTS_2026-10-30.md).
-3. Complete the G-BASE attempt-cap decision and six-check evidence map.
+3. Complete the G-BASE six-check evidence map and its CI evidence. Freeze and implement the numerical B1 cap mixture at Stage 2, after the registered compute-matching data are collected.
 4. Resume P-M2 only when license, image route, approved network/runtime controls, and measured storage capacity are available.
 
 ## What can be told to the professor now
