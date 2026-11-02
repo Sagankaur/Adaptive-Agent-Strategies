@@ -1,8 +1,8 @@
 # HPC and TB-Pro outreach drafts — 2026-10-30
 
-These drafts are prepared for the next route-gating step. They have **not been sent**.
+The A2I2 support message has been sent and received a general storage response on 2026-11-02. The TB-Pro author draft below remains unsent. The Harbor-specific questions should be directed to Mohamed, as A2I2 support recommended.
 
-## A2I2 HPC support
+## A2I2 HPC support — sent message
 
 **To:** a2i2-it-support@deakin.edu.au  
 **Subject:** Rohan: approved Apptainer network policy and TB-Pro image import route
@@ -25,6 +25,14 @@ I will keep the planned smoke to five public TB-Pro tasks and will not run TB2 t
 Thank you,
 
 Sagandeep
+
+### Response and follow-up — 2026-11-02
+
+A2I2 support advised that scratch is for active data and workloads, while home is limited and intended for frequently needed files/code. Scratch data may be removed when the filesystem becomes too full. For longer-term persistent storage, use the Research Data Store (RDS). They referred us to the A2I2 support site's storage-structure documentation.
+
+This answers the general storage policy but not the project's specific scratch quota, current free space, purge thresholds/notification, RDS access from Rohan/Gondor jobs, or best location for pinned SIFs and reproducibility artifacts. Review the authenticated [A2I2 storage documentation](https://deakin365.sharepoint.com/sites/A2I2Support) and ask support only for those remaining cluster-specific details, Apptainer compatibility approval, and the egress controls the cluster provides. The SharePoint page could not be opened through the public web reader, so its detailed storage values have not been independently checked here. The message above is the original sent message, not a pending draft.
+
+Support said Mohamed may be better placed to advise on Harbor-specific requirements and testing. Ask Mohamed separately to validate the Harbor adapter's Apptainer compatibility, identify the Harbor connections that must remain available, review whether the proposed cluster egress controls preserve them, and confirm the five-task smoke acceptance criteria. Do not ask A2I2 to validate Harbor behavior beyond cluster-runtime and network facilities.
 
 ## TB-Pro authors / maintainers
 

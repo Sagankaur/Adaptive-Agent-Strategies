@@ -24,8 +24,8 @@ Before building task images, obtain and record:
 
 - a root `LICENSE` or written TB-Pro author confirmation that covers the pinned task release;
 - an accessible, authorized source for both required base images, with immutable digests and an equivalence check before any substitution;
-- A2I2 guidance on Apptainer 1.3.3 approval, task egress blocking that preserves Harbor's localhost control channel, and scratch quota/retention;
-- the granted cluster storage allocation/quota and retention policy before starting builds.
+- A2I2 confirmation of Apptainer 1.3.3 approval and available cluster egress controls. Separately, Mohamed should validate Harbor compatibility, identify its required connections, and confirm that the proposed controls preserve them;
+- the granted cluster storage allocation/quota, current free space, purge behavior, and retention policy before starting builds. General guidance received 2026-11-02 says to use scratch for active workloads and RDS for persistent data; scratch may be cleaned when full. The detailed A2I2 storage documentation and project-specific quota are still to be checked.
 
 Then build each eligible task image once, pin its digest, apply the resource filter, owner-review the three nearest TB2 tasks for every candidate using static public text as allowed by LEDGER, and run the allowlisted Harbor Oracle on TB-Pro only. After measuring actual task and pinned TB2 image footprints, publish the routing table, host lists, image pins, and disk report. Do not give a model, agent, or Oracle access to TB2 tasks or run a TB2 Oracle.
 
@@ -44,9 +44,9 @@ Only after the smoke passes should the team start E0 on the reserved TB-Pro non-
 ## Immediate actions
 
 1. Retrieve job `4433963` status and artifacts from Rohan; update this record with terminal state and clearly label it as synthetic integration evidence.
-2. Send the already drafted, separate questions to A2I2 support and TB-Pro authors. The drafts are in [`OUTREACH_DRAFTS_2026-10-30.md`](../cluster/OUTREACH_DRAFTS_2026-10-30.md); they have not been sent.
+2. Review the A2I2 storage documentation and confirm project-specific scratch/RDS allocations. Follow up with A2I2 only on runtime, egress controls, and quota details; ask Mohamed about Harbor-specific requirements. The TB-Pro author license/base-image request remains unsent; status and response notes are in [`OUTREACH_DRAFTS_2026-10-30.md`](../cluster/OUTREACH_DRAFTS_2026-10-30.md).
 3. Complete the G-BASE attempt-cap decision and six-check evidence map.
-4. Resume P-M2 only when license, image route, and approved network/storage answers are available.
+4. Resume P-M2 only when license, image route, approved network/runtime controls, and measured storage capacity are available.
 
 ## What can be told to the professor now
 
