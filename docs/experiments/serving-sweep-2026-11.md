@@ -70,4 +70,4 @@ Paste `metadata.json`, the JSONL result, GPU type/Slurm job ID, and any relevant
 
 Record the GPU name, requested resource string, Slurm QoS, driver, model/SIF hashes, every flag, exact prompt/output token counts, cache hits, timing fields, repeated-batch summaries, peak VRAM/headroom, and all failed configurations. The upstream server API options are documented in the [llama.cpp server README](https://github.com/ggml-org/llama.cpp/blob/master/tools/server/README.md); that current documentation is a reference only, and the job checks the exact pinned b11515 binary before using its flags/endpoints.
 
-No results exist yet. The workstation could not resolve Rohan at the time this protocol was prepared, and no Slurm job was submitted.
+No results exist yet. On 2026-11-03, key-only SSH checks from the workstation could not resolve either `login-f.ai.deakin.edu.au` (Rohan) or `login-m.ai.deakin.edu.au` (Gondor). A connection attempt to Rohan's previously recorded private IP timed out. No Slurm job was submitted. Resume from an authenticated network route to Rohan, then check the staged files, GPU allocation, QoS, and wall-time before submission.
