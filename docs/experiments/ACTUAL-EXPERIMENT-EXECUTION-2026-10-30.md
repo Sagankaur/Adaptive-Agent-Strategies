@@ -25,9 +25,9 @@ Before building task images, obtain and record:
 - a root `LICENSE` or written TB-Pro author confirmation that covers the pinned task release;
 - an accessible, authorized source for both required base images, with immutable digests and an equivalence check before any substitution;
 - A2I2 confirmation of Apptainer 1.3.3 approval and available cluster egress controls. Separately, Mohamed should validate Harbor compatibility, identify its required connections, and confirm that the proposed controls preserve them;
-- the granted cluster storage allocation/quota, current free space, purge behavior, and retention policy before starting builds. General guidance received 2026-11-02 says to use scratch for active workloads and RDS for persistent data; scratch may be cleaned when full. The detailed A2I2 storage documentation and project-specific quota are still to be checked.
+- check and record current shared scratch occupancy before large builds. Rohan `/scratch` is shared 100-TB VAST with no per-user quota; keep it below 80% full after planned writes. `/home` is 20 GB. Create an RDS Activity/Collection and request quota for the RDS source of record and backups; requests above 2 TB require a Data Management Plan. See [A2I2 storage workflow](../cluster/STORAGE_WORKFLOW_A2I2_2026-11-02.md). Current free scratch capacity and this project's RDS quota remain unknown.
 
-Then build each eligible task image once, pin its digest, apply the resource filter, owner-review the three nearest TB2 tasks for every candidate using static public text as allowed by LEDGER, and run the allowlisted Harbor Oracle on TB-Pro only. After measuring actual task and pinned TB2 image footprints, publish the routing table, host lists, image pins, and disk report. Do not give a model, agent, or Oracle access to TB2 tasks or run a TB2 Oracle.
+Then build each eligible task image once, pin its digest, apply the resource filter, owner-review the three nearest TB2 tasks for every candidate using static public text as allowed by LEDGER, and run the allowlisted Harbor Oracle on TB-Pro only. Before the full census, record `df -h /scratch` and a representative build size. After measuring actual task and pinned TB2 image footprints, publish the routing table, host lists, image pins, and disk report, and back up retained artifacts to RDS. Do not give a model, agent, or Oracle access to TB2 tasks or run a TB2 Oracle.
 
 Make the documented G-ROUTE decision mechanically from these criteria: confirmed license; at least 120 tasks survive build, resource, dedup, and Oracle checks before removing the development slice; adapter work remains within five engineer-days; and disk has at least 20% headroom or a logged build-run-prune plan is adopted. If criteria (1)–(3) fail, use the preregistered E-RESPLIT route and document the deviation; do not quietly replace the task source.
 
@@ -44,7 +44,7 @@ Only after the smoke passes should the team start E0 on the reserved TB-Pro non-
 ## Immediate actions
 
 1. Retrieve job `4433963` status and artifacts from Rohan; update this record with terminal state and clearly label it as synthetic integration evidence.
-2. Review the A2I2 storage documentation and confirm project-specific scratch/RDS allocations. Follow up with A2I2 only on runtime, egress controls, and quota details; ask Mohamed about Harbor-specific requirements. The TB-Pro author license/base-image request remains unsent; status and response notes are in [`OUTREACH_DRAFTS_2026-10-30.md`](../cluster/OUTREACH_DRAFTS_2026-10-30.md).
+2. Check `df -h /scratch`, create the RDS Activity/Collection, and configure/test access. Follow up with A2I2 on runtime and egress facilities; ask Mohamed about Harbor-specific requirements. The TB-Pro author license/base-image request remains unsent; status and response notes are in [`OUTREACH_DRAFTS_2026-10-30.md`](../cluster/OUTREACH_DRAFTS_2026-10-30.md).
 3. Complete the G-BASE attempt-cap decision and six-check evidence map.
 4. Resume P-M2 only when license, image route, approved network/runtime controls, and measured storage capacity are available.
 
