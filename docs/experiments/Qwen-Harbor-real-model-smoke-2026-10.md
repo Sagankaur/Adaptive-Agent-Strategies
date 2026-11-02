@@ -64,3 +64,22 @@ The reusable Slurm job is [`01_qwen_harbor_smoke.sbatch`](../cluster/harbor-real
 This closes the real-model-on-Harbor toy smoke: Qwen produced native function calls, the adapter executed them, Harbor ran the task container on an L40S allocation, and reward was joined from Harbor's persisted result. The pass is limited to this one synthetic task and the bounded `s0` fixture.
 
 Network isolation remains untested because the task allowed internet. The five-task TB-Pro smoke is still gated on the P-M2 image/license route, the G-BASE audit, approved egress controls, and the remaining cluster-use conditions. No benchmark episode has run.
+
+## Post-cap revalidation — Slurm job 4433963 (retrieved 2026-11-03)
+
+This reran the same synthetic `task_apptainer` Harbor integration smoke using source commit `8902548`, after the shared generated-token-cap change. It is a regression check of the updated execution path, not a benchmark trial and not a stress test of exhaustion behavior.
+
+| Item | Result |
+|---|---|
+| Slurm | Job `4433963`; partition `gpu`; node `l40s-f-03`; completed in 39 seconds; exit `0:0` |
+| Runtime | Apptainer `1.3.3+342-g42a8ae13e`; Harbor `0.23.0`; Python `3.12.16` |
+| Model | Qwen3.6-35B-A3B Q4_K_M served by the colocated llama.cpp server on the L40S |
+| Source | `8902548` |
+| Harbor trials | 1 completed, 0 errors, 0 retries |
+| Reward | `1.0` for the synthetic task |
+| Usage | 2,002 input tokens, 1,391 cached tokens, 198 output tokens; cost unavailable |
+| Harbor trial ID | `e68e874d-bfc8-4a31-8a78-f8da5fef183a` |
+
+The task's network isolation was not tested. A successful tiny task does not validate hard-cap exhaustion or TB-Pro behavior; the cap edge cases are covered by the offline tests.
+
+The raw artifacts remain on Rohan scratch under `/scratch/kasag/harbor-smoke/real-qwen/4433963/`. The Slurm stdout is `/scratch/kasag/harbor-smoke/real-qwen-4433963.out`; stderr is `/scratch/kasag/harbor-smoke/real-qwen-4433963.err`; Harbor's aggregate result is in `harbor_jobs/aas_qwen_harbor_4433963/result.json`. SHA-256: stdout `56c55648cb840efedc659da4183a3bc3153b4ce8a25771a7ae63a0b53da795eb`; stderr `2c6a064ac5deb3bd5efa4d3bcd282c7375040e5b95091a52b8929b7429e140e8`; Harbor result `1b52b362234bebb2391136f125eda346aac9e1adf40abe98f8ad4a4bdde5f498`. They have not yet been copied to RDS.

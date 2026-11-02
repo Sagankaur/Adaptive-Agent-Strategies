@@ -2,11 +2,11 @@
 
 ## Current evidence
 
-No Terminal-Bench Pro task has been built, Oracle-checked, or run with an agent. The successful Harbor runs used synthetic tasks and establish integration only. Job `4433963` was submitted as a repeat synthetic real-Qwen smoke after the shared output-token cap landed. Its last recorded state was `PENDING (Resources)`, with an estimated start of 2026-10-31 02:59 AEDT. That status is stale as of 2026-11-02: the workstation could not poll it in this review because the configured SSH alias failed authentication, and the local Python used by the saved Paramiko polling helper does not have Paramiko installed. Its current state is unknown. Do not count this job as evidence until its terminal Slurm state and result files are retrieved.
+No Terminal-Bench Pro task has been built, Oracle-checked, or run with an agent. The successful Harbor runs used synthetic tasks and establish integration only. Job `4433963`, the post-cap repeat synthetic real-Qwen Harbor smoke, has now been retrieved: Slurm reports `COMPLETED`, exit `0:0`, 39 seconds; Harbor reports 1/1 trials completed, 0 errors, 0 retries, reward `1.0`. It used source commit `8902548`. This confirms the updated synthetic execution path only; see the [smoke report](Qwen-Harbor-real-model-smoke-2026-10.md). No benchmark performance or network-isolation result follows from it.
 
 ## Decision
 
-Do not start TB-Pro task builds, Oracle runs, or agent episodes yet. G-BASE is now green, but the required license evidence is incomplete; 198 tasks rely on two custom Alibaba base images that are unreachable; equivalent GHCR images have not been validated; the supported network isolation path is unresolved; P-M2/G-ROUTE is open; and live scratch usage/RDS readiness have not been checked. Launching tasks before these are settled risks producing results that cannot support a paper claim.
+Do not start TB-Pro task builds, Oracle runs, or agent episodes yet. G-BASE is green, but required license evidence is incomplete; 198 tasks rely on two custom Alibaba base images that are unreachable; equivalent GHCR images have not been validated; supported network isolation is unresolved; P-M2/G-ROUTE is open; and this project's RDS collection/quota is not yet confirmed. Rohan `/scratch` was measured at 65% used (about 59T used and 33T available of 91T reported by `df -h`; values are rounded); A2I2 recommends staying below 80%. This is shared capacity, not a project allocation. Launching task builds before route and RDS readiness would risk results that cannot be preserved or support a paper claim.
 
 ## Staged execution plan
 
@@ -42,9 +42,9 @@ Only after the smoke passes should the team start E0 on the reserved TB-Pro non-
 
 ## Immediate actions
 
-1. Retrieve job `4433963` status and artifacts from Rohan; update this record with terminal state and clearly label it as synthetic integration evidence.
-2. Check `df -h /scratch`, create the RDS Activity/Collection, and configure/test access. Follow up with A2I2 on runtime and egress facilities; ask Mohamed about Harbor-specific requirements. The TB-Pro author license/base-image request remains unsent; status and response notes are in [`OUTREACH_DRAFTS_2026-10-30.md`](../cluster/OUTREACH_DRAFTS_2026-10-30.md).
-3. Complete the G-BASE six-check evidence map and its CI evidence. Freeze and implement the numerical B1 cap mixture at Stage 2, after the registered compute-matching data are collected.
+1. **Done:** retrieved job `4433963` status and result. It is synthetic setup evidence only; copy its retained logs/results to RDS once the collection and key access are ready.
+2. **Partly done:** measured `/scratch`; create the RDS Activity/Collection, obtain quota, configure cluster-to-RDS key access, and test a small transfer. The `a2i2quota` command failed because the `quota` binary is missing, so no home-quota reading was obtained.
+3. **Done:** G-BASE is green. Freeze and implement the numerical B1 cap mixture at Stage 2, after the registered compute-matching data are collected.
 4. Resume P-M2 only when license, image route, approved network/runtime controls, and measured storage capacity are available.
 
 ## What can be told to the professor now
