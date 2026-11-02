@@ -6,7 +6,7 @@ No Terminal-Bench Pro task has been built, Oracle-checked, or run with an agent.
 
 ## Decision
 
-Do not start TB-Pro task builds, Oracle runs, or agent episodes yet. The blockers affect validity and reproducibility: the required license evidence is incomplete; 198 tasks rely on two custom Alibaba base images that are unreachable; equivalent GHCR images have not been validated; the supported network isolation path is unresolved; G-BASE and P-M2 are open; and the cluster disk allocation/headroom has not been measured. Launching tasks before these are settled risks producing results that cannot support a paper claim.
+Do not start TB-Pro task builds, Oracle runs, or agent episodes yet. G-BASE is now green, but the required license evidence is incomplete; 198 tasks rely on two custom Alibaba base images that are unreachable; equivalent GHCR images have not been validated; the supported network isolation path is unresolved; P-M2/G-ROUTE is open; and live scratch usage/RDS readiness have not been checked. Launching tasks before these are settled risks producing results that cannot support a paper claim.
 
 ## Staged execution plan
 

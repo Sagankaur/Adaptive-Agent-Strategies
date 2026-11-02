@@ -18,7 +18,7 @@ There are **no TB-Pro model-performance results**. The synthetic reward-1.0 tria
 1. Confirm the TB-Pro v1.0 task license in a root `LICENSE` file or written author reply. The pinned release README declares Apache-2.0 but has no root `LICENSE`; the author request is drafted.
 2. Obtain official mirrors/OCI exports for TB-Pro's two Aliyun bases, or maintainer evidence that the GHCR candidates are the intended equivalent images. The Aliyun endpoint times out from both Rohan and the workstation.
 3. Get A2I2 guidance on the approved Apptainer route and available cluster egress controls; Mohamed should validate Harbor's required connections and smoke acceptance criteria against those controls.
-4. G-BASE's six baseline checks are mapped to tests. Freeze the numerical B1 attempt-cap mixture at Stage 2 from E1/E-P0 and S* MCU evidence; requiring that future evidence to close G-BASE would create a circular gate.
+4. G-BASE is green: the full suite passed in GitHub Actions on Python 3.11 and 3.12. Freeze the numerical B1 attempt-cap mixture at Stage 2 from E1/E-P0 and S* MCU evidence; requiring that future evidence to close G-BASE would create a circular gate.
 5. Complete the P-M2 route decision and network/disk checks before the five-task TB-Pro smoke.
 
 ## Message to include for Mohamed

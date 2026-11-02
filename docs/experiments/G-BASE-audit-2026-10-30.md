@@ -2,7 +2,7 @@
 
 ## Status
 
-The six explicit acceptance outcomes in `docs/EXECUTION_PLAN.md` are mapped to the implementation and named tests. The B1 token-budget contract is resolved and implemented: one 64k generated-token limit is shared across agent, judge, and reflection calls in a B1 task/run; prompt/input tokens remain costed but do not consume this limit. The numerical B1 attempt-cap mixture belongs to the preregistered Stage-2 freeze and depends on E1/E-P0 and S* MCU evidence; it is not a G-BASE criterion. Requiring it before G-INFRA/E1 would create a circular dependency. A GitHub Actions workflow now runs the offline suite on Python 3.11 and 3.12. **G-BASE remains open pending a successful CI run of all six mapped checks.**
+The six explicit acceptance outcomes in `docs/EXECUTION_PLAN.md` are mapped to the implementation and named tests. The B1 token-budget contract is resolved and implemented: one 64k generated-token limit is shared across agent, judge, and reflection calls in a B1 task/run; prompt/input tokens remain costed but do not consume this limit. The numerical B1 attempt-cap mixture belongs to the preregistered Stage-2 freeze and depends on E1/E-P0 and S* MCU evidence; it is not a G-BASE criterion. Requiring it before G-INFRA/E1 would create a circular dependency. GitHub Actions run [41448330803](https://github.com/Sagankaur/Adaptive-Agent-Strategies/actions/runs/41448330803) succeeded on commit `8655efd` for Python 3.11 and 3.12. **G-BASE is green.** This does not close G-INFRA, which still requires P-M2/G-ROUTE and the five-task TB-Pro smoke.
 
 ## Six acceptance outcomes
 
@@ -25,4 +25,4 @@ The sampled attempt cap `k` is distinct from the token ceiling. The seeded `{1,2
 
 ## Verification note
 
-Focused checks pass for the sync and async clients, Harbor adapter, baseline, judge, runner, and strategy-schema changes. The complete offline suite passed locally on both recorded runs: 132 passed in 10.13s on 2026-10-30 and 132 passed in 10.58s on 2026-11-02. Ruff reported `All checks passed!` for the changed source and tests on 2026-10-30. Local results do not substitute for the newly added CI run. The Stage-2 attempt-cap mixture is deliberately deferred and does not block G-BASE.
+Focused checks pass for the sync and async clients, Harbor adapter, baseline, judge, runner, and strategy-schema changes. The complete offline suite passed locally on both recorded runs: 132 passed in 10.13s on 2026-10-30 and 132 passed in 10.58s on 2026-11-02. GitHub Actions run 41448330803 subsequently passed the full suite on Python 3.11 and 3.12. Ruff reported `All checks passed!` for the changed source and tests on 2026-10-30. The Stage-2 attempt-cap mixture is deliberately deferred and does not block G-BASE.
