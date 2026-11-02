@@ -1,4 +1,4 @@
-# Professor update draft â€” 30 October 2026
+# Professor update draft: 30 October 2026
 
 **Status: draft for Sagandeep to send or adapt; not sent.**
 

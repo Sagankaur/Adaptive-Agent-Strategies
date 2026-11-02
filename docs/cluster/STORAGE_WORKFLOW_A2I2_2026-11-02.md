@@ -6,7 +6,7 @@
 - Rohan `/scratch` maps to the 100-TB shared VAST filesystem. There is no per-user scratch quota; 100 TB is the shared filesystem capacity, not an allocation for this project. Gondor uses its separate 100-TB shared WEKA filesystem. Data does not replicate between these filesystems.
 - Scratch is fast working storage, is not backed up, and older data can be removed when the filesystem nears capacity. The support documentation says there is no fixed purge schedule or exact trigger. Check `df -h /scratch` and keep total filesystem usage below 80% after generating planned data. Local `/data` is job/server-local and must be copied off before the job ends.
 - RDS is the primary long-term source of record. Important data and results must be backed up there; copy inputs from RDS to scratch for processing and copy retained outputs back to RDS. RDS collections can request more quota; a request above 2 TB requires a Data Management Plan.
-- RDS setup: create an Activity for the project, create a Collection to provision storage, request an appropriate quota, set up SSH-key access, identify the collection path, and transfer from the cluster with `rsync` or `scp` (use `tmux`/`screen` for long transfers). The supplied RDS instructions describe a cluster-to-RDS RSA key generated on Rohan/Gondor and registered in the SSH Key Management Utility; treat this as a separate access path from the workstation-to-cluster login key in A2I2 guide §3.4 unless support documentation explicitly says they can be shared.
+- RDS setup: create an Activity for the project, create a Collection to provision storage, request an appropriate quota, set up SSH-key access, identify the collection path, and transfer from the cluster with `rsync` or `scp` (use `tmux`/`screen` for long transfers). The supplied RDS instructions describe a cluster-to-RDS RSA key generated on Rohan/Gondor and registered in the SSH Key Management Utility; treat this as a separate access path from the workstation-to-cluster login key in A2I2 workstation-to-cluster key setup unless support documentation explicitly says they can be shared.
 
 These facts come from the storage documentation supplied in the project conversation. Current free scratch capacity was checked on Rohan on 2026-11-03; current RDS collection/quota, exact purge trigger, and transfer completion remain unknown.
 
@@ -27,3 +27,8 @@ These facts come from the storage documentation supplied in the project conversa
 - [ ] Create the RDS Activity and Collection; note its path and approved quota.
 - [ ] Configure the RDS SSH key following A2I2 instructions and verify a small `rsync`/`scp` transfer.
 - [ ] Do not start the full TB-Pro build census until license, image route, runtime/network gates, and a storage estimate satisfy the documented G-ROUTE and shared-scratch limits.
+
+
+## RDS key status ? 2026-11-03
+
+A dedicated 4096-bit RSA keypair was created on Rohan at `~/.ssh/id_rsa_rds` for cluster-to-RDS access, separate from the workstation-to-Rohan Ed25519 key. Public-key fingerprint: `SHA256:cr6OeKVgF5CoLNY9FDMNkC3Ckps+Nn11lRgRxeeJEUA`. Register `~/.ssh/id_rsa_rds.pub` in Deakin's SSH Key Management Utility after the project Activity and Collection are provisioned. The private key remains on Rohan and must not be copied into the repository or sent by email. No RDS Activity/Collection exists yet, so collection-path discovery and transfer testing remain pending.
