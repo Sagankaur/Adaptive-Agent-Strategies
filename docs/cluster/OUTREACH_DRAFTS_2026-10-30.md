@@ -64,7 +64,7 @@ Sagandeep
 
 Hello A2I2 support,
 
-Thank you for the storage guidance. I have completed a key-only login to Rohan and confirmed the shared scratch filesystem is currently 65% used. I am following up on two cluster-runtime questions from my earlier message:
+Thank you for the storage guidance. I have completed a key-only login to Rohan and confirmed the shared scratch filesystem is currently 65% used. I am following up on the outstanding cluster-runtime and Slurm-accounting questions:
 
 1. Is the Apptainer 1.3.3 module with a job-local `singularity` compatibility wrapper an approved setup for Slurm jobs using Harbor?
 2. Which supported cluster control can restrict task-container internet egress while preserving required host-to-container localhost control traffic and access to a model server running in the same allocation?
@@ -79,4 +79,19 @@ Thank you,
 
 Sagandeep
 
-**Status:** Draft only; no connected email account is available in this workspace. The Slurm accounting question is new; the Apptainer approval and egress-control questions are still open as well.
+## Digital Services: RDS host-key verification
+
+**To:** Deakin IT Help / Digital Services (RDS)
+**Subject:** Verify RDS storage SSH host key from Rohan HPC
+
+Hello,
+
+I am setting up cluster-to-RDS transfers from Rohan HPC. The dedicated RSA client key is present on Rohan, but `ssh -i ~/.ssh/id_rsa_rds kasag@rds-storage.deakin.edu.au collections` stopped at host-key verification because `rds-storage.deakin.edu.au` has no entry in Rohan's `known_hosts`. The attempt did not reach client-key authentication.
+
+Could you provide the official SSH host-key fingerprint for `rds-storage.deakin.edu.au`, or the approved first-connection procedure for users connecting from A2I2 Rohan? I will verify the fingerprint before caching the host key. Please also confirm whether the RDS SSH Key Management Utility is the right place to register the Rohan-generated RSA public key for this transfer path.
+
+Thank you,
+
+Sagandeep
+
+**Status:** Both A2I2 and Digital Services messages are drafts only; no connected email account is available in this workspace. The A2I2 draft also includes the still-open Apptainer approval and egress-control questions.
