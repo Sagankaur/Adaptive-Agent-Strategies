@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """No-task llama.cpp serving characterization for the A2I2 Slurm cluster.
 
 This runner screens model/server fit and synthetic request throughput only. It

@@ -1,4 +1,4 @@
-﻿#!/bin/bash -l
+#!/bin/bash -l
 # Synthetic llama.cpp fit screen or serving measurement; no Harbor tasks or episodes.
 #SBATCH --job-name=aas-serving-sweep
 #SBATCH --output=%x-%j.out
