@@ -1,4 +1,4 @@
-# P-M2 pre-build audit and templates ? 2026-11-03
+# P-M2 pre-build audit and templates - 2026-11-03
 
 ## Purpose and boundary
 
@@ -10,7 +10,13 @@ The pinned TB-Pro census reports 200 unique task Dockerfiles and 201 `FROM` base
 
 The Rohan probe showed that Apptainer can pull Laude Institute's public GHCR Terminal-Bench Python 3.13 and Ubuntu 24.04 packages by digest. This is evidence of reachability and OS/runtime-family similarity only. The GHCR package names, publisher, and manifest digests do not prove those layers match TB-Pro's custom Aliyun images. No source Dockerfile provenance link, image configuration comparison, filesystem comparison, or maintainer confirmation has established equivalence. Therefore the GHCR candidates remain unapproved substitutes, and the route is not cleared for builds.
 
-The next static comparison should retrieve the official Laude source Dockerfiles and compare their base-image build recipes against any maintainer-provided TB-Pro source/export or digests. Even recipe similarity cannot prove registry image identity; retain maintainer confirmation or compare immutable manifests/config and filesystem contents after an approved image route is available. Record every finding in `P-M2-route-table-template.csv`; do not substitute based only on matching `python-3-13` or `ubuntu-24-04` labels.
+### Static source-recipe comparison (2026-11-03)
+
+I inspected the official Laude/Terminal-Bench base-image Dockerfiles exposed on the repository's `main` branch as retrieved on 2026-11-03: [`python-3-13`](https://raw.githubusercontent.com/laude-institute/terminal-bench/main/docker/base-images/python-3-13/Dockerfile) and [`ubuntu-24-04`](https://raw.githubusercontent.com/laude-institute/terminal-bench/main/docker/base-images/ubuntu-24-04/Dockerfile). The Python recipe starts from `python:3.13-slim-bookworm`; both recipes add `tmux` and `asciinema`, remove apt package lists, and set `/app` as the working directory. The Ubuntu recipe starts from `ubuntu:24.04`. The source links use a moving branch and are not an immutable recipe pin; an immutable commit for these exact files was not established in this audit.
+
+This comparison does **not** establish that these current recipes produced the previously probed GHCR digests (`20250620` and `20250624`), nor that those GHCR images match TB-Pro's custom Aliyun images. The audited TB-Pro task Dockerfiles reference the custom Aliyun tags; no corresponding TB-Pro base-image build recipe, immutable source-image digest, or maintainer equivalence statement is available in the audited records. Thus, the recipes overlap in broad OS/runtime family and terminal tooling, but key provenance and resulting package/filesystem state remain unknown. This is not an image equivalence result and does not clear any task for image substitution or build.
+
+The next valid comparison requires maintainer-provided source recipes or OCI exports/digests for the two TB-Pro bases. Once an authorized route exists, compare immutable manifests/configuration and filesystem contents, then record per-task mapping in `P-M2-route-table-template.csv`. Recipe similarity alone cannot prove registry image identity.
 
 ## Routing table schema
 
