@@ -12,7 +12,7 @@ set -euo pipefail
 
 log() { echo "[$(date -Is)] $*"; }
 SCR=/scratch/$USER
-SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+SCRIPT_DIR=${SLURM_SUBMIT_DIR:?Submit from the directory containing both serving-sweep files}
 MODEL_FILE=Qwen3.6-35B-A3B-UD-Q4_K_M.gguf
 MODEL=$SCR/models/$MODEL_FILE
 SERVER_IMAGE=$SCR/images/llama-server-cuda12-b11515.sif

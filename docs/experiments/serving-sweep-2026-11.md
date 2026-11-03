@@ -18,7 +18,7 @@ The runner recomputes the model hash and stops on a mismatch. It records the SIF
 
 ## Before submission
 
-On Rohan, stage this committed directory under a scratch path, for example `$SCRATCH/jobs/serving-sweep`, and submit from that directory. The workstation-to-Rohan DNS check currently fails from the assistant workspace, so do not assume a new commit has already reached Rohan.
+On Rohan, stage this committed directory under a scratch path and submit from the directory containing both files. The batch wrapper uses Slurm's `SLURM_SUBMIT_DIR` because Slurm copies the `.sbatch` file into its spool directory before execution.
 
 Check the GPU types and time limits offered to your account before submission. Existing run evidence supports Rohan `gpu`/`short`, one L40S, 4 CPUs and 24 GiB RAM. The job uses the `gpu` partition, `short` QoS, 4 CPUs and 24 GiB RAM. It deliberately has no GPU-type or wall-time default: pass the exact GPU type and an approved time on the `sbatch` command. The one-hour `short` request and A100/RTX Pro resource labels are not verified. The runner also requires Slurm to expose exactly one unambiguous GPU and records/samples that GPU by UUID.
 
@@ -26,6 +26,7 @@ Examples after staging and confirming the site GPU type string:
 
 ```bash
 # Screen all 12 configurations on one L40S.
+cd /scratch/$USER/jobs/serving-sweep/repo/docs/cluster/serving-sweep
 SWEEP_GPU_LABEL=l40s sbatch --gpus=l40s:1 --time=01:00:00 01_serving_sweep.sbatch
 
 # After reviewing screens, measure one selected configuration.
@@ -70,4 +71,4 @@ Paste `metadata.json`, the JSONL result, GPU type/Slurm job ID, and any relevant
 
 Record the GPU name, requested resource string, Slurm QoS, driver, model/SIF hashes, every flag, exact prompt/output token counts, cache hits, timing fields, repeated-batch summaries, peak VRAM/headroom, and all failed configurations. The upstream server API options are documented in the [llama.cpp server README](https://github.com/ggml-org/llama.cpp/blob/master/tools/server/README.md); that current documentation is a reference only, and the job checks the exact pinned b11515 binary before using its flags/endpoints.
 
-No results exist yet. On 2026-11-03, key-only SSH checks from the workstation could not resolve either `login-f.ai.deakin.edu.au` (Rohan) or `login-m.ai.deakin.edu.au` (Gondor). A connection attempt to Rohan's previously recorded private IP timed out. No Slurm job was submitted. Resume from an authenticated network route to Rohan, then check the staged files, GPU allocation, QoS, and wall-time before submission.
+On 2026-11-03, key-only access became available and the L40S one-hour request passed `sbatch --test-only`; Slurm confirmed the `short` QoS permits up to two hours. Job `4504950` was submitted but failed before starting the runner because Slurm executes a spool copy of the batch script and the wrapper looked for the Python file beside that copy. No model server started and no measurements were produced. The wrapper now locates its driver through `SLURM_SUBMIT_DIR`; resubmit from the directory containing both staged files. The first login attempt from this workstation had failed DNS resolution for Rohan and Gondor, then succeeded on retry.
