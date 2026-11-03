@@ -2,6 +2,12 @@ name: P-M2 base image comparison
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - docs/research-plan-2026-10
+    paths:
+      - .github/workflows/pm2-image-compare.yml
+      - scripts/pm2_compare_base_images.py
 
 permissions:
   contents: read
@@ -37,6 +43,6 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
-      - name: Fail if either Aliyun reference could not be fully compared
+      - name: Fail if any image reference could not be fully compared
         if: steps.compare.outcome == 'failure'
         run: exit 1
