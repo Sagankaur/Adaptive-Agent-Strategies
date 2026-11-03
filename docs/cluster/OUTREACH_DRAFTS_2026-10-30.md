@@ -1,6 +1,6 @@
 # HPC and TB-Pro outreach drafts: 2026-10-30
 
-The A2I2 support message has been sent and received a general storage response on 2026-11-02. The TB-Pro author draft below remains unsent. The Harbor-specific questions should be directed to Mohamed, as A2I2 support recommended.
+The initial A2I2 support message was sent and received a general storage response on 2026-11-02. On 2026-11-03, the user reported sending the TB-Pro author request and the A2I2 technical follow-up below; both are awaiting replies. Harbor-specific questions should be directed to Mohamed, as A2I2 support recommended.
 
 ## A2I2 HPC support — sent message
 
@@ -94,4 +94,4 @@ Thank you,
 
 Sagandeep
 
-**Status:** Both A2I2 and Digital Services messages are drafts only; no connected email account is available in this workspace. The A2I2 draft also includes the still-open Apptainer approval and egress-control questions.
+**Status (2026-11-03):** The user reports that the TB-Pro author request and A2I2 technical follow-up were sent. Await their replies on license/image route and Apptainer/network controls. The Digital Services RDS host-key message remains a draft. The original A2I2 support message was sent earlier and received the general storage response summarized above.

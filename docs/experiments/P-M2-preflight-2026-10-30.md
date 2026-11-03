@@ -48,9 +48,9 @@ Do not start the 200 image builds or Oracle trials yet. The immediate route bloc
 
 After an accessible base-image route is established, continue P-M2 with the full per-task build report, dedup review against TB2, network/audit decision, Oracle results on TB-Pro only, disk/headroom report, and the final routing table. Keep all TB2 tasks agent- and Oracle-unseen.
 
-## Public repository recheck: 2026-10-30
+## Public repository recheck: 2026-10-30; outreach update: 2026-11-03
 
-The current [GitHub README](https://github.com/alibaba/terminal-bench-pro/blob/main/README.md) still declares Apache-2.0 and identifies `yanquan.xx@alibaba-inc.com` for public-set results. The current [repository root](https://github.com/alibaba/terminal-bench-pro) does not show a separate root `LICENSE` file; the pinned v1.0 release still has no such file. This confirms the README declaration but does not satisfy this plan's stricter written-author-confirmation-or-LICENSE requirement. A request for written confirmation and official base-image mirrors/exports has been drafted in [`docs/cluster/OUTREACH_DRAFTS_2026-10-30.md`](../cluster/OUTREACH_DRAFTS_2026-10-30.md); it has not been sent.
+The current [GitHub README](https://github.com/alibaba/terminal-bench-pro/blob/main/README.md) declares Apache-2.0 and identifies `yanquan.xx@alibaba-inc.com` for public-set results. The current [repository root](https://github.com/alibaba/terminal-bench-pro) does not show a separate root `LICENSE` file; the pinned v1.0 release also has no such file. The README and official Hugging Face dataset card support the authors' stated license, but do not satisfy this plan's stricter written-author-confirmation-or-root-LICENSE requirement. The user reported sending the author request for written confirmation and official base-image mirrors/exports on 2026-11-03; see [`outreach record`](../cluster/OUTREACH_DRAFTS_2026-10-30.md) and await a reply.
 
 ## Official GHCR route probe: 2026-10-30
 

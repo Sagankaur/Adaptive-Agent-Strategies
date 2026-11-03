@@ -10,6 +10,12 @@ The pinned TB-Pro census reports 200 unique task Dockerfiles and 201 `FROM` base
 
 The Rohan probe showed that Apptainer can pull Laude Institute's public GHCR Terminal-Bench Python 3.13 and Ubuntu 24.04 packages by digest. This is evidence of reachability and OS/runtime-family similarity only. The GHCR package names, publisher, and manifest digests do not prove those layers match TB-Pro's custom Aliyun images. No source Dockerfile provenance link, image configuration comparison, filesystem comparison, or maintainer confirmation has established equivalence. Therefore the GHCR candidates remain unapproved substitutes, and the route is not cleared for builds.
 
+### Public web-source check (2026-11-03)
+
+The pinned TB-Pro README and the official Hugging Face dataset card state Apache-2.0: [pinned README](https://github.com/alibaba/terminal-bench-pro/blob/321216e78aa4c824f7877f45e3414ea235d7dd5c/README.md), [dataset card](https://huggingface.co/datasets/alibabagroup/terminal-bench-pro). This is positive public evidence of the authors' stated license, but it does not meet this project's explicit P-M2 criterion, which requires a root `LICENSE` file or written maintainer confirmation covering the pinned release. Keep that gate open unless the protocol is formally revised; do not silently relax it after preregistration.
+
+The public Laude GHCR packages remain the only accessible candidate bases found in the official sources checked. Their public availability and successful Rohan pulls do not establish equivalence to the custom Aliyun TB-Pro bases. No official TB-Pro OCI export or mirror was found in those sources; the author request remains the direct route to obtain one.
+
 ### Static source-recipe comparison (2026-11-03)
 
 I inspected the official Laude/Terminal-Bench base-image Dockerfiles exposed on the repository's `main` branch as retrieved on 2026-11-03: [`python-3-13`](https://raw.githubusercontent.com/laude-institute/terminal-bench/main/docker/base-images/python-3-13/Dockerfile) and [`ubuntu-24-04`](https://raw.githubusercontent.com/laude-institute/terminal-bench/main/docker/base-images/ubuntu-24-04/Dockerfile). The Python recipe starts from `python:3.13-slim-bookworm`; both recipes add `tmux` and `asciinema`, remove apt package lists, and set `/app` as the working directory. The Ubuntu recipe starts from `ubuntu:24.04`. The source links use a moving branch and are not an immutable recipe pin; an immutable commit for these exact files was not established in this audit.
