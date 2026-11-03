@@ -16,6 +16,19 @@ The pinned TB-Pro README and the official Hugging Face dataset card state Apache
 
 The public Laude GHCR packages remain the only accessible candidate bases found in the official sources checked. Their public availability and successful Rohan pulls do not establish equivalence to the custom Aliyun TB-Pro bases. No official TB-Pro OCI export or mirror was found in those sources; the author request remains the direct route to obtain one.
 
+### Direct manifest and filesystem comparison attempt (2026-11-03)
+
+To compare actual image content rather than names or recipes, I dispatched a read-only GitHub Actions job on an x86-64 Linux runner. It pulled each GHCR reference by immutable linux/amd64 digest, attempted each TB-Pro Aliyun tag, inspected image config and uncompressed layer IDs, and exported and hashed the stopped images' merged filesystems. No container was started, and no task code ran. The workflow and script are [`pm2-image-compare.yml`](../../.github/workflows/pm2-image-compare.yml) and [`pm2_compare_base_images.py`](../../scripts/pm2_compare_base_images.py); the [run and retained artifact](https://github.com/Sagankaur/Adaptive-Agent-Strategies/actions/runs/41636341190) contain the full report and path-hash inventories.
+
+Both GHCR pulls and exports succeeded, but both Aliyun pulls failed before authentication: Docker timed out waiting for headers from `https://skylensage-registry.cn-hangzhou.cr.aliyuncs.com/v2/`. Thus, no Aliyun manifest, config, layer IDs, or filesystem content was obtained; the pairwise comparisons are **incomplete**, not mismatches.
+
+| Candidate image | Pulled linux/amd64 manifest digest | Docker config image ID | Config SHA-256 | Uncompressed layers | Exported rootfs entries | Rootfs inventory SHA-256 |
+|---|---|---|---:|---:|---:|---|
+| Laude Python 3.13 | `sha256:10dd0648b5339468ba39b2df90c1a28745faf8622e7552f85446611e2e992110` | `sha256:75cb41dc2d4f832786b0d4be2c474eb2177ece9d173bdfdff74af6509484dcc9` | `9539433740e1a5396cff01670865c6e6a7bb99b2c5e0e91ad020f7f2e908ff01` | 6 | 8,151 | `a50f8174385460d69725188282bf42d507be12bb6692c08013009138dc34d1bc` |
+| Laude Ubuntu 24.04 | `sha256:9ae5033b4f62fbffd63896353f2c8e02939764fac81311608e4e731f0b4a8db5` | `sha256:2591fd9a98fc54fc79cddd50700fa320a77880cfdee1e06169b22e7708b48ad1` | `0c4c89424561931e0b5db48a8996435beab7ebc85e87085921faf0ba8aa006e3` | 3 | 6,163 | `54ff2b600f723d26c14855e4434ebc6a0a7e2fca9c516b0e84a0eab98582f487` |
+
+The captured GHCR config summaries show both use `/app` as the working directory; the Python image has `CMD ["python3"]`, while Ubuntu has `CMD ["/bin/bash"]`. These are fingerprints for the candidate images only. They cannot be compared against TB-Pro until the two Aliyun images are reachable or the maintainers supply immutable digests/OCI exports. The image-equivalence route therefore remains unresolved.
+
 ### Static source-recipe comparison (2026-11-03)
 
 I inspected the official Laude/Terminal-Bench base-image Dockerfiles exposed on the repository's `main` branch as retrieved on 2026-11-03: [`python-3-13`](https://raw.githubusercontent.com/laude-institute/terminal-bench/main/docker/base-images/python-3-13/Dockerfile) and [`ubuntu-24-04`](https://raw.githubusercontent.com/laude-institute/terminal-bench/main/docker/base-images/ubuntu-24-04/Dockerfile). The Python recipe starts from `python:3.13-slim-bookworm`; both recipes add `tmux` and `asciinema`, remove apt package lists, and set `/app` as the working directory. The Ubuntu recipe starts from `ubuntu:24.04`. The source links use a moving branch and are not an immutable recipe pin; an immutable commit for these exact files was not established in this audit.
