@@ -1,0 +1,42 @@
+name: P-M2 base image comparison
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pm2-base-image-comparison
+  cancel-in-progress: false
+
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Check out comparison script
+        uses: actions/checkout@v6
+
+      - name: Record runner platform
+        run: |
+          uname -a
+          docker version
+
+      - name: Pull and compare public base-image references
+        id: compare
+        continue-on-error: true
+        run: python scripts/pm2_compare_base_images.py --output-dir comparison-output
+
+      - name: Upload metadata and filesystem-hash report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pm2-base-image-comparison
+          path: comparison-output/
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Fail if either Aliyun reference could not be fully compared
+        if: steps.compare.outcome == 'failure'
+        run: exit 1
