@@ -78,7 +78,10 @@ def apptainer_base_command(server_image: Path, model_dir: Path) -> list[str]:
 
 
 def check_binary_capabilities(server_image: Path, model_dir: Path, output_dir: Path) -> str:
-    command = apptainer_base_command(server_image, model_dir) + ["/app/llama-server", "--help"]
+    command = apptainer_base_command(server_image, model_dir) + [
+        "env", "LD_LIBRARY_PATH=/app:/usr/local/cuda/lib64:/.singularity.d/libs",
+        "/app/llama-server", "--help",
+    ]
     result = run_command(command, timeout_s=90)
     help_path = output_dir / "llama-server-help.txt"
     help_path.write_text(result.stdout, encoding="utf-8")
