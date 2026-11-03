@@ -69,9 +69,11 @@ on_signal() {
 trap on_signal TERM INT
 python3 "$SCRIPT_DIR/02_model_sweep.py" "${ARGS[@]}" &
 PY_PID=$!
-set +e
-wait "$PY_PID"
-STATUS=$?
-set -e
+if wait "$PY_PID"; then
+  STATUS=0
+else
+  STATUS=$?
+fi
+log "runner_exit_status=$STATUS"
 PY_PID=
 exit "$STATUS"

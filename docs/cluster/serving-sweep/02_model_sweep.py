@@ -22,7 +22,7 @@ import urllib.error
 import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterator
 
 MODEL_SHA256 = "ac0e2c1189e055faa36eff361580e79c5bd6f8e76bffb4ce547f167d53e31a61"
 MODEL_FILENAME = "Qwen3.6-35B-A3B-UD-Q4_K_M.gguf"
@@ -506,11 +506,14 @@ def run_one_configuration(config: dict[str, Any], config_index: int, args: argpa
             warmup["config_id"] = config_id
             batch_records.append(warmup)
             append_jsonl(jsonl_path, warmup)
-            batches = measured_batches(server.client, config, args, config_id, config_index)
-            batch_records.extend(batches)
-            for batch in batches:
+            for batch in measured_batches(server.client, config, args, config_id, config_index):
+                batch_records.append(batch)
                 append_jsonl(jsonl_path, batch)
-            status = "measured" if all(batch["failed_calls"] == 0 for batch in batches) else "measured_with_errors"
+            status = (
+                "measured"
+                if all(batch["failed_calls"] == 0 for batch in batch_records)
+                else "measured_with_errors"
+            )
         else:
             prompt = exact_prompt_tokens(server.client, min(8192, config["context_per_slot"] - 256))
             batch = run_concurrent_batch(
@@ -555,7 +558,7 @@ def run_one_configuration(config: dict[str, Any], config_index: int, args: argpa
 
 
 def measured_batches(client: LlamaClient, config: dict[str, Any], args: argparse.Namespace,
-                     config_id: str, config_index: int) -> list[dict[str, Any]]:
+                     config_id: str, config_index: int) -> Iterator[dict[str, Any]]:
     context = int(config["context_per_slot"])
     prompt_lengths: set[int] = set()
     for output_cap in (512, 2048):
@@ -563,7 +566,6 @@ def measured_batches(client: LlamaClient, config: dict[str, Any], args: argparse
         for target in (8192, 32768, 65536, near_limit):
             if target >= 8192 and target + output_cap + 128 <= context:
                 prompt_lengths.add(target)
-    results: list[dict[str, Any]] = []
     token_cache: dict[int, list[int]] = {}
     for prompt_length in sorted(prompt_lengths):
         token_cache[prompt_length] = exact_prompt_tokens(client, prompt_length)
@@ -587,8 +589,7 @@ def measured_batches(client: LlamaClient, config: dict[str, Any], args: argparse
                     "per_slot_context_tokens": context,
                     "repetition": repetition,
                 })
-                results.append(record)
-    return results
+                yield record
 
 
 def parse_args() -> argparse.Namespace:
