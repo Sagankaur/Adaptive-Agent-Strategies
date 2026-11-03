@@ -71,8 +71,12 @@ Thank you for the storage guidance. I have completed a key-only login to Rohan a
 
 I will ask Mohamed to validate Harbor's actual connection requirements and the five-task smoke acceptance criteria. I am not asking A2I2 to certify Harbor behavior; I need the supported cluster runtime and network-control options.
 
+3. I ran six synthetic llama.cpp serving jobs on Rohan under the `gpu` partition and `short` QoS. For jobs `4505001`, `4505018`, and `4505019`, the batch output records `runner_exit_status=0`, the JSONL ends with successful `run_finished` statuses, and `sacct` reports `DerivedExitCode=0:0`; however, both the allocation and `.batch` step are `FAILED`, `ExitCode=1:0`. The `.err` files are empty. The earlier three runs show the same Slurm state, though their wrapper did not log the Python exit status. Could you identify where the `1:0` is coming from (for example, a site epilog or Slurm step/accounting issue), and advise which cluster logs or exit status I should use to diagnose it? Should I change the job wrapper or request parameters?
+
+The run record and captured outputs are in the public repository under `docs/experiments/serving-sweep-2026-11.md` and `docs/experiments/artifacts/`.
+
 Thank you,
 
 Sagandeep
 
-**Status:** Draft only; no connected email account is available in this workspace.
+**Status:** Draft only; no connected email account is available in this workspace. The Slurm accounting question is new; the Apptainer approval and egress-control questions are still open as well.
