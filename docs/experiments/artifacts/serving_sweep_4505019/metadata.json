@@ -1,0 +1,25 @@
+{
+  "benchmark_episodes": 0,
+  "gpu": {
+    "driver_version": "595.91.07",
+    "memory_total_mib": 97887,
+    "name": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+    "uuid": "GPU-f4e0d489-e568-bcbc-e69f-d995e03c6b68"
+  },
+  "gpu_label_requested": "rtxp6000",
+  "host": "rtxp6000l-f-01",
+  "model_path": "/vast/kasag/models/Qwen3.6-35B-A3B-UD-Q4_K_M.gguf",
+  "model_sha256": "ac0e2c1189e055faa36eff361580e79c5bd6f8e76bffb4ce547f167d53e31a61",
+  "sampling": {
+    "temperature": 0.6,
+    "top_k": 20,
+    "top_p": 0.95
+  },
+  "server_help_sha256": "95adc9ff44d01558cce93e198a6feb9db8c2f7dea7e3faac3cf50e4d653a7335",
+  "server_image_path": "/vast/kasag/images/llama-server-cuda12-b11515.sif",
+  "server_image_reference": "ghcr.io/ggml-org/llama.cpp:server-cuda12-b11515 (existing cluster SIF)",
+  "server_image_sha256": "dd8110164788b9deb354e06cb984214b2ef8b6b0598c2ef73dd0ab9828957d56",
+  "slurm_job_id": "4505019",
+  "task_data_used": false,
+  "timestamp_utc": "2026-11-03T06:42:58.254255+00:00"
+}

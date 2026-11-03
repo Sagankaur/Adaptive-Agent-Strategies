@@ -1,0 +1,9 @@
+[2026-11-03T17:16:19+11:00] job=4505001 host=l40s-f-01 mode=measure requested_gpu=l40s
+[2026-11-03T17:16:19+11:00] runtime=apptainer version 1.3.3+342-g42a8ae13e python=Python 3.10.12
+name, memory.total [MiB], driver_version
+NVIDIA L40S, 46068 MiB, 565.57.01
+[2026-11-03T17:16:19+11:00] model=/scratch/kasag/models/Qwen3.6-35B-A3B-UD-Q4_K_M.gguf
+[2026-11-03T17:16:19+11:00] server_image=/scratch/kasag/images/llama-server-cuda12-b11515.sif
+[2026-11-03T17:16:19+11:00] outputs=/scratch/kasag/jobs/out/serving_sweep_4505001
+{"configurations_recorded": 1, "metadata_file": "/scratch/kasag/jobs/out/serving_sweep_4505001/metadata.json", "mode": "measure", "record_type": "run_finished", "result_file": "/scratch/kasag/jobs/out/serving_sweep_4505001/measure.jsonl", "statuses": ["measured"], "timestamp_utc": "2026-11-03T06:32:53.665961+00:00"}
+[2026-11-03T17:32:53+11:00] runner_exit_status=0

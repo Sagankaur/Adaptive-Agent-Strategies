@@ -1,0 +1,23 @@
+INFO:    squashfuse not found, will not be able to mount SIF or other squashfs files
+INFO:    fuse2fs not found, will not be able to mount EXT3 filesystems
+INFO:    gocryptfs not found, will not be able to use gocryptfs
+INFO:    Converting SIF file to temporary sandbox...
+warn: LLAMA_ARG_HOST environment variable is set, but will be overwritten by command line argument --host
+0.00.237.086 I srv  llama_server: initializing ...
+0.00.237.102 I cmn  common_param: common_params_print_info: verbosity = 3 (adjust with the `-lv N` CLI arg)
+0.00.237.407 W srv  llama_server: security: no API key is set and CORS allows all origins (see https://github.com/ggml-org/llama.cpp/pull/25655)
+0.00.241.214 I srv    load_model: loading model '/models/Qwen3.6-35B-A3B-UD-Q4_K_M.gguf'
+0.31.854.206 I cmn          init: llama threadpool init, n_threads = 96
+0.32.048.024 I srv    load_model: initializing, n_slots = 1, n_ctx_slot = 65536, kv_unified = 'false'
+0.32.058.016 W srv          init: chat template supports preserving reasoning, it is enabled by default (may use more tokens, disable via --no-reasoning-preserve)
+0.32.058.284 I srv  llama_server: model loaded
+0.32.058.292 I srv  llama_server: listening on http://127.0.0.1:41361
+0.32.918.992 I slot get_availabl: id  0 | task -1 | selected slot by id (0)
+0.32.919.045 I slot launch_slot_: id  0 | task 1 | processing task, is_child = 0
+0.34.864.921 I slot print_timing: id  0 | task 1 | prompt eval time =    1286.05 ms /  8192 tokens (    0.16 ms per token,  6369.90 tokens per second)
+0.34.864.925 I slot print_timing: id  0 | task 1 |        eval time =     659.80 ms /   128 tokens (    5.20 ms per token,   192.48 tokens per second)
+0.34.864.925 I slot print_timing: id  0 | task 1 |       total time =    1945.84 ms /  8320 tokens
+0.34.864.929 I slot print_timing: id  0 | task 1 |    graphs reused =        127
+0.34.865.087 I slot      release: id  0 | task 1 | stop processing: n_tokens = 8319, truncated = 0
+0.34.868.980 I srv    operator(): operator(): cleaning up before exit...
+INFO:    Cleaning up image...

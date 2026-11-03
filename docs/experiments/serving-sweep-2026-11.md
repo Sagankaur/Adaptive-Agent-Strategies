@@ -71,4 +71,60 @@ Paste `metadata.json`, the JSONL result, GPU type/Slurm job ID, and any relevant
 
 Record the GPU name, requested resource string, Slurm QoS, driver, model/SIF hashes, every flag, exact prompt/output token counts, cache hits, timing fields, repeated-batch summaries, peak VRAM/headroom, and all failed configurations. The upstream server API options are documented in the [llama.cpp server README](https://github.com/ggml-org/llama.cpp/blob/master/tools/server/README.md); that current documentation is a reference only, and the job checks the exact pinned b11515 binary before using its flags/endpoints.
 
-On 2026-11-03, key-only access became available and the L40S one-hour request passed `sbatch --test-only`; Slurm confirmed the `short` QoS permits up to two hours. Job `4504950` failed before starting the runner because Slurm executes a spool copy of the batch script and the wrapper looked for the Python file beside that copy. Job `4504952` reached `l40s-f-01`, recorded the L40S (46,068 MiB, driver 565.57.01), Apptainer 1.3.3, and Python 3.10.12, then failed the `--help` preflight: its command omitted the SIF's `LD_LIBRARY_PATH`. No model inference ran. Both startup issues are fixed. Job `4504954` completed all 12 fit checks with 1,024 MiB headroom exceeded by at least 16,817 MiB, but Slurm marked the batch job `FAILED (1:0)` despite a `run_finished` record showing all 12 statuses as `fit_probe_passed`. Job `4504968` completed the first measured configuration (`measured`, all 21 measured batches plus warm-up recorded), but Slurm likewise marked the job `FAILED (1:0)`. The wrapper now logs the Python exit code, and the runner writes each measurement batch incrementally for the remaining configurations so the cause and any partial run are diagnosable. The first login attempt had failed DNS resolution for Rohan and Gondor, then succeeded on retry.
+## Completed engineering run (2026-11-03)
+
+Key-only SSH access worked through Rohan's pinned login IP. The synthetic sweep ran sequentially on one Rohan L40S and one Rohan RTX Pro 6000 Blackwell. Slurm allowed one-hour jobs on `gpu`/`short`. The six completed experiment jobs used Apptainer 1.3.3, Python 3.10.12, llama.cpp build `b11515-3d65c90d0`, the same pinned Qwen model SHA-256 above, and SIF SHA-256 `dd8110164788b9deb354e06cb984214b2ef8b6b0598c2ef73dd0ab9828957d56`. No Harbor task, benchmark task, dataset, hidden test, reference solution, or episode was run.
+
+### Fit screens
+
+| Job | GPU | Fit results | Highest sampled use | Lowest sampled headroom | Startup range |
+| --- | --- | ---: | ---: | ---: | ---: |
+| 4504954 | L40S, 46,068 MiB | 12/12 pass | 29,251 MiB | 16,817 MiB | 14.35–14.71 s |
+| 4505018 | RTX Pro 6000 Blackwell, 97,887 MiB | 12/12 pass | 29,427 MiB | 68,460 MiB | 27.46–41.06 s |
+
+Every requested slot count, KV precision, and per-slot context matched the server's effective settings. All fit probes passed with more than the 1 GiB minimum. The RTX startup range differs from its later measurement run (13.10 s); startup time was not isolated from node and filesystem cache state, so treat these as observed run values, not a controlled GPU startup comparison.
+
+### Measurement jobs
+
+Each measured configuration recorded one warm-up batch plus 21 measured batches: seven prompt/output cells, three synchronized concurrent repetitions per cell. The cells use prompt targets of 8,192, 32,768, 63,360, and 64,896 tokens (duplicate near-limit targets omitted) and output caps of 512 or 2,048. At four slots, this is 12 calls per cell. The runner marked every configuration `measured`; all calls succeeded. Exact prompt lengths, actual generated lengths, llama.cpp timings, client wall times, and one-second GPU samples are in the JSONL artifacts.
+
+| Job | GPU | Slots / KV / context per slot | Peak sampled use | Headroom at peak | Startup |
+| --- | --- | --- | ---: | ---: | ---: |
+| 4504968 | L40S | 1 / q8_0 / 65,536 | 22,107 MiB | 23,961 MiB | 14.44 s |
+| 4504971 | L40S | 4 / q8_0 / 65,536 | 24,721 MiB | 21,347 MiB | 14.65 s |
+| 4505001 | L40S | 4 / f16 / 65,536 | 26,661 MiB | 19,407 MiB | 14.31 s |
+| 4505019 | RTX Pro 6000 Blackwell | 4 / q8_0 / 65,536 | 24,897 MiB | 72,990 MiB | 13.10 s |
+
+The following representative cell uses a 64,896-token prompt and a 512-token output cap (the near-context-limit prompt cell). Prompt and generation speeds are medians of per-call llama.cpp timing fields across 12 calls. “Aggregate prompt + generated” is the median across three concurrent batches of realized prompt plus output tokens divided by batch wall time. Throughput ranges cover the three batches; per-call speed, latency, and realized-output ranges cover the 12 calls.
+
+| GPU / setting | Per-call prompt tok/s | Per-call generation tok/s | Aggregate prompt + generated tok/s | Median call wall | Actual output tokens, median (range) |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| L40S, 4 slots, q8_0 | 4,889 (4,770–5,244) | 20.4 (2.6–66.5) | 4,504 (4,450–4,525) | 57.4 s | 512 (78–512) |
+| L40S, 4 slots, f16 | 4,989 (4,854–5,320) | 20.2 (6.8–51.2) | 4,353 (4,346–4,625) | 59.2 s | 512 (180–512) |
+| RTX Pro 6000, 4 slots, q8_0 | 6,803 (6,671–7,315) | 27.6 (12.4–76.8) | 6,062 (6,045–6,072) | 42.8 s | 512 (376–512) |
+
+The full 28-cell summary across all four measured GPU configurations is in [serving-sweep-cells-2026-11.md](serving-sweep-cells-2026-11.md); the JSONL files retain each individual call and batch.
+
+In this cell, the RTX Pro's median aggregate throughput was about 1.35× the L40S q8_0 result. This is an engineering comparison for one model, build, and synthetic input shape, based on three batch repetitions; it is not a general GPU ranking. The output cap is not a fixed generation length: the model stopped early on some calls, as the ranges show. At a 63,360-token prompt with a 2,048-token cap, median aggregate throughput was 3,143 tok/s on L40S q8_0 and 2,883 tok/s on L40S f16; both had a median realized output of 2,048 tokens. The f16 and q8_0 order therefore depends on workload shape, and this sweep does not justify a universal cache-precision choice.
+
+### Slurm accounting discrepancy
+
+Slurm reports all six experiment jobs (`4504954`, `4504968`, `4504971`, `4505001`, `4505018`, `4505019`) as `FAILED`, exit `1:0`, even though each has a complete `run_finished` record and successful runner statuses. For the three runs using the updated wrapper (`4505001`, `4505018`, `4505019`), the captured batch output explicitly says `runner_exit_status=0`; `sacct` also reports `DerivedExitCode=0:0`, while the batch step still says `FAILED 1:0`. Their `.err` files are empty. The earlier wrapper versions did not print the runner exit code. The measurement JSONL and output files are complete, but the reason for the Slurm state is unresolved; ask A2I2 support to explain the discrepancy before relying on job state alone in future automation.
+
+### Interpretation and limits
+
+- All 12 settings fit on the L40S, with at least 16.8 GiB of sampled headroom. The L40S is memory-sufficient for this pinned model and these contexts. The RTX Pro delivered about 35% higher aggregate throughput in the matched 64.9K/512 cell and substantially more memory headroom; request the RTX Pro when available throughput matters. An A100 was not tested.
+- The one-second sampler reads whole-device memory and can miss brief peaks. GPU utilization by other processes was not independently audited.
+- Inputs are repetitive synthetic token-ID histories, not real Harbor or agent traces. The per-call timings do not measure task/tool overhead, solve rate, timeouts, episode throughput, or cost per task.
+- These data do not fit MCU coefficients or validate the 213.5 episodes/GPU-day planning proxy. They do not count as E-P0 and do not close any benchmark gate.
+- The raw outputs are under `docs/experiments/artifacts/serving_sweep_<job-id>/`. They have been copied to this repository, but an RDS collection has not yet been configured; cluster scratch remains volatile.
+
+### Professor-ready update
+
+> We completed a synthetic serving preflight for the pinned Qwen model on Rohan. All 12 tested slot/cache/context settings fit on an L40S with at least 16.8 GiB sampled headroom. On a matched 4-slot q8_0 near-limit prompt cell, the RTX Pro 6000 delivered about 1.35× the L40S aggregate throughput (6,062 vs. 4,504 realized prompt-plus-generation tokens/s, three batch repetitions). These are engineering measurements from synthetic histories only; no benchmark episodes ran and E-P0 remains open. Slurm marks the jobs failed despite complete runner records (including exit status 0 for the latest jobs), so we are asking cluster support to explain the accounting discrepancy.
+
+### Next steps
+
+1. Ask A2I2 support why these batch steps are `FAILED 1:0` while the wrapper exits 0 and the derived exit code is 0; include jobs `4505001`, `4505018`, and `4505019`.
+2. Configure the RDS Activity/Collection and copy the report and raw artifacts there. Keep the local/GitHub copies as convenient working copies, not the sole long-term research-data store.
+3. When the TB-Pro image/licence route and Harbor network questions are resolved, run the registered task-based E-P0 with the RTX Pro as the preferred throughput option and the L40S as the available fallback. Use actual task/episode measurements to pick the production serving configuration and fit any MCU coefficients.
