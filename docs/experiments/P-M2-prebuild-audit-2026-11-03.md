@@ -29,6 +29,10 @@ Both GHCR pulls and exports succeeded, but both Aliyun pulls failed before authe
 
 The captured GHCR config summaries show both use `/app` as the working directory; the Python image has `CMD ["python3"]`, while Ubuntu has `CMD ["/bin/bash"]`. These are fingerprints for the candidate images only. They cannot be compared against TB-Pro until the two Aliyun images are reachable or the maintainers supply immutable digests/OCI exports. The image-equivalence route therefore remains unresolved.
 
+### Follow-up public web search (2026-11-05)
+
+I searched the exact Aliyun image names and registry path across public web results, GitHub, and Docker Hub. The sources checked exposed TB-Pro task Dockerfile references and the public Laude GHCR packages, but no Aliyun manifest digest, OCI export, or official mirror. The [Laude Python package](https://github.com/orgs/laude-institute/packages/container/package/t-bench%2Fpython-3-13) and [Laude Ubuntu package](https://github.com/orgs/laude-institute/packages/container/package/t-bench%2Fubuntu-24-04) expose immutable digests for their own images; they provide no metadata tying those manifests to TB-Pro's Aliyun tags. Third-party task copies that reference Laude GHCR images are not evidence about the contents of the separate Aliyun images.
+
 ### Static source-recipe comparison (2026-11-03)
 
 I inspected the official Laude/Terminal-Bench base-image Dockerfiles exposed on the repository's `main` branch as retrieved on 2026-11-03: [`python-3-13`](https://raw.githubusercontent.com/laude-institute/terminal-bench/main/docker/base-images/python-3-13/Dockerfile) and [`ubuntu-24-04`](https://raw.githubusercontent.com/laude-institute/terminal-bench/main/docker/base-images/ubuntu-24-04/Dockerfile). The Python recipe starts from `python:3.13-slim-bookworm`; both recipes add `tmux` and `asciinema`, remove apt package lists, and set `/app` as the working directory. The Ubuntu recipe starts from `ubuntu:24.04`. The source links use a moving branch and are not an immutable recipe pin; an immutable commit for these exact files was not established in this audit.
