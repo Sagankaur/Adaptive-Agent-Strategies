@@ -1,4 +1,4 @@
-﻿# Synthetic serving sweep — 2026-11
+# Synthetic serving sweep — 2026-11
 
 ## Purpose and boundary
 

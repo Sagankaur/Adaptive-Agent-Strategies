@@ -1,4 +1,4 @@
-﻿# G-BASE acceptance audit — 2026-10-30
+# G-BASE acceptance audit — 2026-10-30
 
 ## Status
 
