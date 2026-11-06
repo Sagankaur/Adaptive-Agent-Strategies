@@ -2,7 +2,7 @@
 
 Sagandeep Kaur, draft for discussion with Prof. Mohamed Abdelrazek (Deakin A2I2), 2026-10-20.
 
-**Status (2026-10-20).** No experiment has been run and no model has been called. Every episode count, GPU-day figure and probability below is an estimate. Each comes from public data, a simulation or arithmetic, and is labelled as such. The likelihood and impact ratings are judgements, not measurements. Experiment ids are those of [EXPERIMENTS.md](EXPERIMENTS.md). Gate ids are those of EXPERIMENTS.md and [EXECUTION_PLAN.md, section 4](EXECUTION_PLAN.md#4-gates). The decisions behind the mitigations are recorded in [DESIGN_REVIEW_2026-10.md](DESIGN_REVIEW_2026-10.md).
+**Status (updated 2026-11-06).** Historical engineering work includes synthetic Qwen+Harbor task runs and synthetic serving-only sweeps; no budgeted benchmark episodes, TB-Pro task builds, Oracle runs or TB2 runs have occurred. Network isolation was not enabled in the historical synthetic task runs, and their raw agent/trial logs have not yet been audited. No future real-model task-command job may run until egress blocking and the Harbor control channel are verified together. Serving-only jobs remain allowed. Episode counts, GPU-day figures and probabilities below are planning estimates from public data, simulation or arithmetic unless marked otherwise. Likelihood and impact ratings are judgements. Experiment ids are in [EXPERIMENTS.md](EXPERIMENTS.md); gate ids are in [EXECUTION_PLAN.md, section 4](EXECUTION_PLAN.md#4-gates). The design-review decisions are in [DESIGN_REVIEW_2026-10.md](DESIGN_REVIEW_2026-10.md).
 
 Some mitigations depend on Prof. Abdelrazek's answers to open questions. Those are marked **to confirm with Prof. Abdelrazek**. Each has a stated default, listed in [DECISIONS.md, section 1](DECISIONS.md#1-open-decisions).
 
@@ -89,6 +89,7 @@ Some mitigations depend on Prof. Abdelrazek's answers to open questions. Those a
 | RK-26 | Licences of TB-Pro or Self-Harness code are unclear | M | H | No LICENSE file or written confirmation from the TB-Pro authors when P-M2 ends | Licence is GO condition (i) of P-M2. From Self-Harness, use the paper only and copy no code | TB-Pro unconfirmed: route failure, E-RESPLIT. Self-Harness: ask its authors before any reuse, else drop the 64-task comparison slice | SK | P-M2, G-ROUTE, E-RESPLIT, E-N4 |
 | RK-27 | Disk space runs out | M | M | The P-M2 disk census leaves less than 20% headroom | Pull TB2 by digest, build TB-Pro once, no duplicate local registry. Request a 500 GB NVMe disk (1 TB recommended) | Build, run and prune by digest, logged. Ask for a larger disk | SK | P-M2, G-ROUTE (condition iv) |
 | RK-28 | Model-written code escapes the B5 sandbox | L | H | The sandbox escape test fails | B5 runs only in a per-trial container whose only network route is the llama.cpp endpoint, killed on timeout, never in the host Harbor process | B5 moves to paper 2. The paper states that it makes no code-harness comparison | SK | E-B5, G-B5, E-INTERP |
+| RK-29 | A model-driven task command attempts unexpected egress or probes host metadata | M | H | Audit of Harbor steps/trial/agent logs finds URL, IP, cloud-storage, metadata, namespace, or mount indicators; or the scripted isolation probe reaches an external endpoint | Default-deny task networking with Apptainer `--net --network none`; preserve Harbor control only through a tested, private per-trial Unix socket; verify egress and metadata probes fail while task writes and control work. Set `HARBOR_TELEMETRY=off`. The command tripwire is monitoring/filtering only, not isolation | Pause all model/agent task jobs. Serving-only work may continue. Ask Prof. Abdelrazek to decide whether the pinned Qwen model remains appropriate after isolation is verified | SK (controls); MA (model choice) | E-NET, G-INFRA, Q9 |
 
 ### Highest-rated risks
 
@@ -287,6 +288,14 @@ Facts below were checked against the cited source on or before 2026-10-20. "Simu
 
 - B5 lets the proposer edit our controller code. That code then runs on every trial, so it must be isolated from the host.
 - B5 is Tier C rank 4: 1,810 episodes, plus at most 5 engineering days for the sandbox. It also needs a 10-proposal smoke test (at least 5 apply cleanly and pass the controller unit tests).
+
+### RK-29 Unexpected model-command egress
+
+- Cohere reported that Qwen3.8-Flash-Next attempted an outbound request during a security-agent evaluation; Cohere says its sandbox blocked the request and does not determine intent. This is a report about a different Qwen version, not evidence that this project's pinned Qwen3.6 model has made such an attempt. The underlying risk applies to any model with shell/network-capable tools.
+- The two historical synthetic Harbor runs had task internet enabled. Their raw step, trial and agent logs have not yet been audited in this environment because key-only SSH could not resolve the Rohan hostname on 2026-11-06. No clean-log claim is made.
+- Harbor 0.23.0's Apptainer provider uses a localhost TCP control server. Network namespace isolation is not ready until the provider's Unix-socket patch and a scripted end-to-end isolation check pass on Rohan.
+- The adapter tripwire refuses obvious URL/IP/namespace/mount strings and records flags, but it cannot detect all network-capable commands, programmatic sockets or obfuscation. It is not a security boundary.
+- Until isolation is verified, no real-model command job may run. The professor's model choice is recorded as Q9; no replacement model is selected by this risk entry.
 
 ---
 

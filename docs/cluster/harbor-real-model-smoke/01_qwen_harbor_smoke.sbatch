@@ -1,5 +1,5 @@
 #!/bin/bash -l
-# Real Qwen + Harbor smoke on one L40S allocation; synthetic task only.
+# Historical real-Qwen + Harbor smoke; intentionally disabled pending verified egress isolation.
 # Stage the source snapshot at /scratch/$USER/harbor-smoke/aas-source-639ba1d.
 # Submit with: sbatch docs/cluster/harbor-real-model-smoke/01_qwen_harbor_smoke.sbatch
 #SBATCH --job-name=aas-qwen-harbor
@@ -14,6 +14,10 @@
 set -euo pipefail
 
 log() { echo "[$(date -Is)] $*"; }
+export HARBOR_TELEMETRY=off
+log "SAFETY HOLD: this recipe uses Harbor's localhost TCP control channel without task-network isolation; no model command will run."
+(exit 78)
+
 SCR=/scratch/$USER
 ROOT=$SCR/harbor-smoke
 SOURCE=$ROOT/aas-source-639ba1d

@@ -17,6 +17,7 @@ from evaluation.harbor_results import (
     reward_from_trial_result,
 )
 from strategy_schema import s0
+from strategy_schema.model import Check
 
 
 def _response(call_id: str, name: str, arguments: dict[str, Any], seed: int) -> SimpleNamespace:
@@ -150,6 +151,86 @@ def test_agent_refuses_hidden_test_paths_without_executing_them(tmp_path, monkey
     rows = [json.loads(line) for line in (tmp_path / "agent-logs" / "aas_steps.jsonl").read_text().splitlines()]
     assert rows[0]["exit_code"] == 126
     assert "refused" in rows[0]["observation"].lower()
+
+
+@pytest.mark.parametrize(
+    ("command", "expected_flag"),
+    [
+        ("curl https://example.com/x", "url"),
+        ("curl http://169.254.169.254/latest/meta-data", "ipv4_address"),
+        ("curl http://192.0.2.8/", "url"),
+        ("ping -c 1 2001:db8::8", "ipv6_address"),
+        ("unshare -Ur true", "namespace_tool"),
+        ("sudo nsenter -t 1 -m true", "namespace_tool"),
+        ("/bin/mount -t tmpfs tmpfs /mnt", "mount_tool"),
+    ],
+)
+def test_command_tripwire_classifies_network_and_namespace_commands(command, expected_flag):
+    assert expected_flag in harbor_agent.command_tripwire_flags(command)
+
+
+def test_command_tripwire_leaves_plain_local_commands_unflagged():
+    assert harbor_agent.command_tripwire_flags("python -m pytest -q") == []
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        "curl https://example.com/x",
+        "curl http://169.254.169.254/latest/meta-data",
+        "unshare -Ur true",
+        "sudo nsenter -t 1 -m true",
+        "/bin/mount -t tmpfs tmpfs /mnt",
+    ],
+)
+def test_agent_flags_and_refuses_tripwire_commands_before_exec(command, tmp_path, monkeypatch):
+    model = _ScriptedModel(
+        [
+            _response("call-risky", "terminal", {"command": command}, 611),
+            _response("call-submit", "submit", {"answer": "done"}, 612),
+        ]
+    )
+    agent = _configured_agent(tmp_path, monkeypatch, model)
+    environment = _ToyEnvironment()
+    context = SimpleNamespace(n_input_tokens=0, n_cache_tokens=0, n_output_tokens=0, metadata={})
+
+    async def run_agent():
+        await agent.setup(environment)
+        await agent.run("Do the synthetic task.", environment, context)
+
+    asyncio.run(run_agent())
+
+    assert environment.commands == []
+    rows = [json.loads(line) for line in (tmp_path / "agent-logs" / "aas_steps.jsonl").read_text().splitlines()]
+    assert rows[0]["tripwire_flags"]
+    assert rows[0]["exit_code"] == 126
+    assert "tripwire" in rows[0]["observation"].lower()
+
+
+def test_agent_flags_and_refuses_configured_check_before_exec(tmp_path, monkeypatch):
+    model = _ScriptedModel([])
+    agent = _configured_agent(tmp_path, monkeypatch, model)
+    environment = _ToyEnvironment()
+    agent.extra_env["AAS_CHECK_BUILD"] = "curl http://169.254.169.254/latest/meta-data"
+
+    async def run_check():
+        await agent.setup(environment)
+        agent._strategy = agent._strategy.model_copy(
+            update={
+                "verification": agent._strategy.verification.model_copy(
+                    update={"checks": [Check.BUILD]}
+                )
+            }
+        )
+        return await agent._run_own_checks(environment, agent._strategy)
+
+    asyncio.run(run_check())
+
+    assert environment.commands == []
+    rows = [json.loads(line) for line in (tmp_path / "agent-logs" / "aas_steps.jsonl").read_text().splitlines()]
+    assert rows[0]["action"] == "check:build"
+    assert rows[0]["tripwire_flags"] == ["url", "ipv4_address"]
+    assert rows[0]["exit_code"] == 126
 
 
 def test_reward_reader_uses_harbor_verifier_result():

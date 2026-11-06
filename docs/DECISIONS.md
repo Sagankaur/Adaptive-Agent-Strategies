@@ -65,7 +65,7 @@ From [TECHNICAL_PLAN.md](TECHNICAL_PLAN.md), section 1. None is dropped.
 
 This is the one list of questions for you. [OVERVIEW.md](OVERVIEW.md) and [EXPERIMENTS.md](EXPERIMENTS.md) summarise it and link here. Where they differ, this list holds.
 
-There are ten in all: seven questions (Q1 to Q6 and Q8) and three items left from the 2026-10-15 plan (plan items 1, 6 and 11).
+There are eleven in all: eight questions (Q1 to Q6, Q8 and Q9) and three items left from the 2026-10-15 plan (plan items 1, 6 and 11).
 
 | Q | Topic (meeting point) | Urgent | Answer by (estimate) | Default if no answer | Why it matters |
 |---|---|---|---|---|---|
@@ -76,6 +76,7 @@ There are ten in all: seven questions (Q1 to Q6 and Q8) and three items left fro
 | [Q5](#q5-compute-meeting-point-6) | Compute: GPU, GPU-days, who provides them, consumer machine (6) | Yes, first | Run host from W7, 2026-11-30; GPU-days by G0, W13, 2027-01-11; consumer machine by W20 | E-PORT emulated; plan the full core; halt at G0 below the floor | No episode can run without a GPU |
 | [Q6](#q6-fallback-models-meeting-point-6) | Fallback models (6) | No | Only if the primary model fails at G0 (W13); then within one week | Stated order; (b) if no local model passes | Model choice at G0 |
 | [Q8](#q8-a-free-form-code-edit-baseline-informational) | Free-form code-edit baseline B5 | No | W11, 2026-12-28 preferred; W20 at the latest | B5 stays Tier C rank 4 | Order of optional work |
+| [Q9](#q9-model-choice-under-the-qwen-egress-advisory) | Model choice after the Cohere Qwen agent-egress report | Yes, before any real-model task job | Before real-model task jobs resume | No model-job default; pause those jobs, serving-only allowed | Model choice and experiment comparability |
 | [Plan item 1](#plan-item-1-duration-start-date-hours-per-week-and-supervision-rhythm) | Duration, start, hours, supervision | No | Before G0, W13, 2027-01-11 | 24-week target; schedule at 20 hours per week | Sets every date and the venue |
 | [Plan item 6](#plan-item-6-model-for-the-diagnoser-and-proposer) | Same or stronger model for diagnoser and proposer | No | W20, 2027-03-01 | (a) same model | Model pins freeze at Stage 1 |
 | [Plan item 11](#plan-item-11-publication-target-and-authorship) | Venue and authorship | No | W28, 2027-04-26; earlier if NeurIPS 2027 is wanted | None | Page budget and write-up start |
@@ -315,6 +316,26 @@ Either way, B5 runs only if its gates pass before Stage 1: a sandbox escape test
 
 **Source.** [M1](DESIGN_REVIEW_2026-10.md#m1-novelty-reframe-and-a-code-edit-baseline-b5).
 
+#### Q9. Model choice under the Qwen egress advisory
+
+**Evidence.** On 2026-10-26, Cohere reported that Qwen3.8-Flash-Next attempted an outbound request during a defensive security-agent task and that its sandbox blocked the request. Cohere says the cause and intent are undetermined. The report concerns Qwen3.8-Flash-Next; the project currently pins Qwen3.6-35B-A3B, so this is a safety signal, not evidence that the pinned model has shown the same behavior. See [Cohere's report](https://cohere.com/blog/concerning-behaviour-popular-open-weight-ai-model).
+
+**Question.** After task-container egress is blocked and verified, do you want to keep the pinned Qwen3.6 model for the planned agent experiments, or pause Qwen agent use and choose another model? Serving-only model measurements do not execute task commands and may continue.
+
+| Option | What changes |
+|---|---|
+| Keep pinned Qwen3.6 after the network-isolation gate passes | Preserve the current model pin and experiment plan. The model is not treated as trusted; the task container remains isolated and audited |
+| Pause Qwen agent use and select another model | Requalify the alternative for tool use, context, throughput, starting score and resource fit; update model pins, costs, calibration and pre-registration before any task episodes |
+| Defer model choice | Keep all real-model task-command jobs paused; continue only serving-only work until you decide |
+
+**Recommendation.** Keep the Qwen3.6 pin as a candidate, but do not run agent-task commands before the independent network-isolation gate passes. Decide before E-P0 whether the advisory warrants a model change; changing models requires a documented requalification and amendment.
+
+**Default if no answer.** No real-model task-command jobs resume. Serving-only work may continue. This is a safety hold, not an implicit approval of Qwen for agent use.
+
+**Owner.** Prof. Mohamed Abdelrazek decides; Sagandeep Kaur records the choice and updates the model plan.
+
+**Source.** [Cohere report (2026-10-26)](https://cohere.com/blog/concerning-behaviour-popular-open-weight-ai-model); [safety gate and evidence](experiments/harbor-egress-safety-2026-11.md).
+
 #### Plan item 1. Duration, start date, hours per week and supervision rhythm
 
 From the 2026-10-15 list in [TECHNICAL_PLAN.md](TECHNICAL_PLAN.md), section 11, item 1.
@@ -425,6 +446,7 @@ Entries are added, never edited. A correction is a new entry. "Decided" means pr
 | 20 | 2026-10-20 | The attribution part of the M1 contribution sentence now reads "leave-one-out attribution over changed strategy-dimension groups". E-ATTR reverts changed dimension groups of S\*1, not single fields | Decided | [M1](DESIGN_REVIEW_2026-10.md#m1-novelty-reframe-and-a-code-edit-baseline-b5), [M16](DESIGN_REVIEW_2026-10.md#m16-total-compute-and-the-cut-order) |
 | 21 | 2026-11-06 | Protocol deviation: on 2026-11-05, an AI assistant read only public `instruction.md` files for 13 TB2 sibling-candidate pairs (26 pair-task appearances across 19 distinct task IDs, listed below) to review split leakage. No tests, solutions, task environments, Oracle outputs or experimental outcomes were read. No further TB2 task-text reads will be made. This familiarity risk applies to both routes: the TB-Pro route holds out all 89 TB2 tasks, while E-RESPLIT would hold out H52. Disclose this deviation in the pre-registration limitations | Recorded; add to Stage-1 and Stage-2 pre-registration limitations | [Review protocol and decisions](experiments/E-RESPLIT-candidate-review-amendment-2026-11-05.md) |
 | 22 | 2026-11-06 | Proposal only for Prof. Abdelrazek: if no TB-Pro author response arrives by 2026-11-20, request explicit approval to try Laude GHCR bases pinned by digest, retain only tasks whose reference solution passes on TB-Pro as a functional-equivalence screen, and accept the README plus Hugging Face card Apache-2.0 statements as licence evidence. This would change P-M2 rules and is not adopted. Preserve G-ROUTE's ≥120-task criterion. Issue #10 reports 125/200 passed in another user's run, while all 68 Ubuntu-base tasks failed before reference-solution/verifier execution; this is comparison context, not our result or evidence of image equivalence | Proposal; explicit sign-off required before any changed P-M2 route and before Stage 1; no default | [TB-Pro issue #10](https://github.com/alibaba/terminal-bench-pro/issues/10), [P-M2](experiments/P-M2-preflight-2026-10-30.md) |
+| 23 | 2026-11-06 | Cohere's 2026-10-26 report describes a blocked outbound request by Qwen3.8-Flash-Next during a security-agent task; it does not establish intent or show the project's pinned Qwen3.6 made the same attempt. Prof. Abdelrazek must decide whether to keep the pinned model after egress isolation passes or pause Qwen agent use and select another model. Until the isolation gate passes, real-model task-command jobs remain paused; serving-only work may continue | Open; professor decision before any real-model task-command job; no default | Q9 and [Harbor egress safety review](experiments/harbor-egress-safety-2026-11.md) |
 
 ### Entry 21: TB2 instruction pairs reviewed
 
@@ -445,6 +467,10 @@ The pair-task appearances are listed as reviewed; repeated task IDs are intentio
 | 11 | `circuit-fibsqrt`; `polyglot-rust-c` |
 | 12 | `chess-best-move`; `regex-chess` |
 | 13 | `extract-moves-from-video`; `regex-chess` |
+
+### Entry 23: model choice after the Qwen egress advisory
+
+This is a question for Prof. Abdelrazek, not a decision made by the project. Cohere reports a blocked outbound attempt by Qwen3.8-Flash-Next and leaves its cause/intent unresolved. The selected Qwen3.6 model is a different version, and this report does not establish that it has made such an attempt. The network-isolation gate remains mandatory for either model choice. The immediate hold applies to real-model jobs that execute task commands; serving-only jobs remain allowed.
 
 **To be logged when they happen.**
 
