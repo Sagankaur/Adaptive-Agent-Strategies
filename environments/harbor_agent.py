@@ -10,6 +10,7 @@ from __future__ import annotations
 import hashlib
 import ipaddress
 import json
+import logging
 import os
 import re
 import time
@@ -72,12 +73,13 @@ _IPV4_TOKEN = re.compile(r"(?<![\w.])(?:\d{1,3}\.){3}\d{1,3}(?![\w.])")
 _IPV6_TOKEN = re.compile(r"(?<![\w:])(?:[0-9a-f]{0,4}:){2,}[0-9a-f:.%]{0,}(?![\w:])", re.IGNORECASE)
 _NAMESPACE_TOKEN = re.compile(r"(?<![\w.-])(?:unshare|nsenter)(?![\w.-])", re.IGNORECASE)
 _MOUNT_TOKEN = re.compile(r"(?<![\w.-])mount(?![\w.-])", re.IGNORECASE)
+_LOGGER = logging.getLogger(__name__)
 
 
 def command_tripwire_flags(command: str) -> list[str]:
     """Return monitoring flags for network and namespace-sensitive shell text.
 
-    This text scan is a command filter, not a security boundary. It cannot
+    This text scan is a monitoring signal, not a security boundary. It cannot
     establish network isolation or detect every obfuscated/system-call path.
     """
     flags: list[str] = []
@@ -92,6 +94,17 @@ def command_tripwire_flags(command: str) -> list[str]:
     if _MOUNT_TOKEN.search(command):
         flags.append("mount_tool")
     return flags
+
+
+def _log_tripwire(action: str, command: str | None, flags: list[str]) -> None:
+    if flags and command:
+        digest = hashlib.sha256(command.encode("utf-8")).hexdigest()[:12]
+        _LOGGER.warning(
+            "Harbor command tripwire matched action=%s flags=%s command_sha256=%s",
+            action,
+            ",".join(flags),
+            digest,
+        )
 
 
 def _is_valid_ip(token: str) -> bool:
@@ -333,23 +346,7 @@ class HarborStrategyAgent(BaseAgent):
                     if not isinstance(command, str) or not command.strip():
                         raise HarborAgentProtocolError(f"terminal call {call.id!r} requires a non-empty command")
                     tripwire_flags = command_tripwire_flags(command)
-                    if tripwire_flags:
-                        observation = "Command refused by the monitoring tripwire; this is not network isolation."
-                        return_code = 126
-                        self._write_step(
-                            response,
-                            call.name,
-                            call.id,
-                            observation,
-                            return_code,
-                            args,
-                            tripwire_flags=tripwire_flags,
-                        )
-                        messages.append(
-                            {"role": "tool", "tool_call_id": call.id, "content": f"exit={return_code}\n{observation}"}
-                        )
-                        self._step_index += 1
-                        continue
+                    _log_tripwire(call.name, command, tripwire_flags)
                     if self._references_hidden_path(command):
                         observation = "Command refused because it references verifier or solution paths."
                         return_code = 126
@@ -391,7 +388,15 @@ class HarborStrategyAgent(BaseAgent):
                     observation = (result.stdout or "") + (result.stderr or "")
                     return_code = result.return_code
                     observation = observation[: strategy.tool_policy.max_observation_chars]
-                self._write_step(response, call.name, call.id, observation, return_code, args)
+                self._write_step(
+                    response,
+                    call.name,
+                    call.id,
+                    observation,
+                    return_code,
+                    args,
+                    tripwire_flags=tripwire_flags,
+                )
                 messages.append(
                     {
                         "role": "tool",
@@ -420,14 +425,13 @@ class HarborStrategyAgent(BaseAgent):
                 break
             command = commands.get(probe)
             tripwire_flags = command_tripwire_flags(command) if command else []
+            _log_tripwire(f"probe:{probe}", command, tripwire_flags)
             if not shell_allowed:
                 observation, code = "Skipped: strategy does not allow shell probes.", 0
             elif probe == Probe.INSPECT_TESTS:
                 observation, code = "Skipped: Harbor keeps verifier tests unavailable during agent execution.", 0
             elif command is None:
                 observation, code = "Probe is not implemented by this Harbor adapter.", 127
-            elif tripwire_flags:
-                observation, code = "Probe refused by the monitoring tripwire; this is not network isolation.", 126
             else:
                 result = await environment.exec(command, timeout_sec=self._command_timeout(strategy))
                 observation = (result.stdout or "") + (result.stderr or "")
@@ -457,6 +461,7 @@ class HarborStrategyAgent(BaseAgent):
             variable = f"AAS_CHECK_{check.value.upper()}"
             command = self._setting(variable)
             tripwire_flags = command_tripwire_flags(command) if command else []
+            _log_tripwire(f"check:{check}", command, tripwire_flags)
             if not shell_allowed:
                 result_text, code = "Skipped: strategy does not allow shell checks.", 0
             elif check == Check.RUN_VISIBLE_TESTS and not command:
@@ -465,9 +470,6 @@ class HarborStrategyAgent(BaseAgent):
                 result_text, code = f"Skipped: {variable} is not configured.", 0
             elif self._references_hidden_path(command):
                 result_text, code = "Skipped: configured check references verifier or solution paths.", 126
-            elif tripwire_flags:
-                result_text = "Configured check refused by the monitoring tripwire; this is not network isolation."
-                code = 126
             else:
                 result = await environment.exec(command, timeout_sec=self._command_timeout(strategy))
                 result_text = (result.stdout or "") + (result.stderr or "")

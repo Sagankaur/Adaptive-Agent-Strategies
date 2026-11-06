@@ -183,7 +183,7 @@ def test_command_tripwire_leaves_plain_local_commands_unflagged():
         "/bin/mount -t tmpfs tmpfs /mnt",
     ],
 )
-def test_agent_flags_and_refuses_tripwire_commands_before_exec(command, tmp_path, monkeypatch):
+def test_agent_logs_tripwire_and_executes_command(command, tmp_path, monkeypatch):
     model = _ScriptedModel(
         [
             _response("call-risky", "terminal", {"command": command}, 611),
@@ -200,14 +200,15 @@ def test_agent_flags_and_refuses_tripwire_commands_before_exec(command, tmp_path
 
     asyncio.run(run_agent())
 
-    assert environment.commands == []
+    assert len(environment.commands) == 1
+    assert environment.commands[0][0] == command
     rows = [json.loads(line) for line in (tmp_path / "agent-logs" / "aas_steps.jsonl").read_text().splitlines()]
     assert rows[0]["tripwire_flags"]
-    assert rows[0]["exit_code"] == 126
-    assert "tripwire" in rows[0]["observation"].lower()
+    assert rows[0]["exit_code"] == 0
+    assert "created output" in rows[0]["observation"]
 
 
-def test_agent_flags_and_refuses_configured_check_before_exec(tmp_path, monkeypatch):
+def test_agent_logs_tripwire_and_executes_configured_check(tmp_path, monkeypatch):
     model = _ScriptedModel([])
     agent = _configured_agent(tmp_path, monkeypatch, model)
     environment = _ToyEnvironment()
@@ -226,11 +227,12 @@ def test_agent_flags_and_refuses_configured_check_before_exec(tmp_path, monkeypa
 
     asyncio.run(run_check())
 
-    assert environment.commands == []
+    assert len(environment.commands) == 1
+    assert environment.commands[0][0] == "curl http://169.254.169.254/latest/meta-data"
     rows = [json.loads(line) for line in (tmp_path / "agent-logs" / "aas_steps.jsonl").read_text().splitlines()]
     assert rows[0]["action"] == "check:build"
     assert rows[0]["tripwire_flags"] == ["url", "ipv4_address"]
-    assert rows[0]["exit_code"] == 126
+    assert rows[0]["exit_code"] == 0
 
 
 def test_reward_reader_uses_harbor_verifier_result():

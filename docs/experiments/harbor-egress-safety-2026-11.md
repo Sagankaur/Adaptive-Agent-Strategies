@@ -48,7 +48,7 @@ Apptainer's [1.3 networking guide](https://apptainer.org/docs/user/1.3/networkin
 
 The initial network and filesystem probe is recorded above. The complete Harbor integration test remains open. Run only a made-up scripted task, with no model client, Oracle, benchmark task or reference solution. The integration test passes only when all of these are demonstrated in the same task-container configuration:
 
-- the actual Apptainer argv includes `exec --net --network none --writable-tmpfs` and omits `--fakeroot` if the write probe succeeds without it;
+- the actual Apptainer argv includes `exec --net --network none --writable-tmpfs`; omit `--fakeroot` only after the full Harbor provider startup, health check, `environment.exec`, and cleanup all succeed without it (the `/app` write probe alone is insufficient);
 - task writes under the expected working directory succeed;
 - a unique-nonce request and response traverse the mounted Unix-socket control channel, and Harbor's ordinary `environment.exec` returns the expected result;
 - `curl` is present in the image, then a request to a controlled external HTTPS host and a direct request to `169.254.169.254` both fail because of network reachability (not because `curl` is missing or the command is malformed);
@@ -58,7 +58,7 @@ Save the job script, provider patch/hash, Harbor and Apptainer versions, full ar
 
 ## Adapter tripwire
 
-`HarborStrategyAgent` now scans proposed terminal commands and configured shell checks/probes for URLs, valid IPv4/IPv6 addresses, `unshare`, `nsenter`, and `mount`. Matching commands are refused before `environment.exec`, and `aas_steps.jsonl` records `tripwire_flags` on every step. This is command-text monitoring and filtering only. It is not a network boundary: obfuscated shell, Python or another executable can make network calls without matching these strings. Only the task-container network isolation test can close the egress gate.
+`HarborStrategyAgent` scans proposed terminal commands and configured shell checks/probes for URLs, valid IPv4/IPv6 addresses, `unshare`, `nsenter`, and `mount`. Matching commands produce a warning with their flag types and a truncated SHA-256 digest; `aas_steps.jsonl` records `tripwire_flags`. The tripwire does not refuse commands and does not enforce egress policy. Obfuscated shell, Python or another executable can make network calls without matching these strings. Only the task-container network isolation test can close the egress gate.
 
 ## Harbor telemetry
 
@@ -74,8 +74,8 @@ See [DECISIONS.md, Q9](../DECISIONS.md#q9-model-choice-under-the-qwen-egress-adv
 |---|---|
 | Logs for 4410693 and 4433963 | Eight logs searched; no suspicious-command indicators in `aas_steps.jsonl`; benign runtime/local-URL matches described above |
 | Apptainer egress isolation | Scripted probe job 4626138 passed on Rohan CPU node; no task routes; external and metadata curl attempts failed with exit 7 |
-| `--writable-tmpfs` without fakeroot | `/app` write passed in job 4626138 |
+| `/app` writable tmpfs without fakeroot | Passed in job 4626138; full Harbor startup without fakeroot remains untested |
 | Harbor control channel under network isolation | Not implemented or tested; Unix-socket provider patch still required |
-| Adapter tripwire | Implemented; local unit tests cover classification and pre-execution refusal |
+| Adapter tripwire | Implemented as monitoring; unit tests cover flags, warning behavior, and continued execution |
 | Harbor telemetry opt-out | Verified from pinned 0.23.0 source; set `HARBOR_TELEMETRY=off` for future jobs |
 | Real-model command jobs | Paused until egress and control-channel checks pass |
