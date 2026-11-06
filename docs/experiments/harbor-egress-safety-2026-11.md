@@ -1,4 +1,4 @@
-# Harbor egress safety review — 2026-11-06
+# Harbor egress safety review - 2026-11-06
 
 ## Safety gate
 
@@ -6,9 +6,9 @@ No job that executes real-model commands may run until task-container egress is 
 
 ## Audit of the two existing Harbor jobs
 
-**Result: not audited; no clean-log conclusion is available.** The local repository contains the run summaries but not `aas_steps.jsonl`, Harbor `trial.log` files, or agent logs for either job. A key-only `ssh -o BatchMode=yes rohan ...` attempt failed before authentication because `login-f.ai.deakin.edu.au` did not resolve. No password authentication or password helper was used. Therefore zero log files were searched and there is no evidence from this attempt about whether either run issued a suspicious command.
+**Result: searched four logs per job using key-only SSH on 2026-11-06.** For each job, the searched files were Harbor `job.log`, agent `aas_steps.jsonl`, Harbor `trial.log`, and `server.log` under `/scratch/kasag/harbor-smoke/real-qwen/<job>/harbor_jobs/aas_qwen_harbor_<job>/`. The `aas_steps.jsonl` files had no matches for any requested indicator. Across all four files per job, there were no matches for `169.254`, `curl`, `wget`, `aliyuncs`, `oss-`, `unshare`, or `nsenter`. The `mount` matches were Apptainer warnings that `squashfuse` and `fuse2fs` are unavailable. URL matches were Harbor's localhost execution-server and llama.cpp listener URLs, plus a GitHub pull-request link embedded in a llama.cpp warning about its local server configuration. These are not evidence of agent-issued outbound commands. The audit applies only to these eight files; it does not prove network isolation or establish what happened in unsearched files.
 
-When the key-only cluster connection is available, audit only those logs for each job with:
+The raw logs remain on Rohan under the paths above. The scan does not prove the container was isolated; both historical jobs ran with task internet available. `server.log` also records that llama.cpp ran without an API key and allowed permissive CORS while listening on loopback. Treat that as a separate local-service hardening issue for any future model job.
 
 ```bash
 for job in 4410693 4433963; do
@@ -27,7 +27,7 @@ for job in 4410693 4433963; do
 done
 ```
 
-Record the exact files searched and matching lines. If `grep` finds no matches, state that only for the files actually searched; it does not prove the container was isolated.
+The search was limited to the requested indicators in these eight files. The exact match categories are summarized above.
 
 ## Harbor 0.23.0 control-channel finding
 
@@ -42,11 +42,11 @@ The viable design to test is a Harbor 0.23.0 provider patch that:
 
 This requires a provider patch; there is no existing Harbor job-config option that turns the current localhost TCP server into a Unix socket. A socket exchange is not assumed to work until a scripted task demonstrates request/response with a unique nonce and ordinary `environment.exec` continues to work.
 
-Apptainer's [1.3 networking guide](https://apptainer.org/docs/user/1.3/networking.html) documents `--network` together with `--net`; `none` is the no-external-network candidate. A2I2 module and Slurm policy still need an on-node check. The historical task-filesystem probe used both `--writable-tmpfs` and `--fakeroot`, so it does **not** show that fakeroot is needed or that writable tmpfs works alone. The scripted gate must test writable writes with `--writable-tmpfs` and no fakeroot first, then record the actual runtime argv.
+Apptainer's [1.3 networking guide](https://apptainer.org/docs/user/1.3/networking.html) documents `--network` together with `--net`. The on-node probe used this configuration on Rohan CPU node `cpu-f-01`, without `--fakeroot`. The image's `/app` write succeeded, `/proc/net/dev` showed only `lo`, `/proc/net/route` had no routes, and curl requests to `https://1.1.1.1/` and `http://169.254.169.254/latest/meta-data/` both failed with curl exit 7 (could not connect). The successful probe was job **4626138**, exit `0:0`; its complete log and Slurm output are under `/scratch/kasag/harbor-smoke/egress-probe/4626138/`. The first attempt failed because the image lacked curl. A second attempt using the host curl with the container dynamic loader segfaulted; the passing attempt explicitly used the host loader and libraries mounted read-only. This proves the tested Apptainer invocation blocked the two requested endpoints and that writable tmpfs works without fakeroot. It does not yet prove Harbor can communicate with the task under the same network configuration. A2I2 policy approval for the flags remains to be confirmed.
 
 ## Required scripted isolation test
 
-Run only a made-up scripted task, with no model client, agent, Oracle, benchmark task or reference solution. The test passes only when all of these are demonstrated in the same task-container configuration:
+The initial network and filesystem probe is recorded above. The complete Harbor integration test remains open. Run only a made-up scripted task, with no model client, Oracle, benchmark task or reference solution. The integration test passes only when all of these are demonstrated in the same task-container configuration:
 
 - the actual Apptainer argv includes `exec --net --network none --writable-tmpfs` and omits `--fakeroot` if the write probe succeeds without it;
 - task writes under the expected working directory succeed;
@@ -72,9 +72,10 @@ See [DECISIONS.md, Q9](../DECISIONS.md#q9-model-choice-under-the-qwen-egress-adv
 
 | Item | Status |
 |---|---|
-| Logs for 4410693 and 4433963 | Not audited; raw logs inaccessible while key-only SSH name resolution fails |
-| Egress isolation and Harbor control channel | Designed around a provider patch and Unix socket; not implemented or tested on Rohan |
-| `--writable-tmpfs` without fakeroot | Not tested |
+| Logs for 4410693 and 4433963 | Eight logs searched; no suspicious-command indicators in `aas_steps.jsonl`; benign runtime/local-URL matches described above |
+| Apptainer egress isolation | Scripted probe job 4626138 passed on Rohan CPU node; no task routes; external and metadata curl attempts failed with exit 7 |
+| `--writable-tmpfs` without fakeroot | `/app` write passed in job 4626138 |
+| Harbor control channel under network isolation | Not implemented or tested; Unix-socket provider patch still required |
 | Adapter tripwire | Implemented; local unit tests cover classification and pre-execution refusal |
 | Harbor telemetry opt-out | Verified from pinned 0.23.0 source; set `HARBOR_TELEMETRY=off` for future jobs |
 | Real-model command jobs | Paused until egress and control-channel checks pass |
