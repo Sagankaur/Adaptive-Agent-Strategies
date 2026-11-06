@@ -21,5 +21,5 @@
     "mean_tokens": 1088.0,
     "mean_dollars": null
   },
-  "result_path": "/home/kasag/jobs/out/project_client_toy_4316173/toy_run.jsonl"
+  "result_path": "cluster-scratch: jobs/out/project_client_toy_4316173/toy_run.jsonl"
 }

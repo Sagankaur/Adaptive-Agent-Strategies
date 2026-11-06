@@ -11,7 +11,7 @@ The review used only public `instruction.md` files for the 13 unconfirmed high-s
 | Artifact | SHA-256 |
 |---|---|
 | Pinned task metadata, `evaluation/data/tb2_tasks.jsonl` | `ed7d652ea977eb0a609daa551ba5bfc61f96631e32fbd6f48d77f6adb04ffe1e` |
-| Reviewed sibling-group manifest, `evaluation/data/tb2_sibling_groups.json` | `e7141dc44e4be6213580a0ebc99d4f0b634060b4ebb12d09cc98a315da36505c` |
+| Reviewed sibling-group manifest, `evaluation/data/tb2_sibling_groups.json` | `d36bcd4ba1256e33af811f3ae8a2920c0030ea74a7eb7f9cb6618b6bc71c3335` |
 | Existing split, `splits/terminal-bench-2.0.json` | `ad74c41b98d55111eda914d3048810a6035d0663316ff6d54933d0e41f0720f9` |
 | V1 candidate, superseded | `7f16e19e8d93d27bb4608b782ba217389255c9c943069f7fc5c2df44f932a8be` |
 | V2 candidate, superseded | `c7c803165947eecee3d4b5d4c7d21bf1cf080473eeafe2eee06fc887740081bc` |

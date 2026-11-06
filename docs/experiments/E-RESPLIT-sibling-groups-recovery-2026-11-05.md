@@ -2,7 +2,7 @@
 
 ## Finding
 
-The missing nine pair IDs were present in the original local red-team notes, outside the Git repository. From the repository root, the source is `../plan/research_2026-10/inputs/02_methodology_redteam.md`, lines 30–42, SHA-256 `fa249936dd967cac736e40d8ec6c78fb70abcc0966ab56d3cee044a7d9de4bfd`. Its table explicitly identifies the held-out task, sibling, and sibling pool for each pair.
+The missing nine pair IDs were present in design-review red-team notes (2026-10, not in the repository), lines 30–42, SHA-256 `fa249936dd967cac736e40d8ec6c78fb70abcc0966ab56d3cee044a7d9de4bfd`. Their table explicitly identifies the held-out task, sibling, and sibling pool for each pair.
 
 | Group | Held-out task | Sibling task | Existing pool |
 |---|---|---|---|
