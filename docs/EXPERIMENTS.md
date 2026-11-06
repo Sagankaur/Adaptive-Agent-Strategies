@@ -141,6 +141,8 @@ These are not experiments, but experiments depend on them. None uses a GPU episo
 
 **G1 fallback.** If recovery.\* cannot be compiled by the planned Stage-1 date, the typed-strategy claim is narrowed in the pre-registration and logged. It is never kept silently.
 
+**Current feasibility status (2026-11-06).** G1 remains open. Implementation stopped before code changes because the current Harbor lifecycle exposes no reset/snapshot operation for the required `restart_task` recovery value. See [G1 compile feasibility note](experiments/G1-compile-2026-11.md); no G1 tests or field labels are claimed.
+
 ### Thresholds and where they come from
 
 Each decision threshold has one of three sources: a **simulation** or arithmetic shown here, a **convention**, or **owner judgement** (a round value chosen in the design review, not derived). All are frozen in the Stage-1 tag.
