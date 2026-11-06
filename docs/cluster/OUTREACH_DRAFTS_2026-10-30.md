@@ -71,7 +71,7 @@ Thank you for the storage guidance. I have completed a key-only login to Rohan a
 
 I will ask Mohamed to validate Harbor's actual connection requirements and the five-task smoke acceptance criteria. I am not asking A2I2 to certify Harbor behavior; I need the supported cluster runtime and network-control options.
 
-3. **Resolved locally on 2026-11-06; withdraw from future support follow-up.** The batch wrapper used `#!/bin/bash -l` and ended with `exit "$STATUS"`; on Ubuntu, that invokes `~/.bash_logout`, whose default `clear_console` condition can return 1 and produce `FAILED 1:0` after a successful runner. This was reproduced in an Ubuntu 24.04 container. The wrapper now ends with `(exit "$STATUS")`; a one-minute CPU job and `sacct` confirmation are still pending because key-only SSH could not resolve Rohan's hostname on 2026-11-06. No support response is needed for this wrapper issue.
+3. **Local mitigation applied; support follow-up withdrawn; cluster verification pending.** The batch wrapper used `#!/bin/bash -l` and ended with `exit "$STATUS"`; a possible explanation is that the login shell runs `~/.bash_logout`, whose default `clear_console` condition can return 1 and produce `FAILED 1:0` after a successful runner. This was reproduced in an Ubuntu 24.04 container, not verified on Rohan. The wrapper now ends with `(exit "$STATUS")`; a one-minute CPU job and `sacct` confirmation are still pending because key-only SSH could not resolve Rohan's hostname on 2026-11-06. No support response is needed unless this local mitigation fails.
 
 ## A2I2 cluster-only resend draft (2026-11-06; not sent)
 
@@ -123,4 +123,4 @@ Thank you,
 
 Sagandeep
 
-**Status (2026-11-06):** The TB-Pro author email was sent on 2026-10-30; no reply had arrived by this date. The earlier A2I2 technical follow-up was sent as reported; question 3 about Slurm `FAILED 1:0` is now resolved locally and withdrawn from future support follow-up. The cluster-only resend above is a draft and has not been sent. The Digital Services RDS host-key message remains a draft. The original A2I2 support message was sent earlier and received the general storage response summarized above.
+**Status (2026-11-06):** The TB-Pro author email was sent on 2026-10-30; no reply had arrived by this date. The earlier A2I2 technical follow-up was sent as reported. Question 3 about Slurm `FAILED 1:0` has a local mitigation and likely explanation, but Rohan verification remains pending; support follow-up is withdrawn unless the mitigation fails. The cluster-only resend above is a draft and has not been sent. The Digital Services RDS host-key message remains a draft. The original A2I2 support message was sent earlier and received the general storage response summarized above.
