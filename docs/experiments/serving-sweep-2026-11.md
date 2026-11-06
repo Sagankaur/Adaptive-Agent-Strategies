@@ -107,9 +107,11 @@ The full 28-cell summary across all four measured GPU configurations is in [serv
 
 In this cell, the RTX Pro's median aggregate throughput was about 1.35× the L40S q8_0 result. This is an engineering comparison for one model, build, and synthetic input shape, based on three batch repetitions; it is not a general GPU ranking. The output cap is not a fixed generation length: the model stopped early on some calls, as the ranges show. At a 63,360-token prompt with a 2,048-token cap, median aggregate throughput was 3,143 tok/s on L40S q8_0 and 2,883 tok/s on L40S f16; both had a median realized output of 2,048 tokens. The f16 and q8_0 order therefore depends on workload shape, and this sweep does not justify a universal cache-precision choice.
 
-### Slurm accounting discrepancy
+### Slurm exit-status cause
 
-Slurm reports all six experiment jobs (`4504954`, `4504968`, `4504971`, `4505001`, `4505018`, `4505019`) as `FAILED`, exit `1:0`, even though each has a complete `run_finished` record and successful runner statuses. For the three runs using the updated wrapper (`4505001`, `4505018`, `4505019`), the captured batch output explicitly says `runner_exit_status=0`; `sacct` also reports `DerivedExitCode=0:0`, while the batch step still says `FAILED 1:0`. Their `.err` files are empty. The earlier wrapper versions did not print the runner exit code. The measurement JSONL and output files are complete, but the reason for the Slurm state is unresolved; ask A2I2 support to explain the discrepancy before relying on job state alone in future automation.
+The six experiment jobs (`4504954`, `4504968`, `4504971`, `4505001`, `4505018`, `4505019`) remain recorded by Slurm as `FAILED`, exit `1:0`, although their runner records completed successfully. The wrapper used `#!/bin/bash -l` and ended with the `exit` builtin. In an Ubuntu login shell, that invokes `~/.bash_logout`; the default logout command's `clear_console` condition can return 1 and replace the intended job status. This was reproduced in an Ubuntu 24.04 container (`exit 0` yielded status 1; reaching end-of-file after a successful command yielded status 0).
+
+The wrapper now ends with `(exit "$STATUS")` as its last command. This returns the runner status without invoking the login-shell `exit` builtin and leaves the signal handler unchanged. A one-minute CPU-only Rohan job is still required to confirm `sacct` reports `COMPLETED 0:0`; the current key-only SSH attempt could not resolve the Rohan hostname, so that cluster confirmation is pending.
 
 ### Interpretation and limits
 

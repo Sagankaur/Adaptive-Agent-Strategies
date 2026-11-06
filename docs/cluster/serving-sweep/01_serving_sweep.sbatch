@@ -76,4 +76,4 @@ else
 fi
 log "runner_exit_status=$STATUS"
 PY_PID=
-exit "$STATUS"
+(exit "$STATUS")
