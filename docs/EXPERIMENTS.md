@@ -192,7 +192,7 @@ Each decision threshold has one of three sources: a **simulation** or arithmetic
 - **Survivor floor (estimate).** With 120 survivors, 105 tasks enter E0. If TB-Pro difficulty resembles TB2's (unverified), a task is contested at k=5 with probability 0.308. Then the expected C5 is about 32, P(C5 ≥ 30) is about 0.7 and P(C5 < 20) is below 0.01.
 - **Risks.** TB-Pro is a different source, so RQ2 becomes "cross-source (TB-Pro to TB2)". Some TB-Pro tasks may be related to TB2 tasks without being copies; dedup is by owner review. TB-Pro's difficulty is unknown. TB-Pro and the Qwen models share a provider, which could inflate calibration scores; the memorisation probe in E0 reports this.
 - **Paper slot.** A1 (TB-Pro routing table); Table 7 (pools); A3 (allowlist fork diff and per-task host lists); A7 (dedup removal list).
-- **Status.** Preflight underway as of 2026-10-30; the custom Alibaba base-image registry is unreachable from Rohan, so builds and Oracle checks have not run. See [`P-M2-preflight-2026-10-30.md`](experiments/P-M2-preflight-2026-10-30.md). Replacing the committed split is **to confirm with Prof. Abdelrazek** (Q3; see [Open questions](#open-questions-for-prof-abdelrazek)).
+- **Status (2026-11-06).** P-M2 is still pending replies and has not passed or failed its route gate. No TB-Pro task build or Oracle check has run. See [`P-M2-preflight-2026-10-30.md`](experiments/P-M2-preflight-2026-10-30.md). V3 is a prepared E-RESPLIT fallback candidate only; it is not adopted. The fallback triggers only if P-M2 formally fails the route gate, not while replies are pending or on a contested-supply shortfall. Replacing the committed split remains subject to Q3 and Stage-1 approval.
 - **Meeting points.** 2.
 
 ### E-P0 Bring-up and throughput sweep
@@ -585,8 +585,10 @@ See [E-T2](#e-t2-enforced-versus-advised). Rank 2. 445 episodes = 2.08 GPU-days.
 
 ### E-RESPLIT Fallback TB2 re-split
 
+**Current state (2026-11-06):** V3 is prepared but not adopted. P-M2 has not failed; its author and cluster-runtime replies are pending. Do not use V3 unless P-M2 route failure triggers this fallback and the required pre-registration decision is recorded.
+
 - **Research question.** RQ1 and RQ2, only if the TB-Pro route fails.
-- **Design.** Re-split TB2 into H52 held out plus A15 / V12 / V2 10, with sibling groups (the 9 known pairs plus review finds), seed 20261015, stratified by category and difficulty. Logged as a deviation from the committed split. S0 ×3 pre-screen on the 37 non-held-out tasks only.
+- **Design.** Prepared candidate V3 re-splits TB2 into H52 held out plus A15 / V12 / V2 10, with nine indivisible groups (seven pairs and two triplets), seed 20261015, stratified by category and difficulty. It is not the active split. If triggered, the route change is logged as a deviation from the committed split. S0 ×3 pre-screen on the 37 non-held-out tasks only.
 - **Cost.** Replaces the TB-Pro pools; E3-style arms on 52 tasks instead of 89.
 - **Go/no-go.** Triggered only by a P-M2 route failure, never by a contested-supply shortfall.
 - **Risks.** MDE about 7.6 pp at k=5 (5.8 × sqrt(89/52)), stated in the abstract. Only about 12 contested adaptation tasks among the 37 non-held-out tasks.

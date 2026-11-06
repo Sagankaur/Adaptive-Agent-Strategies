@@ -2,7 +2,7 @@
 
 ## Status
 
-V3 is a deterministic candidate, not a frozen experimental split. It supersedes V2 for consideration because the scoped instruction review accepted two additional leakage links. V1 and V2 remain preserved. The existing A25/V12/M15/H37 split was not modified. No task was built, Oracle-checked, reference solution run, or evaluated by an agent. H52 remains unexecuted.
+V3 is a prepared fallback candidate, not an adopted or frozen experimental split. It supersedes V2 for fallback consideration because the scoped instruction review accepted two additional leakage links. P-M2 has not failed; it is awaiting author and cluster-runtime replies. V3 is triggered only by a formal P-M2 route failure and the required pre-registration decision. V1 and V2 remain preserved. The existing A25/V12/M15/H37 split was not modified. No task was built, Oracle-checked, reference solution run, or evaluated by an agent. H52 remains unexecuted.
 
 The review used only public `instruction.md` files for the 13 unconfirmed high-similarity pairs, as authorized and recorded in [`E-RESPLIT-candidate-review-amendment-2026-11-05.md`](E-RESPLIT-candidate-review-amendment-2026-11-05.md). Eleven pairs were kept separate; two were added to existing groups. The amendment records each decision and its rationale, as well as the protocol deviation.
 
