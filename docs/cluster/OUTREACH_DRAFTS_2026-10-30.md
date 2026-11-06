@@ -77,7 +77,8 @@ I will ask Mohamed to validate Harbor's actual connection requirements and the f
 
 A2I2's storage response did not answer the cluster-runtime questions and referred Harbor-specific requirements to Mohamed. Keep this resend limited to cluster-supported runtime and egress controls; ask Mohamed separately about Harbor's own connection requirements.
 
-**To:** a2i2-it-support@deakin.edu.au  
+**To:** a2i2-it-support@deakin.edu.au
+
 **Subject:** Rohan batch support: Apptainer features and per-job egress controls
 
 Hello A2I2 support,
