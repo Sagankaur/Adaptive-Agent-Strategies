@@ -1,6 +1,6 @@
 # HPC and TB-Pro outreach drafts: 2026-10-30
 
-The initial A2I2 support message was sent and received a general storage response on 2026-11-02. On 2026-11-03, the user reported sending the TB-Pro author request and the A2I2 technical follow-up below; both are awaiting replies. Harbor-specific questions should be directed to Mohamed, as A2I2 support recommended.
+The initial A2I2 support message was sent and received a storage response on 2026-11-02. A2I2 referred Harbor-specific questions to Mohamed. The TB-Pro author email was sent on 2026-10-30; no reply had arrived by 2026-11-06. No issue comment or separate LICENSE issue is recorded here yet; the user plans to post and will confirm links before they are recorded. This file contains drafts only; do not send messages on the user's behalf.
 
 ## A2I2 HPC support — sent message
 
@@ -57,7 +57,7 @@ Thank you,
 Sagandeep
 
 
-## A2I2 follow-up draft: outstanding technical questions
+## A2I2 follow-up (previously sent; retained record)
 
 **To:** a2i2-it-support@deakin.edu.au
 **Subject:** Follow-up: approved Apptainer setup and task egress controls on Rohan
@@ -71,7 +71,35 @@ Thank you for the storage guidance. I have completed a key-only login to Rohan a
 
 I will ask Mohamed to validate Harbor's actual connection requirements and the five-task smoke acceptance criteria. I am not asking A2I2 to certify Harbor behavior; I need the supported cluster runtime and network-control options.
 
-3. **Resolved locally; withdraw this question from any support follow-up.** The batch wrapper used `#!/bin/bash -l` and ended with `exit "$STATUS"`; on Ubuntu, that invokes `~/.bash_logout`, whose default `clear_console` condition can return 1 and produce `FAILED 1:0` after a successful runner. This was reproduced in an Ubuntu 24.04 container. The wrapper now ends with `(exit "$STATUS")`; a one-minute CPU job and `sacct` confirmation are still pending because key-only SSH could not resolve Rohan's hostname on 2026-11-06. No support response is needed for this wrapper issue.
+3. **Resolved locally on 2026-11-06; withdraw from future support follow-up.** The batch wrapper used `#!/bin/bash -l` and ended with `exit "$STATUS"`; on Ubuntu, that invokes `~/.bash_logout`, whose default `clear_console` condition can return 1 and produce `FAILED 1:0` after a successful runner. This was reproduced in an Ubuntu 24.04 container. The wrapper now ends with `(exit "$STATUS")`; a one-minute CPU job and `sacct` confirmation are still pending because key-only SSH could not resolve Rohan's hostname on 2026-11-06. No support response is needed for this wrapper issue.
+
+## A2I2 cluster-only resend draft (2026-11-06; not sent)
+
+A2I2's storage response did not answer the cluster-runtime questions and referred Harbor-specific requirements to Mohamed. Keep this resend limited to cluster-supported runtime and egress controls; ask Mohamed separately about Harbor's own connection requirements.
+
+**To:** a2i2-it-support@deakin.edu.au  
+**Subject:** Rohan batch support: Apptainer features and per-job egress controls
+
+Hello A2I2 support,
+
+Thank you for the storage guidance. I have two remaining questions about supported cluster facilities on Rohan:
+
+1. Is the Apptainer 1.3.3 module supported for Slurm batch jobs when using `--fakeroot`, `--writable-tmpfs`, and `--containall`?
+2. May unprivileged users run `apptainer exec --net --network none` on compute nodes, or is there a supported per-job egress restriction for batch jobs?
+
+I will ask Mohamed to confirm Harbor's application-specific connection requirements. I am asking A2I2 only which runtime and network controls the cluster supports.
+
+Thank you,
+
+Sagandeep
+
+## P-M2 outreach and registry status (2026-11-06)
+
+- The TB-Pro author email was sent on 2026-10-30; no response had arrived by 2026-11-06.
+- [Issue #10](https://github.com/alibaba/terminal-bench-pro/issues/10), opened by another user on 2026-11-05, reports the same registry timeout. That user's report says 125/200 tasks passed in an Oracle run using a locally cached Python base; all 68 Ubuntu-base tasks failed during setup before their references or verifiers ran. This is external evidence, not our run and not proof that GHCR images are equivalent.
+- The user reports that `120.26.27.123:443` also timed out from a third network on 2026-11-06.
+- The user plans to comment on issue #10 and open a separate LICENSE issue. Record those links only after the user confirms they posted; no comment or issue was created by this assistant.
+- P-M2 has not passed or failed its formal route gate; it remains pending replies. No TB-Pro build, Oracle run, or agent episode has occurred.
 
 The run record and captured outputs are in the public repository under `docs/experiments/serving-sweep-2026-11.md` and `docs/experiments/artifacts/`.
 
@@ -94,4 +122,4 @@ Thank you,
 
 Sagandeep
 
-**Status (2026-11-03):** The user reports that the TB-Pro author request and A2I2 technical follow-up were sent. Await their replies on license/image route and Apptainer/network controls. The Digital Services RDS host-key message remains a draft. The original A2I2 support message was sent earlier and received the general storage response summarized above.
+**Status (2026-11-06):** The TB-Pro author email was sent on 2026-10-30; no reply had arrived by this date. The earlier A2I2 technical follow-up was sent as reported; question 3 about Slurm `FAILED 1:0` is now resolved locally and withdrawn from future support follow-up. The cluster-only resend above is a draft and has not been sent. The Digital Services RDS host-key message remains a draft. The original A2I2 support message was sent earlier and received the general storage response summarized above.

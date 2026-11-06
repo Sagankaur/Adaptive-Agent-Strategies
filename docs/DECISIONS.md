@@ -8,7 +8,7 @@ Sagandeep Kaur, for discussion with Prof. Mohamed Abdelrazek (Deakin A2I2). Crea
 2. the outcomes of the design review of 2026-10-20 ([DESIGN_REVIEW_2026-10.md](DESIGN_REVIEW_2026-10.md)), proposed by Sagandeep Kaur. You may overrule any of them;
 3. a log of deviations from earlier plans and of defaults applied.
 
-No experiment has been run and no model has been called. Every episode count, GPU-day and dollar figure here is an estimate. GPU-days use the planning rate of 213.5 episodes per GPU-day. That rate was measured on a laptop and is used as a proxy with a ±30% band ([DESIGN_REVIEW_2026-10.md, section 4](DESIGN_REVIEW_2026-10.md#4-main-errors-found-and-corrected)).
+**Execution status (2026-11-06).** No budgeted benchmark episode, TB-Pro task build or Oracle run, or TB2 run has occurred. Earlier engineering work includes a synthetic Qwen Harbor smoke and synthetic serving sweeps; those are not benchmark experiments. Every episode count, GPU-day and dollar figure here is an estimate. GPU-days use the planning rate of 213.5 episodes per GPU-day. That rate was measured on a laptop and is used as a proxy with a ±30% band ([DESIGN_REVIEW_2026-10.md, section 4](DESIGN_REVIEW_2026-10.md#4-main-errors-found-and-corrected)).
 
 **Who does what.** You decide the questions marked Q and the three plan items. Sagandeep Kaur sends them, records each answer here, and applies the default if no answer arrives by the deadline gate. The one exception is the change to internship objectives O4 and O6 in Q4: it has no default and needs your explicit answer. Every applied default is logged in section 3 as "defer to professor, default applied", and you are told in one line.
 
@@ -423,6 +423,28 @@ Entries are added, never edited. A correction is a new entry. "Decided" means pr
 | 18 | 2026-10-20 | Correction to entry 13. The compute request is stated in tiers (floor, core, core plus contingency, with Tier C) with a rough dollar cost, and asks who provides the GPU. The recommendation is at least 49 GPU-days, not 45, because contingency pays for the judge, selector, diagnosis and proposal calls | Pending Q5 | [M16](DESIGN_REVIEW_2026-10.md#m16-total-compute-and-the-cut-order) |
 | 19 | 2026-10-20 | M1 amended after review: 2607.12227 found during drafting narrows the novelty claim. [Rethinking the Evaluation of Harness Evolution for Agents (Wang et al., arXiv 2607.12227, Jul 2026)](https://arxiv.org/abs/2607.12227) compares harness evolution with matched-budget best-of-N sampling and sequential refinement on TB2.1, with frontier API models. The M1 wording "none of the closest works we checked reports a cost-matched BoN comparison" is replaced by: among the harness-evolution methods we checked, none reports one; the evaluation study 2607.12227 does, with frontier API models. Paper 1's distinct part is that test on a small, locally served model with a typed, compiled strategy, with cost per task for every arm and the enforced-versus-advised contrast. 2607.12227 joins Table 1 | Decided | [M1](DESIGN_REVIEW_2026-10.md#m1-novelty-reframe-and-a-code-edit-baseline-b5) |
 | 20 | 2026-10-20 | The attribution part of the M1 contribution sentence now reads "leave-one-out attribution over changed strategy-dimension groups". E-ATTR reverts changed dimension groups of S\*1, not single fields | Decided | [M1](DESIGN_REVIEW_2026-10.md#m1-novelty-reframe-and-a-code-edit-baseline-b5), [M16](DESIGN_REVIEW_2026-10.md#m16-total-compute-and-the-cut-order) |
+| 21 | 2026-11-06 | Protocol deviation: on 2026-11-05, an AI assistant read only public `instruction.md` files for 13 TB2 sibling-candidate pairs (26 pair-task appearances across 19 distinct task IDs, listed below) to review split leakage. No tests, solutions, task environments, Oracle outputs or experimental outcomes were read. No further TB2 task-text reads will be made. This familiarity risk applies to both routes: the TB-Pro route holds out all 89 TB2 tasks, while E-RESPLIT would hold out H52. Disclose this deviation in the pre-registration limitations | Recorded; add to Stage-1 and Stage-2 pre-registration limitations | [Review protocol and decisions](experiments/E-RESPLIT-candidate-review-amendment-2026-11-05.md) |
+| 22 | 2026-11-06 | Proposal only for Prof. Abdelrazek: if no TB-Pro author response arrives by 2026-11-20, request explicit approval to try Laude GHCR bases pinned by digest, retain only tasks whose reference solution passes on TB-Pro as a functional-equivalence screen, and accept the README plus Hugging Face card Apache-2.0 statements as licence evidence. This would change P-M2 rules and is not adopted. Preserve G-ROUTE's ≥120-task criterion. Issue #10 reports 125/200 passed in another user's run, while all 68 Ubuntu-base tasks failed before reference-solution/verifier execution; this is comparison context, not our result or evidence of image equivalence | Proposal; explicit sign-off required before any changed P-M2 route and before Stage 1; no default | [TB-Pro issue #10](https://github.com/alibaba/terminal-bench-pro/issues/10), [P-M2](experiments/P-M2-preflight-2026-10-30.md) |
+
+### Entry 21: TB2 instruction pairs reviewed
+
+The pair-task appearances are listed as reviewed; repeated task IDs are intentional because a task appeared in more than one candidate pair.
+
+| Pair | Task IDs |
+|---:|---|
+| 1 | `code-from-image`; `gcode-to-text` |
+| 2 | `dna-assembly`; `protein-assembly` |
+| 3 | `crack-7z-hash`; `vulnerable-secret` |
+| 4 | `git-leak-recovery`; `vulnerable-secret` |
+| 5 | `gpt2-codegolf`; `pytorch-model-cli` |
+| 6 | `log-summary-date-ranges`; `regex-log` |
+| 7 | `feal-linear-cryptanalysis`; `vulnerable-secret` |
+| 8 | `path-tracing`; `write-compressor` |
+| 9 | `code-from-image`; `polyglot-rust-c` |
+| 10 | `circuit-fibsqrt`; `write-compressor` |
+| 11 | `circuit-fibsqrt`; `polyglot-rust-c` |
+| 12 | `chess-best-move`; `regex-chess` |
+| 13 | `extract-moves-from-video`; `regex-chess` |
 
 **To be logged when they happen.**
 
