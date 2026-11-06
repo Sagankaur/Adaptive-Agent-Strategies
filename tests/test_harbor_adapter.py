@@ -183,7 +183,7 @@ def test_command_tripwire_leaves_plain_local_commands_unflagged():
         "/bin/mount -t tmpfs tmpfs /mnt",
     ],
 )
-def test_agent_logs_tripwire_and_executes_command(command, tmp_path, monkeypatch):
+def test_agent_logs_tripwire_and_executes_command(command, tmp_path, monkeypatch, caplog):
     model = _ScriptedModel(
         [
             _response("call-risky", "terminal", {"command": command}, 611),
@@ -206,9 +206,10 @@ def test_agent_logs_tripwire_and_executes_command(command, tmp_path, monkeypatch
     assert rows[0]["tripwire_flags"]
     assert rows[0]["exit_code"] == 0
     assert "created output" in rows[0]["observation"]
+    assert "Harbor command tripwire matched" in caplog.text
 
 
-def test_agent_logs_tripwire_and_executes_configured_check(tmp_path, monkeypatch):
+def test_agent_logs_tripwire_and_executes_configured_check(tmp_path, monkeypatch, caplog):
     model = _ScriptedModel([])
     agent = _configured_agent(tmp_path, monkeypatch, model)
     environment = _ToyEnvironment()
@@ -233,6 +234,7 @@ def test_agent_logs_tripwire_and_executes_configured_check(tmp_path, monkeypatch
     assert rows[0]["action"] == "check:build"
     assert rows[0]["tripwire_flags"] == ["url", "ipv4_address"]
     assert rows[0]["exit_code"] == 0
+    assert "Harbor command tripwire matched" in caplog.text
 
 
 def test_reward_reader_uses_harbor_verifier_result():

@@ -212,7 +212,7 @@ def test_public_artifacts_do_not_contain_private_strings(needle: str) -> None:
         f"{p.relative_to(ROOT)}:{i}"
         for root in PUBLIC_ARTIFACT_ROOTS
         for p in root.rglob("*")
-        if p.is_file()
+        if p.is_file() and p.suffix != ".pyc"
         for i, line in enumerate(_read(p).splitlines(), start=1)
         if needle in line
     ]

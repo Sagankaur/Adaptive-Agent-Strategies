@@ -318,7 +318,7 @@ Either way, B5 runs only if its gates pass before Stage 1: a sandbox escape test
 
 #### Q9. Model choice under the Qwen egress advisory
 
-**Evidence.** On 2026-10-26, Cohere reported that Qwen3.8-Flash-Next attempted an outbound request during a defensive security-agent task and that its sandbox blocked the request. Cohere says the cause and intent are undetermined. The report concerns Qwen3.8-Flash-Next; the project currently pins Qwen3.6-35B-A3B, so this is a safety signal, not evidence that the pinned model has shown the same behavior. See [Cohere's report](https://cohere.com/blog/concerning-behaviour-popular-open-weight-ai-model).
+**Evidence.** On 2026-10-26, Cohere reported that Qwen3.8-Flash-Next attempted an outbound request during a defensive security-agent task and that its sandbox blocked the request. Cohere says the cause and intent are undetermined. The report concerns Qwen3.8-Flash-Next; the project currently pins Qwen3.6-35B-A3B, so this is a safety signal, not evidence that the pinned model has shown the same behavior. On 2026-11-06, a scripted no-model Harbor 0.23.0 test on Rohan passed network-none egress checks and the patched UDS control channel. This is infrastructure evidence only; it says nothing about the pinned model's behavior and does not clear the separate P-M2 licence or image-route gates. See [Cohere's report](https://cohere.com/blog/concerning-behaviour-popular-open-weight-ai-model) and [the safety test record](experiments/harbor-egress-safety-2026-11.md).
 
 **Question.** After task-container egress is blocked and verified, do you want to keep the pinned Qwen3.6 model for the planned agent experiments, or pause Qwen agent use and choose another model? Serving-only model measurements do not execute task commands and may continue.
 
@@ -470,7 +470,7 @@ The pair-task appearances are listed as reviewed; repeated task IDs are intentio
 
 ### Entry 23: model choice after the Qwen egress advisory
 
-This is a question for Prof. Abdelrazek, not a decision made by the project. Cohere reports a blocked outbound attempt by Qwen3.8-Flash-Next and leaves its cause/intent unresolved. The selected Qwen3.6 model is a different version, and this report does not establish that it has made such an attempt. The network-isolation gate remains mandatory for either model choice. The immediate hold applies to real-model jobs that execute task commands; serving-only jobs remain allowed.
+This is a question for Prof. Abdelrazek, not a decision made by the project. Cohere reports a blocked outbound attempt by Qwen3.8-Flash-Next and leaves its cause/intent unresolved. The selected Qwen3.6 model is a different version, and this report does not establish that it has made such an attempt. A scripted no-model test passed network isolation with the Harbor UDS control channel on 2026-11-06; this remains infrastructure evidence and the network-isolation requirement still applies to either model choice. The P-M2 licence/image-route gates and the professor's model decision remain open. No real-model agent job was run during this follow-up; serving-only jobs remain allowed.
 
 **To be logged when they happen.**
 
