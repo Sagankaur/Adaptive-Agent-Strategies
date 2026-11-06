@@ -2,8 +2,8 @@
 [2026-11-03T17:34:17+11:00] runtime=apptainer version 1.3.3+342-g42a8ae13e python=Python 3.10.12
 name, memory.total [MiB], driver_version
 NVIDIA RTX PRO 6000 Blackwell Server Edition, 97887 MiB, 595.91.07
-[2026-11-03T17:34:17+11:00] model=/scratch/kasag/models/Qwen3.6-35B-A3B-UD-Q4_K_M.gguf
-[2026-11-03T17:34:17+11:00] server_image=/scratch/kasag/images/llama-server-cuda12-b11515.sif
-[2026-11-03T17:34:17+11:00] outputs=/scratch/kasag/jobs/out/serving_sweep_4505018
-{"configurations_recorded": 12, "metadata_file": "/scratch/kasag/jobs/out/serving_sweep_4505018/metadata.json", "mode": "screen", "record_type": "run_finished", "result_file": "/scratch/kasag/jobs/out/serving_sweep_4505018/screen.jsonl", "statuses": ["fit_probe_passed", "fit_probe_passed", "fit_probe_passed", "fit_probe_passed", "fit_probe_passed", "fit_probe_passed", "fit_probe_passed", "fit_probe_passed", "fit_probe_passed", "fit_probe_passed", "fit_probe_passed", "fit_probe_passed"], "timestamp_utc": "2026-11-03T06:42:21.241160+00:00"}
+[2026-11-03T17:34:17+11:00] model=/scratch/USER/models/Qwen3.6-35B-A3B-UD-Q4_K_M.gguf
+[2026-11-03T17:34:17+11:00] server_image=/scratch/USER/images/llama-server-cuda12-b11515.sif
+[2026-11-03T17:34:17+11:00] outputs=/scratch/USER/jobs/out/serving_sweep_4505018
+{"configurations_recorded": 12, "metadata_file": "/scratch/USER/jobs/out/serving_sweep_4505018/metadata.json", "mode": "screen", "record_type": "run_finished", "result_file": "/scratch/USER/jobs/out/serving_sweep_4505018/screen.jsonl", "statuses": ["fit_probe_passed", "fit_probe_passed", "fit_probe_passed", "fit_probe_passed", "fit_probe_passed", "fit_probe_passed", "fit_probe_passed", "fit_probe_passed", "fit_probe_passed", "fit_probe_passed", "fit_probe_passed", "fit_probe_passed"], "timestamp_utc": "2026-11-03T06:42:21.241160+00:00"}
 [2026-11-03T17:42:21+11:00] runner_exit_status=0

@@ -198,11 +198,15 @@ def test_readme_lists_only_docs_that_exist() -> None:
 
 # These are project-local/private path fragments. Scan docs plus public data and split
 # artifacts so a path cannot leak through a manifest that is outside docs/.
-FORBIDDEN = ("/home/", "research_2026-10", "plan/research")
+FORBIDDEN = ("/home/", "/scratch/kasag", "research_2026-10", "plan/research")
 PUBLIC_ARTIFACT_ROOTS = (DOCS, ROOT / "evaluation" / "data", ROOT / "splits")
 
 
-@pytest.mark.parametrize("needle", FORBIDDEN, ids=["home-path", "research-path", "plan-research-path"])
+@pytest.mark.parametrize(
+    "needle",
+    FORBIDDEN,
+    ids=["home-path", "scratch-user-path", "research-path", "plan-research-path"],
+)
 def test_public_artifacts_do_not_contain_private_strings(needle: str) -> None:
     hits = [
         f"{p.relative_to(ROOT)}:{i}"

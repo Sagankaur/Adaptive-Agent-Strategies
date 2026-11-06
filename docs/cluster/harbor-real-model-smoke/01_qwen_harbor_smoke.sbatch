@@ -3,8 +3,8 @@
 # Stage the source snapshot at /scratch/$USER/harbor-smoke/aas-source-639ba1d.
 # Submit with: sbatch docs/cluster/harbor-real-model-smoke/01_qwen_harbor_smoke.sbatch
 #SBATCH --job-name=aas-qwen-harbor
-#SBATCH --output=/scratch/kasag/harbor-smoke/real-qwen-%j.out
-#SBATCH --error=/scratch/kasag/harbor-smoke/real-qwen-%j.err
+#SBATCH --output=/scratch/USER/harbor-smoke/real-qwen-%j.out
+#SBATCH --error=/scratch/USER/harbor-smoke/real-qwen-%j.err
 #SBATCH --partition=gpu
 #SBATCH --qos=short
 #SBATCH --gpus=l40s:1

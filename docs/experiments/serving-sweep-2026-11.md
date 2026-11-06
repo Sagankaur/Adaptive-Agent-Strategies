@@ -107,7 +107,7 @@ The full 28-cell summary across all four measured GPU configurations is in [serv
 
 In this cell, the RTX Pro's median aggregate throughput was about 1.35× the L40S q8_0 result. This is an engineering comparison for one model, build, and synthetic input shape, based on three batch repetitions; it is not a general GPU ranking. The output cap is not a fixed generation length: the model stopped early on some calls, as the ranges show. At a 63,360-token prompt with a 2,048-token cap, median aggregate throughput was 3,143 tok/s on L40S q8_0 and 2,883 tok/s on L40S f16; both had a median realized output of 2,048 tokens. The f16 and q8_0 order therefore depends on workload shape, and this sweep does not justify a universal cache-precision choice.
 
-### Slurm exit-status cause
+### Slurm exit-status hypothesis
 
 The six experiment jobs (`4504954`, `4504968`, `4504971`, `4505001`, `4505018`, `4505019`) remain recorded by Slurm as `FAILED`, exit `1:0`, although their runner records completed successfully. The wrapper used `#!/bin/bash -l` and ended with the `exit` builtin. In an Ubuntu login shell, that invokes `~/.bash_logout`; the default logout command's `clear_console` condition can return 1 and replace the intended job status. This was reproduced in an Ubuntu 24.04 container (`exit 0` yielded status 1; reaching end-of-file after a successful command yielded status 0).
 
@@ -123,10 +123,10 @@ The wrapper now ends with `(exit "$STATUS")` as its last command. This returns t
 
 ### Professor-ready update
 
-> We completed a synthetic serving preflight for the pinned Qwen model on Rohan. All 12 tested slot/cache/context settings fit on an L40S with at least 16.8 GiB sampled headroom. On a matched 4-slot q8_0 near-limit prompt cell, the RTX Pro 6000 delivered about 1.35× the L40S aggregate throughput (6,062 vs. 4,504 realized prompt-plus-generation tokens/s, three batch repetitions). These are engineering measurements from synthetic histories only; no benchmark episodes ran and E-P0 remains open. Slurm marks the jobs failed despite complete runner records (including exit status 0 for the latest jobs), so we are asking cluster support to explain the accounting discrepancy.
+> We completed a synthetic serving preflight for the pinned Qwen model on Rohan. All 12 tested slot/cache/context settings fit on an L40S with at least 16.8 GiB sampled headroom. On a matched 4-slot q8_0 near-limit prompt cell, the RTX Pro 6000 delivered about 1.35× the L40S aggregate throughput (6,062 vs. 4,504 realized prompt-plus-generation tokens/s, three batch repetitions). These are engineering measurements from synthetic histories only; no benchmark episodes ran and E-P0 remains open. Slurm marks the jobs failed despite complete runner records (including exit status 0 for the latest jobs). A likely explanation is the login-shell logout hook, reproduced locally; confirmation on Rohan with a one-minute CPU job and `sacct` is pending.
 
 ### Next steps
 
-1. Ask A2I2 support why these batch steps are `FAILED 1:0` while the wrapper exits 0 and the derived exit code is 0; include jobs `4505001`, `4505018`, and `4505019`.
+1. Verify the wrapper fix with a one-minute CPU job on Rohan and inspect `sacct`; support follow-up is withdrawn unless the discrepancy remains.
 2. Configure the RDS Activity/Collection and copy the report and raw artifacts there. Keep the local/GitHub copies as convenient working copies, not the sole long-term research-data store.
 3. When the TB-Pro image/licence route and Harbor network questions are resolved, run the registered task-based E-P0 with the RTX Pro as the preferred throughput option and the L40S as the available fallback. Use actual task/episode measurements to pick the production serving configuration and fit any MCU coefficients.
