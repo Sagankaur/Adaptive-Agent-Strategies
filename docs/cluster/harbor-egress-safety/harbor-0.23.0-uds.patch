@@ -1,0 +1,263 @@
+--- a/harbor/environments/singularity/singularity.py
++++ b/harbor/environments/singularity/singularity.py
+@@ -102,6 +102,8 @@
+ 
+         self._server_process: asyncio.subprocess.Process | None = None
+         self._server_port: int | None = None
++        self._control_dir: Path | None = None
++        self._server_socket_path: Path | None = None
+         self._staging_dir: Path | None = None
+         self._sif_path: Path | None = None
+         self._stream_task: asyncio.Task[None] | None = None
+@@ -311,17 +313,26 @@
+         if self._staging_dir and self._staging_dir.exists():
+             shutil.rmtree(self._staging_dir, ignore_errors=True)
+             self._staging_dir = None
++        if self._control_dir and self._control_dir.exists():
++            shutil.rmtree(self._control_dir, ignore_errors=True)
++            self._control_dir = None
++        self._server_socket_path = None
+ 
+     async def _start_server(self) -> None:
+         """Start the FastAPI server inside the Singularity container.
+ 
+-        Uses port reservation with retry logic to handle race conditions where
+-        another process might grab the port between reservation and binding.
++        Uses a private per-trial Unix-domain socket as the host/task control
++        channel so task network isolation does not expose a TCP listener.
+         """
+         await self._cleanup_server_resources()
+ 
+         self._staging_dir = Path(tempfile.mkdtemp(prefix="singularity_staging_"))
+         self._staging_dir.chmod(0o755)
++        self._control_dir = Path(tempfile.mkdtemp(prefix="huds-", dir="/tmp"))
++        self._control_dir.chmod(0o700)
++        self._server_socket_path = self._control_dir / "control.sock"
++        if len(str(self._server_socket_path).encode()) >= 100:
++            raise RuntimeError("Unix control socket path is too long for Linux")
+ 
+         server_script = Path(__file__).parent / "server.py"
+         staging_server = self._staging_dir / "_hbexec.py"
+@@ -332,12 +343,11 @@
+         shutil.copy(bootstrap_src, bootstrap_script)
+         bootstrap_script.chmod(0o755)
+ 
+-        max_port_retries = 3
++        max_port_retries = 1
+         last_error = None
+ 
+         for port_attempt in range(max_port_retries):
+-            reserved_socket, port = self._reserve_port()
+-            self._server_port = port
++            self._server_port = None
+ 
+             # Note: --memory and --cpus flags are NOT used because they require
+             # cgroups support (systemd running as init), which is typically not
+@@ -347,6 +357,8 @@
+             bind_mounts = [
+                 "-B",
+                 f"{self._staging_dir}:/staging",
++                "-B",
++                f"{self._control_dir}:/harbor-control",
+             ]
+             for mount in self._mounts:
+                 if mount.get("type") == "bind":
+@@ -371,19 +383,22 @@
+                 "bash",
+                 self._workdir,
+                 "/staging/_hbexec.py",
+-                "--port",
+-                str(self._server_port),
++                "--uds",
++                "/harbor-control/control.sock",
+                 "--workdir",
+                 self._workdir,
++                "--unprivileged",
+             ]
+             cmd = [
+                 "singularity",
+                 "exec",
++                "--net",
++                "--network",
++                "none",
+                 *no_mount_args,
+                 "--pwd",
+                 self._workdir,
+                 "--writable-tmpfs",
+-                "--fakeroot",
+                 "--containall",
+                 "--pid",
+                 *bind_mounts,
+@@ -392,11 +407,10 @@
+             ]
+ 
+             self.logger.debug(
+-                f"Starting Singularity container with server on port "
+-                f"{self._server_port} (attempt {port_attempt + 1}/{max_port_retries})"
+-            )
+-
+-            reserved_socket.close()
++                f"Starting isolated Singularity container with UDS control "
++                f"(attempt {port_attempt + 1}/{max_port_retries})"
++            )
++            self.logger.info("Apptainer argv: %s", shlex.join(cmd))
+ 
+             self._server_process = await asyncio.create_subprocess_exec(
+                 *cmd,
+@@ -406,28 +420,30 @@
+ 
+             self._stream_task = asyncio.create_task(self._stream_server_output())
+ 
+-            self._http_client = httpx.AsyncClient(timeout=30.0)
++            transport = httpx.AsyncHTTPTransport(uds=str(self._server_socket_path))
++            self._http_client = httpx.AsyncClient(
++                transport=transport,
++                base_url="http://harbor-control",
++                timeout=30.0,
++                trust_env=False,
++            )
+             server_ready = False
+ 
+             for i in range(60):
+                 try:
+-                    response = await self._http_client.get(
+-                        f"http://localhost:{self._server_port}/health"
+-                    )
++                    response = await self._http_client.get("/health")
+                     if response.status_code == 200:
+-                        # Verify OUR server is still alive before declaring ready.
+-                        # Another concurrent trial may have grabbed this port
+-                        # (Singularity shares host network namespace).
++                        if not self._server_socket_path.is_socket():
++                            raise RuntimeError("Harbor UDS control socket was not created")
++                        if self._control_dir.stat().st_mode & 0o777 != 0o700:
++                            raise RuntimeError("Harbor UDS parent directory is not mode 0700")
++                        # Verify our server is still alive before declaring ready.
+                         if self._server_process.returncode is not None:
+                             await self._stream_task
+                             last_error = RuntimeError(
+-                                f"Port collision on {self._server_port}: health "
+-                                f"check succeeded but our server process died."
++                                "UDS health check succeeded but the server process died."
+                             )
+-                            self.logger.warning(
+-                                f"Health check succeeded but server process died "
+-                                f"- port {self._server_port} collision"
+-                            )
++                            self.logger.warning("UDS health check succeeded but server process died")
+                             break
+                         self.logger.debug("Singularity FastAPI server is ready")
+                         if self._memory_limit_bytes is not None:
+@@ -442,12 +458,11 @@
+                 if self._server_process.returncode is not None:
+                     await self._stream_task
+                     last_error = RuntimeError(
+-                        f"Server process died on port {self._server_port}. "
++                        "Server process died before the UDS health check succeeded. "
+                         f"Check trial.log for server output."
+                     )
+                     self.logger.warning(
+-                        f"Server failed to start on port {self._server_port}, "
+-                        f"will retry with new port"
++                        "Server failed to start on the UDS control socket"
+                     )
+                     break
+ 
+@@ -472,8 +487,8 @@
+                 self._http_client = None
+ 
+         raise last_error or RuntimeError(
+-            f"Failed to start Singularity FastAPI server after "
+-            f"{max_port_retries} port attempts"
++            "Failed to start isolated Singularity FastAPI server after "
++            f"{max_port_retries} attempt"
+         )
+ 
+     async def _stream_server_output(self) -> None:
+@@ -724,7 +739,7 @@
+         user: str | int | None = None,
+     ) -> ExecResult:
+         """Execute a command in the Singularity container via HTTP."""
+-        if not self._http_client or not self._server_port:
++        if not self._http_client or not self._server_socket_path:
+             raise RuntimeError("Singularity environment not started")
+ 
+         if self._memory_limit_exceeded:
+@@ -747,7 +762,7 @@
+             )
+ 
+             response = await self._http_client.post(
+-                f"http://localhost:{self._server_port}/exec",
++                "/exec",
+                 json={
+                     "command": command,
+                     "cwd": cwd,
+--- a/harbor/environments/singularity/server.py
++++ b/harbor/environments/singularity/server.py
+@@ -398,15 +398,33 @@
+     parser = argparse.ArgumentParser(
+         description="FastAPI server for Singularity container"
+     )
+-    parser.add_argument("--port", type=int, required=True, help="Port to listen on")
++    parser.add_argument("--port", type=int, help="TCP port to listen on")
++    parser.add_argument("--uds", type=str, help="Unix-domain socket path to listen on")
+     parser.add_argument("--workdir", type=str, default="/app", help="Working directory")
++    parser.add_argument(
++        "--unprivileged",
++        action="store_true",
++        help="Only prepare the workdir; skip setup steps that require fakeroot",
++    )
+     args = parser.parse_args()
++    if (args.port is None) == (args.uds is None):
++        parser.error("specify exactly one of --port or --uds")
+ 
+     setup_logging()
+ 
+-    logger.debug(f"Starting server on port {args.port}, workdir={args.workdir}")
+-
+-    setup_singularity_environment(args.workdir)
++    logger.debug(
++        f"Starting server on {'UDS ' + args.uds if args.uds else 'port ' + str(args.port)}, "
++        f"workdir={args.workdir}"
++    )
++
++    if args.unprivileged:
++        logger.warning(
++            "Unprivileged setup: skipping fakeroot-only compatibility writes; "
++            "task commands do not receive root privileges"
++        )
++        setup_workdir(args.workdir)
++    else:
++        setup_singularity_environment(args.workdir)
+ 
+     timeout_graceful_shutdown: Optional[int] = None
+     timeout_keep_alive = 5
+@@ -419,15 +437,19 @@
+             timeout_keep_alive = 120
+     except (ValueError, TypeError):
+         pass
+-    uvicorn.run(
+-        app,
+-        host="127.0.0.1",
+-        port=args.port,
+-        access_log=False,
+-        server_header=False,
+-        timeout_graceful_shutdown=timeout_graceful_shutdown,
+-        timeout_keep_alive=timeout_keep_alive,
+-    )
++    run_options = {
++        "app": app,
++        "access_log": False,
++        "server_header": False,
++        "timeout_graceful_shutdown": timeout_graceful_shutdown,
++        "timeout_keep_alive": timeout_keep_alive,
++    }
++    if args.uds:
++        run_options["uds"] = args.uds
++    else:
++        run_options["host"] = "127.0.0.1"
++        run_options["port"] = args.port
++    uvicorn.run(**run_options)
+ 
+ 
+ if __name__ == "__main__":

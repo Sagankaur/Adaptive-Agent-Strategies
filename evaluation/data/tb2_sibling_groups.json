@@ -1,0 +1,17 @@
+{
+  "benchmark": "laude-institute/terminal-bench-2",
+  "commit": "2fd12b88aafdd04a52c298e3940bcb189f9766d6",
+  "source": "design-review red-team notes (2026-10, not in the repository), lines 30-42",
+  "source_sha256": "fa249936dd967cac736e40d8ec6c78fb70abcc0966ab56d3cee044a7d9de4bfd",
+  "groups": [
+    {"group_id": "tb2-sibling-01", "task_ids": ["filter-js-from-html", "break-filter-js-from-html"]},
+    {"group_id": "tb2-sibling-02", "task_ids": ["path-tracing", "path-tracing-reverse"]},
+    {"group_id": "tb2-sibling-03", "task_ids": ["polyglot-c-py", "polyglot-rust-c", "circuit-fibsqrt"]},
+    {"group_id": "tb2-sibling-04", "task_ids": ["qemu-startup", "qemu-alpine-ssh"]},
+    {"group_id": "tb2-sibling-05", "task_ids": ["regex-chess", "regex-log", "log-summary-date-ranges"]},
+    {"group_id": "tb2-sibling-06", "task_ids": ["feal-differential-cryptanalysis", "feal-linear-cryptanalysis"]},
+    {"group_id": "tb2-sibling-07", "task_ids": ["torch-tensor-parallelism", "torch-pipeline-parallelism"]},
+    {"group_id": "tb2-sibling-08", "task_ids": ["dna-insert", "dna-assembly"]},
+    {"group_id": "tb2-sibling-09", "task_ids": ["pytorch-model-recovery", "pytorch-model-cli"]}
+  ]
+}

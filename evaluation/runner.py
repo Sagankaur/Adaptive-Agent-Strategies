@@ -19,7 +19,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict
 
 from baselines.baselines import Baseline, TaskOutcome
-from baselines.cost import Cost, PriceTable
+from baselines.cost import Cost, PriceNotSetError, PriceTable
 from environments.base import Environment, Task
 from evaluation.splits import HELD_OUT, Split
 from llm import ChatModel
@@ -42,6 +42,8 @@ class RunBudget:
     def __post_init__(self) -> None:
         if self.max_dollars is not None and self.prices is None:
             raise ValueError("max_dollars needs a price table")
+        if self.prices is not None and self.prices.placeholder:
+            raise PriceNotSetError(f"the price entry for {self.prices.model!r} is a placeholder")
 
     def exhausted(self, spent: Cost) -> bool:
         return (
@@ -73,7 +75,11 @@ class ResultRecord(BaseModel):
     oracle_success: bool | None = None
     own_check_passed: bool | None = None
     selected_attempt: int | None = None
+    budget_stop_reason: str | None = None
+    budget_overrun_tokens: int = 0
     cost: dict[str, float] | None = None
+    extra_cost: dict[str, float] | None = None
+    extra_calls: list[dict[str, Any]] = []
     dollars: float | None = None
     attempts: list[dict[str, Any]] = []
 
@@ -87,6 +93,7 @@ def _attempt_dict(outcome: TaskOutcome) -> list[dict[str, Any]]:
             "success": a.success,
             "cost": a.cost.to_dict(),
             "steps": [asdict(s) for s in a.steps],
+            "judgments": a.judgments,
         }
         for a in outcome.attempts
     ]
@@ -144,7 +151,11 @@ def evaluate(
                     oracle_success=outcome.oracle_success,
                     own_check_passed=outcome.attempts[outcome.selected].own_check_passed,
                     selected_attempt=outcome.selected,
+                    budget_stop_reason=outcome.budget_stop_reason,
+                    budget_overrun_tokens=outcome.budget_overrun_tokens,
                     cost=cost.to_dict(),
+                    extra_cost=outcome.extra_cost.to_dict(),
+                    extra_calls=outcome.extra_calls,
                     dollars=cost.dollars(prices) if prices else None,
                     attempts=_attempt_dict(outcome),
                 )

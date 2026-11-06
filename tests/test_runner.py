@@ -20,6 +20,17 @@ def _split(tasks: list[Task]) -> Split:
     return make_split(infos, {"A": 4, "V": 4, "H": 4}, seed=0, benchmark="toy-text")
 
 
+def _runner_policy():
+    agent_policy = solver(sloppy_first=False)
+
+    def policy(messages):
+        if messages[0].content.startswith("You are a blind evaluator."):
+            return '{"score": 1.0, "reason": "The visible trajectory follows the instruction."}'
+        return agent_policy(messages)
+
+    return policy
+
+
 @pytest.mark.parametrize("baseline", [FixedStrategy(), ReflectionRetry(k=2), BestOfN(n=2)], ids=lambda b: b.name)
 def test_each_baseline_runs_a_split_and_writes_records(
     baseline, tasks: list[Task], strategy: Strategy, tmp_path: Path
@@ -30,7 +41,7 @@ def test_each_baseline_runs_a_split_and_writes_records(
         run_id="test",
         baseline=baseline,
         strategy=strategy,
-        model=MockModel(solver(sloppy_first=False)),
+        model=MockModel(_runner_policy()),
         env=ToyTextEnvironment(),
         tasks={t.task_id: t for t in tasks},
         split=_split(tasks),
