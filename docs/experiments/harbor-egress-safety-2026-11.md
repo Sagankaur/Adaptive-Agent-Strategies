@@ -42,7 +42,7 @@ The viable design to test is a Harbor 0.23.0 provider patch that:
 
 This requires a provider patch; there is no existing Harbor job-config option that turns the current localhost TCP server into a Unix socket. A socket exchange is not assumed to work until a scripted task demonstrates request/response with a unique nonce and ordinary `environment.exec` continues to work.
 
-Apptainer's [1.3 networking guide](https://apptainer.org/docs/user/1.3/networking.html) documents `--network` together with `--net`. The on-node probe used this configuration on Rohan CPU node `cpu-f-01`, without `--fakeroot`. The image's `/app` write succeeded, `/proc/net/dev` showed only `lo`, `/proc/net/route` had no routes, and curl requests to `https://1.1.1.1/` and `http://169.254.169.254/latest/meta-data/` both failed with curl exit 7 (could not connect). The successful probe was job **4626138**, exit `0:0`; its complete log and Slurm output are under `/scratch/<cluster-user>/harbor-smoke/egress-probe/4626138/`. The first attempt failed because the image lacked curl. A second attempt using the host curl with the container dynamic loader segfaulted; the passing attempt explicitly used the host loader and libraries mounted read-only. This proves the tested Apptainer invocation blocked the two requested endpoints and that writable tmpfs works without fakeroot. It does not yet prove Harbor can communicate with the task under the same network configuration. A2I2 policy approval for the flags remains to be confirmed.
+Apptainer's [1.3 networking guide](https://apptainer.org/docs/user/1.3/networking.html) documents `--network` together with `--net`. The on-node probe used this configuration on Rohan CPU node `cpu-f-01`, without `--fakeroot`. The image's `/app` write succeeded, `/proc/net/dev` showed only `lo`, `/proc/net/route` had no routes, and curl requests to `https://1.1.1.1/` and `http://169.254.169.254/latest/meta-data/` both failed with curl exit 7 (could not connect). The successful probe was job **4626138**, exit `0:0`; its complete log and Slurm output are under `/scratch/<cluster-user>/harbor-smoke/egress-probe/4626138/`. The first attempt failed because the image lacked curl. A second attempt using the host curl with the container dynamic loader segfaulted; the passing attempt explicitly used the host loader and libraries mounted read-only. This proves the tested Apptainer invocation blocked the two requested endpoints and that writable tmpfs works without fakeroot. This network-only probe did not test Harbor's control channel; the separate job 4626144 did. A2I2 support later said the flags should be permitted but had not personally tested them; see the support guidance below.
 
 ## Required scripted isolation test
 
@@ -50,7 +50,7 @@ The first network-only probe is recorded above. A scripted Harbor integration th
 
 The patched provider's captured argv included `exec --net --network none --writable-tmpfs --containall`, omitted `--fakeroot`, and started the server in explicit `--unprivileged` setup mode. That mode skips Harbor's root-only compatibility writes and warns that task commands do not receive root privileges; it is appropriate for this control-channel smoke and is not evidence that arbitrary benchmark tasks work without fakeroot. The provider made a per-run socket in a mode-`0700` directory (socket path length 31), and HTTPX health and ordinary `environment.exec` calls succeeded over UDS. The provider used no TCP port (`_server_port` stayed `None`); the host log shows only the expected UDS health, exec, and shutdown requests, with no TCP fallback. A job-derived nonce was written to `/app` and returned unchanged. Through the same `environment.exec` path, curl to `https://1.1.1.1/` failed with exit 7, curl to `https://example.com/` failed name resolution with exit 6, and curl to `http://169.254.169.254/latest/meta-data/` failed with exit 7. The task showed only loopback and no IP routes. Uvicorn shut down and the provider removed the socket and private directory. The captured log and Slurm record remain under the per-job scratch results directory on Rohan.
 
-The network and UDS control checks pass for this synthetic configuration. This does **not** clear the separate P-M2 author/licence and image-route gates, nor does it constitute an agent episode. The real-model job gate remains closed until those gates and A2I2's runtime-policy question are resolved. Full Harbor startup without fakeroot passed only in the explicit unprivileged setup mode described above.
+The network and UDS control checks pass for this synthetic configuration. This does **not** clear the separate P-M2 author/licence and image-route gates, nor does it constitute an agent episode. The real-model job gate remains closed until those gates and Prof. Abdelrazek's model decision are resolved. Full Harbor server startup without fakeroot passed only in the explicit unprivileged setup mode described above.
 
 The integration test must demonstrate all of these in one task-container configuration:
 
@@ -74,6 +74,12 @@ Harbor 0.23.0 sends command-finished and job-finished usage events by default to
 
 See [DECISIONS.md, Q9](../DECISIONS.md#q9-model-choice-under-the-qwen-egress-advisory). No model choice is adopted here. The evidence and choice belong to the professor; the isolation gate applies whichever model is selected.
 
+## A2I2 support guidance
+
+The user shared A2I2's response on 2026-11-09. Support advises caution with these models and recommends using another model where possible; they say the observed behavior's intent is unknown and could be a training artifact. On Apptainer, support has not personally tested `apptainer exec --net --network none` on compute nodes, but says the feature has not been explicitly disabled and therefore should be permitted. They do not believe `--fakeroot` is required for `--writable-tmpfs` unless the container itself is being modified. They cannot provide a cluster-level outbound traffic block at this time and recommend Apptainer for egress control.
+
+This is operational guidance, not formal blanket approval or a guarantee that every task's filesystem behavior works without fakeroot. The scripted Rohan test independently exercised the flags and Harbor UDS channel successfully in an unprivileged setup mode. The model choice remains with Prof. Abdelrazek, and no real-model task job is authorized by the support reply alone.
+
 ## Current status
 
 | Item | Status |
@@ -84,4 +90,4 @@ See [DECISIONS.md, Q9](../DECISIONS.md#q9-model-choice-under-the-qwen-egress-adv
 | `/app` writable tmpfs without fakeroot | `/app` write and Harbor server passed in explicit unprivileged setup mode; arbitrary benchmark-task compatibility is untested |
 | Adapter tripwire | Implemented as monitoring; unit tests cover flags, warning behavior, and continued execution |
 | Harbor telemetry opt-out | Verified from pinned 0.23.0 source; set `HARBOR_TELEMETRY=off` for future jobs |
-| Real-model command jobs | Paused; network/control checks pass on a synthetic task, but P-M2 licence/image-route and A2I2 runtime-policy gates remain unresolved |
+| Real-model command jobs | Paused; synthetic network/control checks pass, support expects the Apptainer flags to be permitted, and P-M2 licence/image-route plus the professor's model decision remain unresolved |
