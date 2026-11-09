@@ -50,6 +50,8 @@ The first network-only probe is recorded above. A scripted Harbor integration th
 
 The patched provider's captured argv included `exec --net --network none --writable-tmpfs --containall`, omitted `--fakeroot`, and started the server in explicit `--unprivileged` setup mode. That mode skips Harbor's root-only compatibility writes and warns that task commands do not receive root privileges; it is appropriate for this control-channel smoke and is not evidence that arbitrary benchmark tasks work without fakeroot. The provider made a per-run socket in a mode-`0700` directory (socket path length 31), and HTTPX health and ordinary `environment.exec` calls succeeded over UDS. The provider used no TCP port (`_server_port` stayed `None`); the host log shows only the expected UDS health, exec, and shutdown requests, with no TCP fallback. A job-derived nonce was written to `/app` and returned unchanged. Through the same `environment.exec` path, curl to `https://1.1.1.1/` failed with exit 7, curl to `https://example.com/` failed name resolution with exit 6, and curl to `http://169.254.169.254/latest/meta-data/` failed with exit 7. The task showed only loopback and no IP routes. Uvicorn shut down and the provider removed the socket and private directory. The captured log and Slurm record remain under the per-job scratch results directory on Rohan.
 
+The same scripted test was repeated on Rohan as job **4698238** on 2026-11-10 AEDT. It completed on `cpu-f-01` in 20 seconds with exit `0:0`. It applied the same patch hash and repeated the mode-`0700` UDS, job-derived nonce, `/app` write, no-route, external curl exit 7, DNS exit 6, metadata curl exit 7, shutdown, and socket cleanup checks. This independent rerun found no configuration drift.
+
 The network and UDS control checks pass for this synthetic configuration. This does **not** clear the separate P-M2 author/licence and image-route gates, nor does it constitute an agent episode. The real-model job gate remains closed until those gates and Prof. Abdelrazek's model decision are resolved. Full Harbor server startup without fakeroot passed only in the explicit unprivileged setup mode described above.
 
 The integration test must demonstrate all of these in one task-container configuration:
@@ -60,7 +62,7 @@ The integration test must demonstrate all of these in one task-container configu
 - `curl` executes inside the task, then a request to a controlled external HTTPS host and a direct request to `169.254.169.254` both fail because of network reachability (not because `curl` is missing or the command is malformed);
 - DNS/external lookup fails, only loopback exists inside the task network namespace, and host-side logs show no unexpected control request.
 
-Save the job script, provider patch/hash, Harbor and Apptainer versions, full argv, socket probe output, `curl` exit codes/stderr, task and trial logs, and `sacct` result. Until this gate passes, the isolation status is **unverified** and the real-model job gate stays closed.
+For each run, save the job script, provider patch/hash, Harbor and Apptainer versions, full argv, socket probe output, `curl` exit codes/stderr, task and trial logs, and `sacct` result. The synthetic egress/control check passed on jobs 4626144 and 4698238. This does not clear P-M2, the professor's model-choice decision, or future task-specific egress requirements; real-model and benchmark jobs remain paused until those gates clear.
 
 ## Adapter tripwire
 
@@ -85,8 +87,8 @@ This is operational guidance, not formal blanket approval or a guarantee that ev
 | Item | Status |
 |---|---|
 | Logs for 4410693 and 4433963 | Eight logs searched; no suspicious-command indicators in `aas_steps.jsonl`; benign runtime/local-URL matches described above |
-| Apptainer egress isolation | Jobs 4626138 and 4626144 passed on Rohan CPU node; fixed-IP, DNS, and metadata requests failed; only loopback was visible |
-| Harbor control channel under network isolation | Scripted UDS provider smoke 4626144 passed health, nonce `environment.exec`, shutdown, and socket cleanup |
+| Apptainer egress isolation | Jobs 4626138, 4626144, and 4698238 passed on Rohan CPU node; fixed-IP, DNS, and metadata requests failed; only loopback was visible |
+| Harbor control channel under network isolation | Scripted UDS provider smoke jobs 4626144 and 4698238 passed health, unique-nonce `environment.exec`, shutdown, and socket cleanup |
 | `/app` writable tmpfs without fakeroot | `/app` write and Harbor server passed in explicit unprivileged setup mode; arbitrary benchmark-task compatibility is untested |
 | Adapter tripwire | Implemented as monitoring; unit tests cover flags, warning behavior, and continued execution |
 | Harbor telemetry opt-out | Verified from pinned 0.23.0 source; set `HARBOR_TELEMETRY=off` for future jobs |
