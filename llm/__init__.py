@@ -1,7 +1,8 @@
-"""A provider-agnostic chat interface, a scripted mock, and the slot where a real client goes.
+"""A provider-agnostic chat interface, a scripted mock, and a client for OpenAI-compatible servers.
 
-Nothing in this repository calls a model API yet. Everything runs offline
-against :class:`MockModel`.
+The tests run offline against :class:`MockModel` and a local stub server.
+:class:`OpenAICompatibleModel` talks to a real model server, local (Ollama,
+llama.cpp, vLLM, LM Studio) or hosted; see ``docs/LOCAL_MODELS.md``.
 """
 
 from __future__ import annotations
@@ -9,34 +10,10 @@ from __future__ import annotations
 import math
 from collections.abc import Callable, Iterator, Sequence
 from dataclasses import dataclass, field
-from typing import Literal, Protocol
 
-
-@dataclass(frozen=True)
-class Message:
-    role: Literal["system", "user", "assistant"]
-    content: str
-
-
-@dataclass(frozen=True)
-class ChatResponse:
-    """A model reply with the token counts used for cost accounting."""
-
-    text: str
-    input_tokens: int
-    output_tokens: int
-
-
-class ChatModel(Protocol):
-    """Anything that turns a conversation into one reply.
-
-    A real provider client implements this by sending ``messages`` to its API
-    and returning the provider-reported token counts in the response.
-    """
-
-    name: str
-
-    def complete(self, messages: Sequence[Message]) -> ChatResponse: ...
+from llm.base import ChatModel, ChatResponse, Cost, Message, Pricing
+from llm.openai_compatible import MissingUsageError, OpenAICompatibleModel, ProviderError
+from llm.token_budget import GeneratedTokenBudget, GeneratedTokenBudgetError
 
 
 def approx_tokens(text: str) -> int:
@@ -57,15 +34,21 @@ class MockModel:
 
     Token counts are approximated with :func:`approx_tokens`, so cost
     accounting can be tested without a provider. Every conversation it
-    receives is kept in ``calls`` for inspection.
+    receives is kept in ``calls`` for inspection, and ``usage`` is the running
+    total of calls and tokens.
     """
 
     script: Sequence[str] | Policy
     name: str = "mock"
     calls: list[list[Message]] = field(default_factory=list)
+    usage: Cost = field(default_factory=Cost, init=False)
     _replies: Iterator[str] | None = field(default=None, init=False, repr=False)
 
-    def complete(self, messages: Sequence[Message]) -> ChatResponse:
+    def complete(
+        self, messages: Sequence[Message], *, seed: int | None = None, max_output_tokens: int | None = None
+    ) -> ChatResponse:
+        if max_output_tokens is not None and max_output_tokens < 1:
+            raise ValueError("max_output_tokens must be positive")
         self.calls.append(list(messages))
         if callable(self.script):
             text = self.script(messages)
@@ -76,37 +59,49 @@ class MockModel:
                 text = next(self._replies)
             except StopIteration as exc:
                 raise MockScriptExhausted(f"script has {len(self.script)} replies") from exc
-        return ChatResponse(
+        if max_output_tokens is not None:
+            text = text[: max_output_tokens * 4]
+        response = ChatResponse(
             text=text,
-            input_tokens=sum(approx_tokens(m.content) for m in messages),
+            input_tokens=sum(approx_tokens(m.content or "") for m in messages),
             output_tokens=approx_tokens(text),
+            seed=seed,
         )
+        self.usage.record(response)
+        return response
 
 
 class ProviderModel:
-    """Where a real provider client plugs in once the model is chosen in Phase 0.
+    """A named model that refuses to run, for code paths that must never call a model.
 
-    It must implement :class:`ChatModel` and report the provider's own token
-    counts; until then it refuses to run so that no code path can spend money
-    by accident.
+    Real endpoints, local or hosted, go through :class:`OpenAICompatibleModel`.
     """
 
     def __init__(self, name: str) -> None:
         self.name = name
 
-    def complete(self, messages: Sequence[Message]) -> ChatResponse:
+    def complete(
+        self, messages: Sequence[Message], *, seed: int | None = None, max_output_tokens: int | None = None
+    ) -> ChatResponse:
         raise NotImplementedError(
-            f"no provider client is wired up for {self.name!r}; tests and the toy environment use MockModel"
+            f"{self.name!r} is a ProviderModel, which never calls a model; use OpenAICompatibleModel for a server"
         )
 
 
 __all__ = [
     "ChatModel",
     "ChatResponse",
+    "GeneratedTokenBudget",
+    "GeneratedTokenBudgetError",
+    "Cost",
     "Message",
+    "MissingUsageError",
     "MockModel",
     "MockScriptExhausted",
+    "OpenAICompatibleModel",
     "Policy",
+    "Pricing",
+    "ProviderError",
     "ProviderModel",
     "approx_tokens",
 ]

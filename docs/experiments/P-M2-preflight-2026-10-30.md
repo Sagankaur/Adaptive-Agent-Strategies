@@ -1,0 +1,78 @@
+# P-M2 source and registry preflight - 2026-10-30
+
+## Status
+
+P-M2 is **not complete and has no GO/NO-GO decision**. This preflight pinned and inspected the public task source, checked metadata/resource requests, and tested one base-image pull. No TB-Pro Dockerfile, solution, test, Oracle, or model agent was run.
+
+## Source pins and license evidence
+
+- Official GitHub release: `v1.0`, commit `321216e78aa4c824f7877f45e3414ea235d7dd5c` ([release](https://github.com/alibaba/terminal-bench-pro/releases/tag/v1.0)).
+- Public Hugging Face dataset snapshot: `b79dec3e67acd466f90127cde0d24516d9132e74` ([dataset snapshot](https://huggingface.co/datasets/alibabagroup/terminal-bench-pro/tree/b79dec3e67acd466f90127cde0d24516d9132e74)).
+- The 200 task IDs in the pinned dataset match all 200 task directories at the pinned GitHub release, with no missing or extra IDs.
+- The GitHub README and Hugging Face card declare Apache-2.0 ([README](https://github.com/alibaba/terminal-bench-pro/blob/321216e78aa4c824f7877f45e3414ea235d7dd5c/README.md), [dataset card](https://huggingface.co/datasets/alibabagroup/terminal-bench-pro)). However, the pinned GitHub release has no root `LICENSE` file. The stricter P-M2 evidence requirement (a `LICENSE` file or written author confirmation) is therefore not yet satisfied.
+
+## Static task census
+
+The Parquet archive is 35,518,851 bytes. It contains 200 unique rows and 200 unique task IDs. Each archive is gzip-compressed; together the 200 task archives are 35,262,041 bytes and contain 1,000 files with 41,378,952 bytes of uncompressed file data.
+
+All 200 tasks use `task.toml` version `1.0`, provide an `environment/Dockerfile`, and omit a prebuilt `docker_image`. Categories are balanced at 25 tasks in each of eight categories. Requested resources:
+
+| Setting | Counts |
+|---|---|
+| CPUs | 1: 181; 2: 2; 4: 15; 8: 1; 16: 1 |
+| Memory | 2,048 MB: 181; 4,096 MB: 1; 8,192 MB: 16; 16,384 MB: 2 |
+| Storage | 10,240 MB: 200 |
+
+Under P-M2's provisional filter (>4 CPUs or >8,192 MB), two tasks are excluded: `build-arm64-qemu-linux-with-custom-message` and `ner-eval-conll2003`. The other 198 meet that preliminary resource filter. This is not the final filter, which depends on the pinned host budget and concurrency.
+
+The Dockerfiles use four distinct base images:
+
+| Base image | Tasks |
+|---|---:|
+| `skylensage-registry.cn-hangzhou.cr.aliyuncs.com/instances/1124:t-bench-python-3-13` | 129 |
+| `skylensage-registry.cn-hangzhou.cr.aliyuncs.com/instances/1124:t-bench-ubuntu-24-04` | 69 |
+| `python:3.11-slim` | 2 |
+| `python:3.13-slim` | 1 |
+
+There is one multi-stage Dockerfile; 199 Dockerfiles contain `RUN`, and 175 contain `COPY` or `ADD`. This confirms that the task archives need real image builds; substituting a stock base image without validating the resulting environment would change the benchmark setup.
+
+## Rohan base-image pull
+
+Slurm job `4408911` ran on `cpu-f-01` with Apptainer 1.3.3. Pulling the Python 3.13 base image from the Alibaba registry failed after about two minutes with a TCP connection timeout to `120.26.27.123:443`. An independent request to the same registry endpoint from the workstation also timed out. No image was written and no task code was executed. Rohan previously pulled Docker Hub's `alpine:3.20` successfully, so this result is specific to the Alibaba registry endpoint rather than evidence that every registry is unreachable.
+
+The pull attempt did not establish an egress allowlist or full network audit. P0-13's public-network fallback is not considered satisfied by this test.
+
+## Decision and next step
+
+Do not start the 200 image builds or Oracle trials yet. The immediate route blocker is that 198 of 200 tasks depend on two base images hosted on the unreachable Alibaba registry; the license evidence also needs to meet the P-M2 rule. Request an approved mirror or OCI image export for those two bases, or written author confirmation of a supported registry path and license. A GitHub Actions/GHCR build-and-pull route is a possible alternative from the private A2I2 notes, but it requires an explicit decision about publishing and storage and must preserve the task environments.
+
+After an accessible base-image route is established, continue P-M2 with the full per-task build report, dedup review against TB2, network/audit decision, Oracle results on TB-Pro only, disk/headroom report, and the final routing table. Keep all TB2 tasks agent- and Oracle-unseen.
+
+## Public repository recheck: 2026-10-30; outreach update: 2026-11-03
+
+The current [GitHub README](https://github.com/alibaba/terminal-bench-pro/blob/main/README.md) declares Apache-2.0 and identifies `yanquan.xx@alibaba-inc.com` for public-set results. The current [repository root](https://github.com/alibaba/terminal-bench-pro) does not show a separate root `LICENSE` file; the pinned v1.0 release also has no such file. The README and official Hugging Face dataset card support the authors' stated license, but do not satisfy this plan's stricter written-author-confirmation-or-root-LICENSE requirement. The author request was sent on 2026-10-30; no reply had arrived by 2026-11-06. See the [`outreach record`](../cluster/OUTREACH_DRAFTS_2026-10-30.md).
+
+## Official GHCR route probe: 2026-10-30
+
+Slurm job `4413248` on `cpu-f-01` confirmed that Apptainer 1.3.3 can pull both public Laude Institute Terminal-Bench base images from GHCR in a CPU job:
+
+| Image reference (linux/amd64 manifest digest) | SIF SHA-256 | Result |
+|---|---|---|
+| `ghcr.io/laude-institute/t-bench/ubuntu-24-04:20250624@sha256:9ae5033b4f62fbffd63896353f2c8e02939764fac81311608e4e731f0b4a8db5` | `559e0f87a4527eabe1806b289aa00d632ea80bc3803cd4fa50404df022c660f3` | Tag pull and inspection succeeded; immutable digest identified on package page |
+| `ghcr.io/laude-institute/t-bench/python-3-13:20250620@sha256:10dd0648b5339468ba39b2df90c1a28745faf8622e7552f85446611e2e992110` | `29f3efdddcc3c2cf9fcc94debca031ef9e1dc4e164f043802350596ebb809b31` | Tag pull and inspection succeeded; immutable digest identified on package page |
+
+The job took 47 seconds. The SIF labels record these GHCR references as their origins. The GHCR package registry lists both images as public Laude Institute packages ([package listing](https://github.com/orgs/laude-institute/packages)); the package pages publish the listed tags and immutable linux/amd64 manifest digests for [Ubuntu 24.04](https://github.com/orgs/laude-institute/packages/container/package/t-bench%2Fubuntu-24-04) and [Python 3.13](https://github.com/orgs/laude-institute/packages/container/package/t-bench%2Fpython-3-13). Job 4413248 pulled by tag, so these digests pin any repeat probe but were not the explicit pull references in that job.
+
+This establishes a reachable candidate route, not equivalence with TB-Pro's custom Aliyun images. No source Dockerfile/config comparison or filesystem diff has established that the two images contain the same packages, setup scripts, or state. Do not substitute these images in benchmark tasks without maintainer confirmation or a reproducibility/equivalence audit. The probe did not build or execute any task and did not satisfy the licensing, image-equivalence, network-isolation, or P-M2 gates.
+
+## Status update: 2026-11-06
+
+P-M2 remains pending; it has not formally passed or failed the route gate. The user reports that `120.26.27.123:443` also timed out from a third network on 2026-11-06. [Issue #10](https://github.com/alibaba/terminal-bench-pro/issues/10), opened by another user on 2026-11-05, independently reports the Ubuntu-base registry timeout and says 125 of 200 tasks passed using a cached Python base while all 68 Ubuntu-base tasks failed before their references or verifiers ran. This is not our Oracle result and does not prove image equivalence. The user plans to comment on issue #10 and open a separate LICENSE issue; those links will be added only after the user confirms posting. No task builds or Oracle runs have been done by this project.
+
+## External GHCR follow-up: 2026-11-10
+
+The issue reporter later posted a follow-up on [issue #10](https://github.com/alibaba/terminal-bench-pro/issues/10#issuecomment-6755089436). They report a full 200-task Oracle sweep using the two Laude GHCR bases passed 192 tasks, followed by targeted reruns that brought the cumulative number with passing Oracle results to 199/200. They explicitly say this was not a second complete sweep. Their follow-up also describes environment repairs (including dependency pins, local canonical data, resource/thread settings, verifier configuration, and a verifier log-pipe fix); the remaining chess task exceeded match-test timeouts in both environments. Thus 199/200 is the reporter's cumulative, repaired result, not evidence that an unmodified GHCR substitution preserves the pinned TB-Pro environments or that our project has reproduced their result.
+
+For the reporter's recovered Python image, `RepoDigests` was empty because it came from a BuildKit cache and was retagged. They provide the source manifest digest `sha256:18d34cc73a311cb821ad1168031c7ece07540c785eeb9ffa81e63c968c652daa`; they also say the GHCR Python image's six layers match the first six layers of the recovered nine-layer image, which has additional preinstalled packages. The commenter asks maintainers to confirm whether the GHCR bases are supported alternatives; this comment is from the issue reporter, not a maintainer confirmation.
+
+This is useful external feasibility evidence for considering an explicitly approved fallback, but it does not satisfy P-M2's written licence criterion, author/maintainer approval, exact image-equivalence criterion, or our own task-routing and survivor-count requirements. Do not build TB-Pro task images, run Oracle/reference solutions, or start episodes based on this report alone. P-M2 remains open; no project task build or Oracle run has occurred.

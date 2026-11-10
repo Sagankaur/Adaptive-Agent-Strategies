@@ -1,0 +1,1 @@
+task_id,task_source_commit,dataset_snapshot,pool,group_id,cpu_request,memory_mb,storage_mb,dockerfile_sha256,base_image_ref,base_image_digest,base_equivalence_evidence,disposition,drop_or_dedup_reason,task_image_digest,build_status,oracle_status,task_host_allowlist,reviewer,notes
