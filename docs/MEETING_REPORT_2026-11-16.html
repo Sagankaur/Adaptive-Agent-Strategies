@@ -233,6 +233,9 @@
         <div class="bar-row"><span class="bar-label">RTX Pro 6000</span><div class="track"><div class="bar pro"></div></div><span class="bar-value">6,062 tok/s</span></div>
         <p class="note">About 1.35× higher aggregate throughput on the RTX Pro for this cell, across three batch repetitions. Synthetic input; no real task or episode was measured. A100 was not tested.</p>
       </div>
+      <div class="callout" style="margin-top:14px">
+        <p><strong>Run-status caveat:</strong> all six serving jobs have successful runner records but Slurm reports FAILED 1:0. A login-shell logout hook is a reproduced local hypothesis, and the wrapper was changed; a short Rohan CPU job is still needed to confirm the fix with sacct. Treat the throughput figures as preliminary engineering measurements until this status discrepancy is resolved.</p>
+      </div>
     </section>
 
     <section aria-labelledby="done-title">
@@ -257,7 +260,7 @@
         <article class="card">
           <span class="tag info">Prior work audit</span>
           <h3>E-N4 is a desk audit</h3>
-          <p>Among 23 mapped operation rows from Self-Harness, AHE, and MemoHarness: 1 is code-enforced, 9 are prompt advice only, and 13 have no matching mechanism. This describes implementation coverage, not comparative performance.</p>
+          <p>Among 23 mapped operation rows from Self-Harness, AHE, and MemoHarness: 1 is code-enforced, 9 are prompt advice only, and 13 are not expressible in the current runtime; some have only coarse approximations. This describes implementation coverage, not comparative performance.</p>
         </article>
       </div>
     </section>
@@ -268,7 +271,7 @@
         <article class="card">
           <span class="tag hold">P-M2 · open</span>
           <h3>TB-Pro images and licence</h3>
-          <p>The Alibaba registry times out. GHCR bases are reachable, but our probe did not prove they match TB-Pro's custom images. The reporter's 199/200 cumulative result followed repairs and is not maintainer approval. No project task images or Oracle runs exist.</p>
+          <p>The Alibaba registry times out. GHCR bases are reachable, but our probe did not prove they match TB-Pro's custom images. The reporter's 199/200 cumulative result followed repairs and is not maintainer approval. The issue thread has no maintainer reply as of this report. No project task images or Oracle runs exist.</p>
         </article>
         <article class="card">
           <span class="tag hold">Q9 · professor decision</span>
@@ -279,6 +282,11 @@
           <span class="tag hold">G1 · paused</span>
           <h3>Honest task restart</h3>
           <p>Harbor has no confirmed way to reset task files and processes within the same trial. Clearing chat alone is not a task restart. The compiler and per-field G1 tests have not been implemented.</p>
+        </article>
+        <article class="card">
+          <span class="tag open">Data retention · open</span>
+          <h3>RDS not set up</h3>
+          <p>The Research Data Store Activity/Collection is not configured. Some raw Harbor logs remain on volatile cluster scratch; finish RDS setup and transfer important results before larger runs.</p>
         </article>
       </div>
       <div class="callout" style="margin-top:16px">

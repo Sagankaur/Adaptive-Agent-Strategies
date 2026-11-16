@@ -80,5 +80,7 @@ make test CPUS=0.5 MEMORY=512m
 * [`docs/LOCAL_MODELS.md`](docs/LOCAL_MODELS.md) - Pointing the agent loop at a locally served model, and how its cost is counted.
 * [`docs/SMALL_MODELS.md`](docs/SMALL_MODELS.md) - Small open-weight model candidates, their published Terminal-Bench 2.0 scores, and what it takes to run them locally.
 * [`docs/MEETING_2026-10-14.md`](docs/MEETING_2026-10-14.md) - Record of the 2026-10-14 meeting with Prof. Abdelrazek and the resulting follow-ups.
+* [`docs/MEETING_REPORT_2026-11-16.html`](docs/MEETING_REPORT_2026-11-16.html) - Visual, plain-language progress report prepared for the 2026-11-16 meeting with Prof. Abdelrazek.
+* [`docs/MEETING_REPORT_2026-11-16.md`](docs/MEETING_REPORT_2026-11-16.md) - Detailed text record underlying the 2026-11-16 meeting report.
 
 **Benchmark choice.** The architecture note names SWE-bench Lite and WebArena, and the technical plan proposed Terminal-Bench 2.0 with AppWorld for transfer. Both are superseded. The 2026-10-20 design holds out all 89 Terminal-Bench 2.0 tasks and adapts on deduplicated terminal-bench-pro, after a pilot. AppWorld moves to paper 2 by default. Prof. Abdelrazek still has to approve this (DECISIONS.md, Q3 and Q4).
