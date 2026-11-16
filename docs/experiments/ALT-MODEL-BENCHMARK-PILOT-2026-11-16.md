@@ -1,10 +1,10 @@
 # Exploratory non-Qwen benchmark pilot: gpt-oss-20b on Aider Polyglot
 
-**Status:** proposed pilot; benchmark episodes not run. This document is an additive, exploratory track for a separate follow-on PR. It does not replace the current proposal, change its primary benchmark/model, or close any existing gate.
+**Status:** the gpt-oss serving-only tool-call smoke passed; Aider benchmark episodes have not run. This document is an additive, exploratory track for a separate follow-on PR. It does not replace the current proposal, change its primary benchmark/model, or close any existing gate.
 
 ## Decision for the exploratory track
 
-- **Model candidate:** OpenAI gpt-oss-20b, served locally. It is a non-Qwen, open-weight model with an Apache-2.0 license and documented function-calling support. The model page lists 21B total parameters, 3.6B active parameters, and a 131,072-token context. The exact inference artifact, quantization, runtime build, and hashes still need pinning before a scored run.
+- **Model candidate:** OpenAI gpt-oss-20b, served locally. It is a non-Qwen, open-weight model with an Apache-2.0 license and documented function-calling support. The model page lists 21B total parameters, 3.6B active parameters, and a 131,072-token context. A serving-only tool-call smoke passed on Rohan; the exact model and SIF hashes are recorded in [the run report](gpt-oss-serving-smoke-2026-11-17.md). This does not qualify it on benchmark tasks.
 - **Benchmark candidate:** the Aider Polyglot benchmark through Harbor's adapter at the project's existing Harbor v0.23.0 pin (`1e5c5c6db929a10a140d05e606882c671ae20729`). The adapter documents 225 code-editing tasks in six languages and MIT licensing for the benchmark and its Exercism source material. Start with the Python subset only; do not claim a full Polyglot score from that sample.
 - **Pilot size:** six Python tasks, one frozen starting strategy and one attempt per task. Freeze task IDs by a documented seed before reading their instructions. Report each task's official verifier outcome, aggregate pass fraction, model/tool errors, tokens, and wall time. Treat this as descriptive feasibility evidence, not a confirmatory result or a comparison with the main proposal.
 - **Scoring rule:** use only the benchmark's official verifier; do not run or inspect its bundled oracle/reference solution. Keep task data and generated run artifacts outside the public repository.
@@ -31,9 +31,9 @@ The task data and verifier stay inside the isolated environment; the agent uses 
 
 The local non-Qwen model already available on the workstation (Llama 3 8B, Q4_0) does not expose tool calling through the installed Ollama registry entry, so it is not a suitable agent candidate without changing the model package or adding a nonstandard tool parser. gpt-oss-20b is a stronger next candidate because its published interface includes function calling and its weight license permits local experimentation. It also provides a meaningful response to A2I2's advice to exercise caution with the recent Qwen family.
 
-Aider Polyglot is a coding benchmark with editable repositories and unit-test-based verification, so it exercises the project's coding-agent question on a benchmark distinct from the Terminal-Bench tasks. Its Harbor adapter is pinned with the existing Harbor version. The adapter's own setup instructions require Docker, however, so the task-image route is not yet established on the cluster's Apptainer-only setup.
+Aider Polyglot is a coding benchmark with editable repositories and unit-test-based verification, so it exercises the project's coding-agent question on a benchmark distinct from the Terminal-Bench tasks. Its Harbor adapter is pinned with the existing Harbor version. The adapter's documented setup uses Docker. The task-image route is not yet established on Rohan, where A2I2 also provides Apptainer and rootless Docker.
 
-## Workstation smoke already run
+## Workstation Llama 3 smoke
 
 On 2026-11-16, the local Ollama endpoint at `127.0.0.1:11434` was tested with the cached `llama3:latest` model:
 
@@ -50,24 +50,29 @@ On 2026-11-16, the local Ollama endpoint at `127.0.0.1:11434` was tested with th
 
 This is one synthetic text-generation smoke, not a benchmark task, agent episode, Harbor run, or evidence of model quality. It is recorded to rule out the cached Llama 3 package as the immediate tool-using alternative. The tool-call result is specific to the local Ollama model package and does not establish that every Llama 3 serving stack lacks tool support.
 
+## Rohan gpt-oss serving smoke
+
+The pinned gpt-oss-20b MXFP4 file and llama.cpp SIF loaded on Rohan's RTX Pro 6000. Job 4800647 returned one `reverse_words` function call with the exact requested argument. The server was bound to localhost, the function was not executed, and no task or Harbor trial ran. The warm request took 0.308 seconds with 149 prompt and 41 completion tokens; the post-load VRAM sample was 11,895 MiB. See the [complete run record](gpt-oss-serving-smoke-2026-11-17.md) and its small JSON/GPU artifacts.
+
 ## Execution blockers and gates
 
-The benchmark pilot and gpt-oss inference job have not run. The workstation has no Docker or Apptainer executable and only an 8 GiB GPU. A key-only SSH session did reach Rohan's `login-f` node once; later retries failed because the hostname stopped resolving, before I could upload or submit the GPU smoke. No password was requested or used.
+The Aider benchmark pilot has not run. The workstation has no Docker or Apptainer executable and only an 8 GiB GPU. Key-only SSH reached Rohan, transferred the scripts, and completed the serving-only job without using a password.
 
 ### Cluster checks and serving-only run files
 
-During the successful login, Rohan exposed the Apptainer 1.3.3 module, the already-staged llama.cpp CUDA 12 SIF, and an RTX Pro 6000 node. The model cache contained the existing Qwen file but no gpt-oss file. The Hugging Face model API supplied a pinned gpt-oss artifact revision (`41e8a94d15d62070b36cf4553a0250717ecf46b8`); its MXFP4 GGUF is 12,109,566,624 bytes with SHA-256 `27cd6c432c7672cb812a92f611cf3ba7bbc35928262bb1e1253ff4ee6ae35901`.
+During the successful login, Rohan exposed the Apptainer 1.3.3 module, the already-staged llama.cpp CUDA 12 SIF, and an RTX Pro 6000 node. Initially the model cache contained only the existing Qwen file. Job 4800639 then downloaded the pinned gpt-oss artifact at Hugging Face revision `41e8a94d15d62070b36cf4553a0250717ecf46b8`; the MXFP4 GGUF is 12,109,566,624 bytes and its SHA-256 check passed against `27cd6c432c7672cb812a92f611cf3ba7bbc35928262bb1e1253ff4ee6ae35901`.
 
-Two Slurm scripts are prepared for the next stable key-only session: [download and verify the model](../cluster/serving-sweep/01_gpt_oss_fetch.sbatch), then [run a localhost-only synthetic function-call smoke on the RTX Pro 6000](../cluster/serving-sweep/02_gpt_oss_tool_call_smoke.sbatch). The smoke does not execute the proposed function and does not run a task. Upload failed when DNS dropped, so no job was submitted and there is no gpt-oss result yet.
+The [fetch script](../cluster/serving-sweep/01_gpt_oss_fetch.sbatch) downloaded and verified the model in job 4800639. The [localhost-only synthetic tool-call script](../cluster/serving-sweep/02_gpt_oss_tool_call_smoke.sbatch) passed in job 4800647. The function was not executed, and no task was run.
+
+Rohan also provides a `rootless-docker/rootless-docker` module, which looked like a route for Harbor's Docker-based Aider adapter. The no-model probe reached the rootless daemon and pulled a small Python image, but Docker could not start a container because the compute node lacked `/sys/fs/cgroup/user.slice/.../cgroup.controllers`. It did not test `network=none` or Harbor control. Do not run Aider tasks through this route unless A2I2 resolves the cgroup issue or identifies a supported setup. The probe is [recorded in the run report](gpt-oss-serving-smoke-2026-11-17.md).
 
 Before the six-task pilot:
 
-1. Re-establish key-only Rohan access; record the serving node's GPU, runtime, disk, and model-cache availability.
-2. Pin the gpt-oss-20b artifact and its digest, the llama.cpp/runtime build, sampling settings, and the exact OpenAI-compatible tool-call format. Run a no-task synthetic tool-call round trip first.
-3. Resolve the Aider Python task image route without Docker: build or import a reproducible Apptainer image from the pinned task definitions and record its digest. Do not assume Harbor's Docker adapter automatically works under Apptainer.
-4. Re-run the existing network-isolation checks with that exact image and adapter, including the model/control channel needed by Harbor, an external URL, and `169.254.169.254`. Keep the task-container command tripwire enabled. Isolation must preserve only the required local control/model path.
-5. Confirm the six task IDs and data/license handling before any model episode. Keep task data and generated run artifacts outside the public repository.
-6. Run six one-attempt episodes and report the raw per-task outcomes and aggregate with an exact denominator. Do not tune the strategy or model on these six tasks and do not infer a general benchmark score.
+1. Keep the gpt-oss model, SIF, sampling settings, and localhost tool-call smoke pinned as recorded.
+2. Resolve a reproducible Aider Python task image route. The rootless Docker smoke currently fails at container startup; alternatively, test a documented Apptainer build of the pinned Aider Python environment. Do not assume either route works without a smoke.
+3. With the exact adapter and image, run a scripted no-model Harbor task: verify the private control path, `network=none`, external/DNS/metadata failure, no host socket or credential mounts, resource limits, and cleanup. Keep the command tripwire enabled.
+4. Freeze six Python task IDs and data/license handling before reading their instructions. Keep task data and generated run artifacts outside the public repository.
+5. Run six one-attempt episodes only after the image and isolation checks pass. Report raw per-task verifier outcomes and the exact denominator. Do not tune on these tasks or infer a general benchmark score.
 
 If the image route or isolation check fails, the pilot remains blocked. Do not switch to TB2 or TB-Pro as a workaround. The primary proposal and its existing gates remain unchanged.
 

@@ -5,7 +5,6 @@
 #SBATCH --job-name=aas-gptoss-tools
 #SBATCH --partition=gpu
 #SBATCH --qos=short
-#SBATCH --nodelist=rtxp6000l-f-01
 #SBATCH --gpus=rtxp6000:1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=32G
@@ -13,6 +12,8 @@
 #SBATCH --output=aas-gptoss-tools-%j.out
 #SBATCH --error=aas-gptoss-tools-%j.err
 
+set -eo pipefail
+source /etc/profile
 set -euo pipefail
 log() { echo "[$(date -Is)] $*"; }
 
@@ -80,7 +81,7 @@ tool = {
 payload = {
     "messages": [
         {"role": "system", "content": "Use the provided function when it can complete the request."},
-        {"role": "user", "content": "Call reverse_words on exactly this text: red blue green."},
+        {"role": "user", "content": 'Call reverse_words on the exact string "red blue green".'},
     ],
     "tools": [tool],
     "temperature": 0.6,
@@ -111,10 +112,12 @@ report = {
     "seed": payload["seed"],
     "temperature": payload["temperature"],
     "top_p": payload["top_p"],
+    "max_tokens": payload["max_tokens"],
+    "tool_choice": payload.get("tool_choice", "auto (server default)"),
     "tool_call_count": len(calls),
     "tool_name": name,
     "tool_arguments": arguments,
-    "tool_call_correct": name == "reverse_words" and arguments == {"text": "red blue green."},
+    "tool_call_correct": len(calls) == 1 and name == "reverse_words" and arguments == {"text": "red blue green"},
     "finish_reason": choice.get("finish_reason"),
     "wall_seconds": wall_s,
     "prompt_tokens": usage.get("prompt_tokens"),
@@ -126,6 +129,8 @@ report = {
 with open(f"{out}/tool_call.json", "w", encoding="utf-8") as handle:
     json.dump(report, handle, indent=2)
 print(json.dumps(report, indent=2), flush=True)
+if not report["tool_call_correct"]:
+    raise SystemExit("expected exactly one reverse_words call with the exact argument")
 PY
 
 log "serving-only tool-call smoke finished; raw record is $OUT/tool_call.json"

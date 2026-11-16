@@ -250,17 +250,17 @@
 
     <section aria-labelledby="pilot-flow-title">
       <h2 id="pilot-flow-title">Proposed alternate pilot: follow the path</h2>
-      <p class="lede">This is a new exploratory route, separate from the current proposal. The model and Aider task episodes have not run yet.</p>
+      <p class="lede">This is a new exploratory route, separate from the current proposal. The gpt-oss serving smoke passed; no Aider task episode has run.</p>
       <div class="flow" role="img" aria-label="Proposed path: gpt-oss-20b talks to the project agent in Harbor; the agent uses Harbor's private Unix-socket control channel to work inside a network-isolated Apptainer Aider Polyglot Python task; the official verifier records pass or fail, tokens, and time.">
-        <article class="flow-node"><span class="flow-num">1</span><strong>Model server</strong><p>gpt-oss-20b, pinned locally; first prove a synthetic tool call works.</p></article>
+        <article class="flow-node"><span class="flow-num">1</span><strong>Model server</strong><p>gpt-oss-20b loaded on RTX Pro; one synthetic tool call passed.</p></article>
         <article class="flow-node"><span class="flow-num">2</span><strong>Project agent</strong><p>Harbor starts the agent with the frozen starting strategy.</p></article>
         <article class="flow-node"><span class="flow-num">3</span><strong>Aider task</strong><p>Six Python code-editing tasks, each with one attempt.</p></article>
         <article class="flow-node"><span class="flow-num">4</span><strong>Isolated container</strong><p>Apptainer blocks outside network access. Harbor commands use a private Unix socket.</p></article>
         <article class="flow-node"><span class="flow-num">5</span><strong>Measured outcome</strong><p>Official tests give pass/fail; log tokens, errors, and wall time.</p></article>
       </div>
-      <div class="flow-gate"><strong>Stop before task episodes unless all three checks pass:</strong> pinned gpt-oss tool-call smoke; reproducible Aider image under Apptainer; and network-off test that preserves Harbor control while blocking external and metadata access.</div>
+      <div class="flow-gate"><strong>Still gated:</strong> build a reproducible Aider image and pass an exact-image, no-model network/control test before any task episode. The tool-call smoke is complete; the Aider image and task isolation are not.</div>
       <div class="callout">
-        <p><strong>Small local check already completed:</strong> cached Llama 3 8B answered a synthetic word-reversal prompt correctly, but the installed Ollama package rejected tool calling. That is a model compatibility smoke, not an Aider score. Key-only SSH reached Rohan once, where the Apptainer module and RTX Pro 6000 node were confirmed; DNS then dropped before the gpt-oss files could be uploaded. No cluster model job or Aider episode has run. <a href="experiments/ALT-MODEL-BENCHMARK-PILOT-2026-11-16.md">Read the pilot protocol and exact measurements.</a></p>
+        <p><strong>What has run:</strong> gpt-oss-20b returned one native function call on Rohan's RTX Pro 6000; the function was not executed and no benchmark task was involved. The supplied rootless-Docker module then failed to start a container because the node lacks a cgroup controller path. <a href="experiments/gpt-oss-serving-smoke-2026-11-17.md">Read the exact run record.</a> <a href="experiments/ALT-MODEL-BENCHMARK-PILOT-2026-11-16.md">Read the separate pilot protocol.</a></p>
       </div>
     </section>
 
