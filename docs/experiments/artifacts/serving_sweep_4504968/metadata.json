@@ -1,0 +1,25 @@
+{
+  "benchmark_episodes": 0,
+  "gpu": {
+    "driver_version": "565.57.01",
+    "memory_total_mib": 46068,
+    "name": "NVIDIA L40S",
+    "uuid": "GPU-73561b96-ccdd-6ae4-595a-fb92d03ee5aa"
+  },
+  "gpu_label_requested": "l40s",
+  "host": "l40s-f-01",
+  "model_path": "/vast/kasag/models/Qwen3.6-35B-A3B-UD-Q4_K_M.gguf",
+  "model_sha256": "ac0e2c1189e055faa36eff361580e79c5bd6f8e76bffb4ce547f167d53e31a61",
+  "sampling": {
+    "temperature": 0.6,
+    "top_k": 20,
+    "top_p": 0.95
+  },
+  "server_help_sha256": "95adc9ff44d01558cce93e198a6feb9db8c2f7dea7e3faac3cf50e4d653a7335",
+  "server_image_path": "/vast/kasag/images/llama-server-cuda12-b11515.sif",
+  "server_image_reference": "ghcr.io/ggml-org/llama.cpp:server-cuda12-b11515 (existing cluster SIF)",
+  "server_image_sha256": "dd8110164788b9deb354e06cb984214b2ef8b6b0598c2ef73dd0ab9828957d56",
+  "slurm_job_id": "4504968",
+  "task_data_used": false,
+  "timestamp_utc": "2026-11-03T05:52:10.680438+00:00"
+}

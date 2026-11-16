@@ -22,7 +22,7 @@ Run as a script to write a split file::
     python -m evaluation.splits --tasks tasks.jsonl --benchmark terminal-bench@2.0 --seed 0 --out splits/tb2.json
 
 where each line of ``tasks.jsonl`` has ``task_id`` and optionally
-``category``, ``difficulty`` and ``group``.
+``category``, ``difficulty`` and ``group``; other keys are ignored.
 """
 
 from __future__ import annotations
@@ -171,7 +171,9 @@ def main(argv: Sequence[str] | None = None) -> None:
     args = parser.parse_args(argv)
 
     lines = [line for line in args.tasks.read_text().splitlines() if line.strip()]
-    tasks = [TaskInfo.model_validate(json.loads(line)) for line in lines]
+    # Extra columns (tags, author, source notes) are kept in the task file but play no part in the split.
+    fields = set(TaskInfo.model_fields)
+    tasks = [TaskInfo.model_validate({k: v for k, v in json.loads(line).items() if k in fields}) for line in lines]
     split = make_split(tasks, args.sizes, args.seed, args.benchmark)
     save_split(split, args.out)
     print(f"wrote {args.out}: " + ", ".join(f"{n}={len(ids)}" for n, ids in split.splits.items()))

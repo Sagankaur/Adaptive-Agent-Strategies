@@ -19,6 +19,13 @@ def test_s0_is_valid_and_round_trips_through_json(strategy: Strategy) -> None:
     assert restored.to_json() == strategy.to_json()
 
 
+def test_s0_defaults_to_the_documented_step_and_generated_token_budgets() -> None:
+    strategy = s0()
+
+    assert strategy.budget.max_steps == 60
+    assert strategy.budget.max_tokens == 64_000
+
+
 def test_set_fields_serialise_sorted_for_stable_json(strategy: Strategy) -> None:
     doc = strategy.model_dump(mode="json")
     assert doc["tool_policy"]["tools_allowed"] == sorted(doc["tool_policy"]["tools_allowed"])
@@ -126,7 +133,8 @@ def test_render_reflects_fields(strategy: Strategy) -> None:
     text = strategy.render()
     assert "list_workdir, read_readme" in text
     assert "run_visible_tests" in text
-    assert "at most 40 steps" in text
+    assert "at most 60 steps" in text
+    assert "64,000 generated tokens" in text
     assert "Notes:" not in text
 
     child = edited(

@@ -2,7 +2,7 @@
 
 from baselines.agent_loop import Attempt, Step, parse_reply, run_episode
 from baselines.baselines import Baseline, BestOfN, FixedStrategy, ReflectionRetry, TaskOutcome
-from baselines.cost import Cost, PriceTable, load_price_tables
+from baselines.cost import Cost, PriceNotSetError, PriceTable, load_price_tables
 
 __all__ = [
     "Attempt",
@@ -10,6 +10,7 @@ __all__ = [
     "BestOfN",
     "Cost",
     "FixedStrategy",
+    "PriceNotSetError",
     "PriceTable",
     "ReflectionRetry",
     "Step",

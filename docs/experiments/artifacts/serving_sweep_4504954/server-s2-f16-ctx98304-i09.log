@@ -1,0 +1,30 @@
+INFO:    squashfuse not found, will not be able to mount SIF or other squashfs files
+INFO:    fuse2fs not found, will not be able to mount EXT3 filesystems
+INFO:    gocryptfs not found, will not be able to use gocryptfs
+INFO:    Converting SIF file to temporary sandbox...
+warn: LLAMA_ARG_HOST environment variable is set, but will be overwritten by command line argument --host
+0.00.151.379 I srv  llama_server: initializing ...
+0.00.151.402 I cmn  common_param: common_params_print_info: verbosity = 3 (adjust with the `-lv N` CLI arg)
+0.00.151.827 W srv  llama_server: security: no API key is set and CORS allows all origins (see https://github.com/ggml-org/llama.cpp/pull/25655)
+0.00.155.241 I srv    load_model: loading model '/models/Qwen3.6-35B-A3B-UD-Q4_K_M.gguf'
+0.04.244.118 I cmn          init: llama threadpool init, n_threads = 64
+0.04.352.659 I srv    load_model: initializing, n_slots = 2, n_ctx_slot = 98304, kv_unified = 'false'
+0.04.357.491 W srv          init: chat template supports preserving reasoning, it is enabled by default (may use more tokens, disable via --no-reasoning-preserve)
+0.04.357.540 I srv  llama_server: model loaded
+0.04.357.547 I srv  llama_server: listening on http://127.0.0.1:47139
+0.05.229.012 I slot get_availabl: id  0 | task -1 | selected slot by id (0)
+0.05.229.061 I slot launch_slot_: id  0 | task 1 | processing task, is_child = 0
+0.05.557.260 I slot get_availabl: id  1 | task -1 | selected slot by id (1)
+0.05.557.293 I slot launch_slot_: id  1 | task 3 | processing task, is_child = 0
+0.07.903.176 I slot print_timing: id  0 | task 1 | prompt eval time =    1815.72 ms /  8192 tokens (    0.22 ms per token,  4511.70 tokens per second)
+0.07.903.180 I slot print_timing: id  0 | task 1 |        eval time =     858.35 ms /    21 tokens (   42.92 ms per token,    23.30 tokens per second)
+0.07.903.181 I slot print_timing: id  0 | task 1 |       total time =    2674.08 ms /  8213 tokens
+0.07.903.185 I slot print_timing: id  0 | task 1 |    graphs reused =         16
+0.07.903.447 I slot      release: id  0 | task 1 | stop processing: n_tokens = 8212, truncated = 0
+0.08.684.972 I slot print_timing: id  1 | task 3 | prompt eval time =    1633.07 ms /  8192 tokens (    0.20 ms per token,  5016.33 tokens per second)
+0.08.684.976 I slot print_timing: id  1 | task 3 |        eval time =     939.78 ms /   128 tokens (    7.40 ms per token,   135.14 tokens per second)
+0.08.684.977 I slot print_timing: id  1 | task 3 |       total time =    2572.85 ms /  8320 tokens
+0.08.684.978 I slot print_timing: id  1 | task 3 |    graphs reused =        126
+0.08.685.156 I slot      release: id  1 | task 3 | stop processing: n_tokens = 8319, truncated = 0
+0.08.689.069 I srv    operator(): operator(): cleaning up before exit...
+INFO:    Cleaning up image...

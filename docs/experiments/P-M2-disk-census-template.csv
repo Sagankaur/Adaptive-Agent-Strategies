@@ -1,0 +1,1 @@
+measurement_id,scope,measurement_type,phase,artifact_or_filesystem,source_or_digest,value,unit,measured_at,planned_project_peak_bytes,shared_occupancy_percent,project_allocation_bytes,project_headroom_percent,retention_policy,notes

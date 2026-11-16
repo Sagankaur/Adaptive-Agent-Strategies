@@ -1,20 +1,20 @@
 # Phase 0 checklist
 
-Status of the Phase 0 items in [TECHNICAL_PLAN.md](TECHNICAL_PLAN.md), section 10, as of 2026-10-04. Phase 0 is "Setup" (weeks 1–2). Its deliverables are a split file, the price table and a smoke-test report.
+Status of the Phase 0 items in [TECHNICAL_PLAN.md](TECHNICAL_PLAN.md), section 10, as of 2026-10-30. The snapshot check is from 2026-10-04 and the split rows from 2026-10-15; the split commit, task-source date and pins table were updated on 2026-10-20. Phase 0 is "Setup" (weeks 1–2). Its deliverables are a split file, the price table and a smoke-test report.
 
-No agent has been run on any real benchmark, and no model API has been called.
+No agent has been run on a real benchmark. A low-level llama.cpp serving smoke and one-task project-client/toy-runner smoke passed on the A2I2 L40S on 2026-10-28/29. Scripted and real-Qwen one-task Harbor smokes passed on Rohan with Apptainer 1.3.3 on 2026-10-30; these validate the synthetic container lifecycle and native tool-call path only. The five-task TB-Pro infrastructure smoke remains gated on P-M2, G-BASE and network policy. The portable project-client report, Slurm job, summary and result JSONL are in [`docs/cluster/l40s-client-smoke/`](cluster/l40s-client-smoke/); Harbor details are in [`docs/experiments/Qwen-Harbor-real-model-smoke-2026-10.md`](experiments/Qwen-Harbor-real-model-smoke-2026-10.md).
 
 | Item | Status |
 |---|---|
-| Pin the benchmark version | **Proposed, not confirmed by a run.** Pins are listed below. |
-| Fix the splits and commit the split file | **Tool implemented; real task ids not yet pinned.** `evaluation/splits.py` makes a seeded split, stratified by category and difficulty, and refuses to overwrite a committed split file. No Terminal-Bench split file exists yet, because the 89 task ids and their category/difficulty metadata have not been extracted. |
+| Pin the benchmark version | **Done for the task source (2026-10-15).** `laude-institute/terminal-bench-2` at commit `2fd12b88aafdd04a52c298e3940bcb189f9766d6`; the 89 task directories were read. Harbor v0.23.0 has passed a synthetic Apptainer smoke; compatibility with the benchmark route is not confirmed. See [`evaluation/data/tb2_tasks.README.md`](../evaluation/data/tb2_tasks.README.md). |
+| Fix the splits and commit the split file | **Done (2026-10-15), committed in `92c1621`.** `splits/terminal-bench-2.0.json` was made from `evaluation/data/tb2_tasks.jsonl` with seed 20261015 and the default sizes A=25, V=12, M=15, H=37. A test in `tests/test_splits.py` checks that the file is disjoint, covers all 89 ids and matches the task list. The split is stratified by category and difficulty; there are 16 categories, 5 of them with one task, so small categories are not represented in every split. |
 | Get Harbor running in a cloud sandbox | **Not done.** Needs a sandbox provider account and budget. |
-| Choose the model: run S0 on 20 tasks from A∪V (starting-score check) | **Not done; needs API budget.** `llm.ProviderModel` is the slot for the real client, and it refuses to run until one is wired up. |
-| Check `terminal-bench-pro` | **Not done.** Its 200 tasks have not been examined. |
+| Choose the model: run S0 on 20 tasks from A∪V (starting-score check) | **Not done.** The project client and Harbor have passed synthetic tasks on the L40S; the 20-task starting-score check, benchmark route and budget gates remain open. Candidate models are listed in [`SMALL_MODELS.md`](SMALL_MODELS.md); see [`LOCAL_MODELS.md`](LOCAL_MODELS.md) for client status. |
+| Check `terminal-bench-pro` | **Partly done.** Pinned the public v1.0 source, confirmed all 200 task IDs match the official release, and recorded resource requests/base images. The Alibaba registry hosting two base images used by 198 tasks is unreachable from Rohan, so image builds, dedup review, and Oracle checks have not run. See [`P-M2-preflight-2026-10-30.md`](experiments/P-M2-preflight-2026-10-30.md). |
 | Check snapshot support | **Done (source and docs check, nothing run).** See below. |
-| Agree the budget | **Not done.** This is Prof. Abdelrazek's decision (open decision 2). |
-| Price table | **Drafted, not frozen.** `evaluation/price_table.json` holds the GPT-5-mini and gpt-oss-120b prices from [PRIOR_WORK.md](PRIOR_WORK.md), seen on 2026-10-02 and not re-checked. It is to be frozen once the model is chosen. |
-| Smoke-test report | **Not done.** It depends on the Harbor and model items above. The offline test suite (`make test`) runs every component on a toy environment with a mock model; that is a software check, not a smoke test of the benchmark. |
+| Agree the budget | **Not done.** This is Prof. Abdelrazek's decision (Q5 in [DECISIONS.md](DECISIONS.md#q5-compute-meeting-point-6); formerly open decision 2). |
+| Price table | **Drafted, not frozen.** `evaluation/price_table.json` holds the GPT-5-mini and gpt-oss-120b prices from [PRIOR_WORK.md](PRIOR_WORK.md), seen on 2026-10-02 and not re-checked, and placeholder entries for three local models without a compute rate ([LOCAL_MODELS.md](LOCAL_MODELS.md)). It is to be frozen once the model is chosen. |
+| Smoke-test report | **Partly done.** Model serving, project-client/toy-runner, scripted Harbor and real-Qwen Harbor smokes are recorded. The end-to-end real-model smoke used one synthetic task; the five-task TB-Pro smoke remains **not done**. The offline test suite (`make test`) runs every component on a toy environment with a mock model; that is a software check, not a benchmark smoke test. |
 
 ## Snapshot support in Harbor
 
@@ -52,7 +52,7 @@ What was checked, at Harbor commit [`3e30cca`](https://github.com/laude-institut
 | What | Pin | Source |
 |---|---|---|
 | Primary benchmark | Terminal-Bench 2.0, Harbor dataset id `terminal-bench@2.0` | Harbor README run example (`harbor run --dataset terminal-bench@2.0 ...`), https://github.com/laude-institute/harbor; the same id in https://github.com/laude-institute/terminal-bench-2 |
-| Task source | `laude-institute/terminal-bench-2` at commit [`2fd12b8`](https://github.com/laude-institute/terminal-bench-2/tree/2fd12b88aafdd04a52c298e3940bcb189f9766d6) (main, 2026-04-30) | GitHub API. The repo root has 89 directories, matching the 89 tasks; the individual task directories were not inspected |
+| Task source | `laude-institute/terminal-bench-2` at commit [`2fd12b8`](https://github.com/laude-institute/terminal-bench-2/tree/2fd12b88aafdd04a52c298e3940bcb189f9766d6) (main; committed 2026-04-30 05:53 UTC, which is 2026-04-29 in US time zones) | GitHub API, author and committer date (the two are equal). The API now redirects the repository to `harbor-framework/terminal-bench-2`; `git ls-remote` on 2026-10-20 still gives this commit as `HEAD`. The repo root has 89 task directories, and the `task.toml` of each was parsed; see [`evaluation/data/tb2_tasks.README.md`](../evaluation/data/tb2_tasks.README.md) |
 | Harness | Harbor v0.23.0 (GitHub release 2026-09-12; PyPI `harbor` is also at 0.23.0) | https://github.com/laude-institute/harbor/releases, https://pypi.org/project/harbor/ |
 | Transfer benchmark | AppWorld v0.1.3.post1 (PyPI, uploaded 2026-02-17) | https://pypi.org/project/appworld/, https://github.com/stonybrooknlp/appworld. The release notes say the main branch is "significantly ahead" of this release, so whether to pin the release or a commit is still open |
 | Not used | Terminal-Bench "continuous" (4.0) | A moving target with 8-hour timeouts (https://www.tbench.ai/news/terminal-bench-4-0) |
@@ -64,3 +64,5 @@ python -m evaluation.splits --tasks tb2_tasks.jsonl --benchmark terminal-bench@2
 ```
 
 The seed should be chosen and recorded before the file is generated, and the file committed before any agent run.
+
+*(Updated 2026-10-20.)* The split file was committed in `92c1621`, before any agent run, with seed 20261015. Its task list was read from the repository at the pinned commit, not from a run of `harbor`, so checking the ids against a `harbor` run is still to do.
