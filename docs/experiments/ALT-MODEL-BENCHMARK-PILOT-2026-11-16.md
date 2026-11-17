@@ -66,11 +66,15 @@ The [fetch script](../cluster/serving-sweep/01_gpt_oss_fetch.sbatch) downloaded 
 
 Rohan also provides a `rootless-docker/rootless-docker` module, which looked like a route for Harbor's Docker-based Aider adapter. The no-model probe reached the rootless daemon and pulled a small Python image, but Docker could not start a container because the compute node lacked `/sys/fs/cgroup/user.slice/.../cgroup.controllers`. It did not test `network=none` or Harbor control. Do not run Aider tasks through this route unless A2I2 resolves the cgroup issue or identifies a supported setup. The probe is [recorded in the run report](gpt-oss-serving-smoke-2026-11-17.md).
 
+### Python 3.11 Apptainer preflight
+
+No-model job 4801425 passed a synthetic Python 3.11.18 + offline-pytest check through the patched Harbor provider's private Unix socket. It also blocked the fixed external IP, DNS, and metadata probes and found no checked SSH/credential/Docker/rootless-Docker mounts or credential environment names. This is useful evidence that an Apptainer route can work without fakeroot for this synthetic setup. The harness called Harbor's provider internals directly and used a generic `python:3.11-slim` SIF, not a normal Harbor trial or the Aider adapter's generated image. It does not resolve task dependency/image fidelity or resource-limit questions. See the [run record](aider-python-image-preflight-2026-11-17.md).
+
 Before the six-task pilot:
 
 1. Keep the gpt-oss model, SIF, sampling settings, and localhost tool-call smoke pinned as recorded.
-2. Resolve a reproducible Aider Python task image route. The rootless Docker smoke currently fails at container startup; alternatively, test a documented Apptainer build of the pinned Aider Python environment. Do not assume either route works without a smoke.
-3. With the exact adapter and image, run a scripted no-model Harbor task: verify the private control path, `network=none`, external/DNS/metadata failure, no host socket or credential mounts, resource limits, and cleanup. Keep the command tripwire enabled.
+2. Reproduce the pinned Aider Python runtime in a task image, including the required command-line tools and offline test dependencies. The generic Python 3.11 SIF preflight passed, but the adapter-generated task image and normal Harbor trial lifecycle remain unverified; the rootless Docker route still fails at container startup.
+3. With the exact adapter and image, run a scripted no-model Harbor trial: verify the private control path, `network=none`, external/DNS/metadata failure, host socket/credential absence, resource limits, and cleanup. Keep the command tripwire enabled.
 4. Freeze six Python task IDs and data/license handling before reading their instructions. Keep task data and generated run artifacts outside the public repository.
 5. Run six one-attempt episodes only after the image and isolation checks pass. Report raw per-task verifier outcomes and the exact denominator. Do not tune on these tasks or infer a general benchmark score.
 

@@ -1,0 +1,24 @@
+{
+  "provider_exec_server_health": "PASS",
+  "uds_nonce_round_trip": "PASS",
+  "tcp_control_port": null,
+  "python_version": "3.11",
+  "offline_pytest_install": "PASS",
+  "synthetic_pytest": "PASS",
+  "egress_fixed_ip_dns_metadata": "PASS_BLOCKED",
+  "host_credentials_and_docker_sockets": "PASS_ABSENT_FOR_CHECKED_MOUNTS_AND_ENV_NAMES",
+  "task_or_benchmark_run": false,
+  "model_or_agent_run": false,
+  "oracle_or_reference_solution_run": false,
+  "limitations": [
+    "This tests a generic Python 3.11 image, not the adapter-generated Aider task image.",
+    "The harness constructs SingularityEnvironment directly and does not run Harbor's CLI trial lifecycle.",
+    "It does not establish task-specific dependency completeness or resource limits."
+  ],
+  "control_stdout": "aider-py311-uds-4801425 Python 3.11.18",
+  "network_stdout": "interfaces=lo\nnon_loopback_routes=0\nexternal_ip=blocked:OSError\nmetadata=blocked:OSError\nexternal_dns=blocked:gaierror\nnetwork=PASS",
+  "mount_stdout": "mounts=PASS\ncredential_env_vars=absent\ndocker_host_env=absent\nrootless_docker_socket_mount=absent",
+  "pytest_stdout": "Looking in links: /wheels\nProcessing /wheels/pytest-8.3.4-py3-none-any.whl\nProcessing /wheels/iniconfig-2.3.1-py3-none-any.whl (from pytest)\nProcessing /wheels/packaging-26.3-py3-none-any.whl (from pytest)\nProcessing /wheels/pluggy-1.7.0-py3-none-any.whl (from pytest)\nInstalling collected packages: pluggy, packaging, iniconfig, pytest\nSuccessfully installed iniconfig-2.3.1 packaging-26.3 pluggy-1.7.0 pytest-8.3.4\n============================= test session starts ==============================\nplatform linux -- Python 3.11.18, pytest-8.3.4, pluggy-1.7.0 -- /usr/local/bin/python3\ncachedir: .pytest_cache\nrootdir: /app\nplugins: anyio-4.16.0\ncollecting ... collected 1 item\n\ntest_synthetic.py::test_synthetic_fixture PASSED                         [100%]\n\n============================== 1 passed in 0.04s ===============================",
+  "pytest_stderr": null,
+  "uds_cleanup": "PASS"
+}

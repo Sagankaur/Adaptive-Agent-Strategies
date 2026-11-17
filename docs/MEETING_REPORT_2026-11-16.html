@@ -260,7 +260,7 @@
       </div>
       <div class="flow-gate"><strong>Still gated:</strong> build a reproducible Aider image and pass an exact-image, no-model network/control test before any task episode. The tool-call smoke is complete; the Aider image and task isolation are not.</div>
       <div class="callout">
-        <p><strong>What has run:</strong> gpt-oss-20b returned one native function call on Rohan's RTX Pro 6000; the function was not executed and no benchmark task was involved. The supplied rootless-Docker module then failed to start a container because the node lacks a cgroup controller path. <a href="experiments/gpt-oss-serving-smoke-2026-11-17.md">Read the exact run record.</a> <a href="experiments/ALT-MODEL-BENCHMARK-PILOT-2026-11-16.md">Read the separate pilot protocol.</a></p>
+        <p><strong>What has run:</strong> gpt-oss-20b returned one native function call on Rohan's RTX Pro 6000; the function was not executed and no benchmark task was involved. A no-model Python 3.11 Apptainer preflight passed offline pytest, UDS control, and external/DNS/metadata blocking with a generic image. It did not use the Aider image or a full Harbor trial. The supplied rootless-Docker route still fails at container startup because the node lacks a cgroup controller path. <a href="experiments/gpt-oss-serving-smoke-2026-11-17.md">Read the exact gpt-oss run record.</a> <a href="experiments/aider-python-image-preflight-2026-11-17.md">Read the Python preflight record.</a> <a href="experiments/ALT-MODEL-BENCHMARK-PILOT-2026-11-16.md">Read the separate pilot protocol.</a></p>
       </div>
     </section>
 
