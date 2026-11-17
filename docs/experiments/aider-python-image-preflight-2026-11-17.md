@@ -1,6 +1,6 @@
 # Aider-style Python runtime preflight
 
-**Status:** passed as a synthetic, no-model Apptainer/provider smoke. It does not run an Aider benchmark task, the Aider adapter's generated image, or a full Harbor CLI trial.
+**Status:** job 4801425 passed as a synthetic, no-model Apptainer/provider smoke. It does not run an Aider benchmark task, the Aider adapter's generated image, or a full Harbor CLI trial. A later normal-CLI synthetic follow-up is recorded in [the Harbor CLI egress preflight](harbor-cli-egress-preflight-2026-11-17.md).
 
 ## Run
 
@@ -36,6 +36,8 @@ This run shows that Apptainer 1.3.3 can host a Python 3.11 process, install pyte
 The harness constructs `SingularityEnvironment` with `__new__` and calls its private start/exec/cleanup methods. It does not exercise Harbor's normal constructor, CLI trial lifecycle, or Aider adapter-generated task configuration. The SIF is based on `python:3.11-slim`, not Aider's generated Dockerfile (`buildpack-deps:jammy`, Python 3.11, `curl`, `tmux`, and `asciinema`). The server logged that `tmux` is absent. The run also does not prove task-specific dependency completeness, cgroup/resource limits, benchmark correctness, or model behavior.
 
 For that reason this is setup evidence only. Do not start model-driven Aider episodes yet. First create a reproducible Python task image that covers the adapter's needed runtime, then run a synthetic task through Harbor's normal trial path with that exact image and verify its mounts, egress, control channel, cleanup, and resource limits.
+
+The subsequent normal-CLI trial in job 4801512 confirms the generic image works through Harbor's standard trial lifecycle and verifies read-only dependency mounts, but it still uses `python:3.11-slim` rather than the adapter-generated runtime. It also leaves task-level resource enforcement unverified. Those gaps remain open.
 
 ## Adapter/runtime references
 

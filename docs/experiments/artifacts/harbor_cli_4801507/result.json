@@ -1,0 +1,65 @@
+{
+  "job_id": 4801507,
+  "slurm": {
+    "state": "COMPLETED",
+    "exit_code": "0:0",
+    "elapsed": "00:00:36",
+    "allocated_cpus": 1,
+    "requested_memory": "4G",
+    "max_rss": null
+  },
+  "versions": {
+    "harbor": "0.23.0",
+    "apptainer": "1.3.3+342-g42a8ae13e",
+    "task_python": "3.11.18",
+    "pytest": "8.3.4"
+  },
+  "scope": "one synthetic local task; built-in nop agent; no model, benchmark, Oracle, or reference solution",
+  "overall_status": "PARTIAL",
+  "read_only_mount_safety_gate": "NOT PASSED",
+  "synthetic_cli_core_gate": "PASS",
+  "harbor_cli_exit_code": 0,
+  "synthetic_reward": 1.0,
+  "checks": {
+    "one_trial_no_exception": "PASS",
+    "offline_pinned_pytest": "PASS: 1 passed",
+    "private_uds_control_and_cleanup": "PASS",
+    "apptainer_network_none_no_fakeroot_or_tcp": "PASS",
+    "only_loopback_interfaces": "PASS",
+    "ipv4_route_count": 0,
+    "ipv6_route_interfaces": ["lo"],
+    "external_ipv4": "BLOCKED: ENETUNREACH",
+    "external_ipv6": "BLOCKED: ENETUNREACH",
+    "external_dns": "BLOCKED: EAI_AGAIN",
+    "metadata_169_254_169_254": "BLOCKED: ENETUNREACH",
+    "checked_mount_and_environment_audit": "PASS for explicitly checked paths and variable-name patterns only",
+    "read_only_dependency_mounts": "NOT VERIFIED; captured argv omitted :ro for /wheels and /runtime-deps",
+    "harbor_telemetry": "HARBOR_TELEMETRY=off"
+  },
+  "resource_observations": {
+    "provider_hard_cpu_memory_capabilities": false,
+    "task_cpu_request": 1,
+    "task_memory_request_mib": 2048,
+    "software_memory_watchdog_mib": 2048,
+    "process_cpu_affinity_count": 1,
+    "visible_cgroup_cpu_quota": "max",
+    "task_level_resource_enforcement": "NOT VERIFIED; no stress test"
+  },
+  "limitations": [
+    "generic python:3.11-slim image, not the Aider adapter-generated task image",
+    "synthetic reward is harness plumbing, not a benchmark result",
+    "no model or agent behavior was evaluated",
+    "checked mount and environment audit is not an exhaustive credential inventory",
+    "hard task-level CPU and memory enforcement remains unverified"
+  ],
+  "raw_evidence_sha256": {
+    "postflight_json": "153b441d991bf9683b20dafdca8ca3367f37e52b787fd3f0d957fb5d64c55c44",
+    "host_resource_observation_json": "8ec172ed1640ed4d0a049829f2646d7acdc14531adda1c7d6910652f4fda8ab7",
+    "provider_resource_capabilities_json": "b4dffccd43416bc37bdf29094bb167440e778f0b1d7c78a4abd23ebd734bcb6a"
+  },
+  "input_sha256": {
+    "python_311_sif": "438a2151bd130cd92c6cdc079d7e581d21756afdf0079ec6abda532969e20d09",
+    "pytest_8_3_4_wheel": "50e16d954148559c9a74109af1eaf0c945ba2d8f30f0a3d3335edde19788b6f6",
+    "harbor_provider_patch_at_run": "9c0a964a839c8d79a6ff78c38057301716e5e7076bd4307df9a8dc76c37f1b25"
+  }
+}

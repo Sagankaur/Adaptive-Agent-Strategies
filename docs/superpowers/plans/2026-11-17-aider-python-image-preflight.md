@@ -67,6 +67,8 @@
 - Modify: the Aider pilot and serving-smoke run records as needed.
 
 - [x] Ask an independent reviewer to check safety scope, reproducibility, privacy, and claim strength; retain the limitations that this bypasses the normal Harbor constructor/trial and uses a generic image.
-- [ ] Run `git diff --check` and `bash -n` on the Slurm script.
+- [x] Run `git diff --check` and `bash -n` on the Slurm script; the patch also passed a dry-run against the installed Harbor 0.23.0 source.
+- [x] Complete a normal Harbor CLI synthetic trial (job 4801512), confirm effective `:ro` mounts from both argv and `/proc/self/mountinfo`, UDS cleanup, egress probes, and the pinned offline pytest run. Record the earlier writable-mount finding, failed setup attempts, and best-effort artifact `su root` failure in `docs/experiments/harbor-cli-egress-preflight-2026-11-17.md`.
+- [ ] Build the task image matching the pinned Aider adapter runtime, establish whether its tasks need root operations or complete artifact collection, and resolve task-level resource enforcement.
 - [ ] Commit and push only to `experiment-aider-nonqwen-pilot`; do not merge PR #1 or PR #2.
 - [ ] Report CI status and keep model episodes paused until an exact Aider task image passes a no-model Harbor CLI trial with egress, UDS, mount, cleanup, and resource checks.

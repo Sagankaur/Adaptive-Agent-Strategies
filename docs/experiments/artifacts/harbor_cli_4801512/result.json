@@ -1,0 +1,75 @@
+{
+  "job_id": 4801512,
+  "slurm": {
+    "state": "COMPLETED",
+    "exit_code": "0:0",
+    "elapsed": "00:00:35",
+    "allocated_cpus": 1,
+    "requested_memory": "4G",
+    "parent_row_max_rss": null,
+    "batch_step_max_rss": "237804K"
+  },
+  "versions": {
+    "harbor": "0.23.0",
+    "apptainer": "1.3.3+342-g42a8ae13e",
+    "task_python": "3.11.18",
+    "pytest": "8.3.4"
+  },
+  "scope": "one synthetic local task; built-in nop agent; no model, benchmark, Oracle, or reference solution",
+  "overall_status": "PARTIAL",
+  "synthetic_cli_core_gate": "PASS",
+  "harbor_cli_exit_code": 0,
+  "synthetic_reward": 1.0,
+  "checks": {
+    "one_trial_no_exception": "PASS",
+    "offline_pinned_pytest": "PASS: 1 passed",
+    "private_uds_control_and_cleanup": "PASS",
+    "apptainer_network_none_no_fakeroot_or_tcp": "PASS",
+    "only_loopback_interfaces": "PASS",
+    "ipv4_route_count": 0,
+    "ipv6_route_interfaces": ["lo"],
+    "external_ipv4": "BLOCKED: ENETUNREACH",
+    "external_ipv6": "BLOCKED: ENETUNREACH",
+    "external_dns": "BLOCKED: EAI_AGAIN",
+    "metadata_169_254_169_254": "BLOCKED: ENETUNREACH",
+    "read_only_dependency_mounts": {
+      "/wheels": "ro",
+      "/runtime-deps": "ro"
+    },
+    "checked_mount_and_environment_audit": "PASS for explicitly checked paths and variable-name patterns only",
+    "artifact_collection_root_operation": "FAILED BEST-EFFORT CHECK: su root authentication failure; reward unaffected; root operations unsupported",
+    "harbor_telemetry": "HARBOR_TELEMETRY=off"
+  },
+  "resource_observations": {
+    "provider_hard_cpu_memory_capabilities": false,
+    "task_cpu_request": 1,
+    "task_memory_request_mib": 2048,
+    "software_memory_watchdog_mib": 2048,
+    "process_cpu_affinity_count": 1,
+    "visible_cgroup_cpu_quota": "max",
+    "task_level_resource_enforcement": "NOT VERIFIED; no stress test"
+  },
+  "limitations": [
+    "generic python:3.11-slim image, not the Aider adapter-generated task image",
+    "synthetic reward is harness plumbing, not a benchmark result",
+    "no model or agent behavior was evaluated",
+    "checked mount and environment audit is not an exhaustive credential inventory",
+    "hard task-level CPU and memory enforcement remains unverified",
+    "explicit root operations and complete artifact collection remain unverified"
+  ],
+  "raw_evidence_sha256": {
+    "postflight_json": "f51ab099cb455775fd36930ccd1e68081a055f2f72e822e7cc72707192a8f140",
+    "host_resource_observation_json": "8ec172ed1640ed4d0a049829f2646d7acdc14531adda1c7d6910652f4fda8ab7",
+    "provider_resource_capabilities_json": "b4dffccd43416bc37bdf29094bb167440e778f0b1d7c78a4abd23ebd734bcb6a",
+    "trial_log": "d5a6f21eafed7a8fdbc19bfe13d34497feb8c4897c2770b1a007621675104dcc"
+  },
+  "input_sha256": {
+    "python_311_sif": "438a2151bd130cd92c6cdc079d7e581d21756afdf0079ec6abda532969e20d09",
+    "pytest_8_3_4_wheel": "50e16d954148559c9a74109af1eaf0c945ba2d8f30f0a3d3335edde19788b6f6",
+    "harbor_provider_patch": "cc0aa94d13de99681d727b110e96e36ed246a8085a851f25a40d659f919fd48f"
+  },
+  "patched_provider_sha256": {
+    "singularity.py": "1b786ada5bff39586cf6ec333265b7a990a3317229085f99264d7eee67ae0787",
+    "server.py": "a9f17b698e852f8b2d184ef534647164b778a98800ef1788867ea2c93c8162d3"
+  }
+}
