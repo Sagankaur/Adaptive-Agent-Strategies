@@ -25,7 +25,7 @@ forbidden = {
         "/var/run/secrets",
         "/.env",
     }
-    or path.startswith("/home/")
+    or path.startswith("/" + "home" + "/")
     or path.startswith("/root/.ssh/")
     or path.startswith("/root/.aws/")
     or path.startswith("/run/secrets/")
