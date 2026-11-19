@@ -51,11 +51,17 @@ def verify_snapshot(root: Path) -> dict[str, object]:
         total_bytes += size
         lfs = getattr(entry, "lfs", None)
         if lfs is not None:
-            oid = lfs.get("oid") if isinstance(lfs, dict) else getattr(lfs, "oid", None)
-            if not oid or not oid.startswith("sha256:"):
+            lfs_sha256 = (
+                lfs.get("sha256") or lfs.get("oid")
+                if isinstance(lfs, dict)
+                else getattr(lfs, "sha256", None) or getattr(lfs, "oid", None)
+            )
+            if lfs_sha256 and lfs_sha256.startswith("sha256:"):
+                lfs_sha256 = lfs_sha256.split(":", maxsplit=1)[1]
+            if not lfs_sha256 or len(lfs_sha256) != 64:
                 raise ValueError("Hub returned an unsupported LFS object identifier")
             digest = hashlib.sha256(path.read_bytes()).hexdigest()
-            if digest != oid.split(":", maxsplit=1)[1]:
+            if digest != lfs_sha256:
                 raise ValueError("local TB2 file content differs from the pinned Hub LFS object")
         else:
             digest = _local_git_blob_sha1(path)
