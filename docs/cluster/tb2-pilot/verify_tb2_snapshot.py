@@ -51,7 +51,7 @@ def verify_snapshot(root: Path) -> dict[str, object]:
         total_bytes += size
         lfs = getattr(entry, "lfs", None)
         if lfs is not None:
-            oid = getattr(lfs, "oid", None)
+            oid = lfs.get("oid") if isinstance(lfs, dict) else getattr(lfs, "oid", None)
             if not oid or not oid.startswith("sha256:"):
                 raise ValueError("Hub returned an unsupported LFS object identifier")
             digest = hashlib.sha256(path.read_bytes()).hexdigest()
