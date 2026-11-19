@@ -1,6 +1,6 @@
 # TB2 One-Task Pilot Plan
 
-> **Status:** Execute the researcher-approved one-task feasibility pilot after independent protocol review.
+> **Status:** Stopped at the exact task-image Harbor startup preflight; no model episode ran. See the experiment report for evidence.
 
 **Goal:** Run one safely isolated Harbor attempt on one previously unexposed TB2 task and record only a sanitized feasibility result.
 
@@ -35,11 +35,11 @@
 - Create: `docs/experiments/TB2-ONE-TASK-PILOT-2026-11-19.md`
 - Modify: `docs/DECISIONS.md`
 
-- [ ] Record the one-task exception, selection, exclusion rule, and no-Oracle boundary before model execution.
-- [ ] Resolve and freeze the Docker Registry manifest digest; do not rely on the mutable task image tag.
-- [ ] Add a durable exclusion manifest and a tested filtered split loader for all future confirmatory TB2 consumers.
-- [ ] Get independent review of the protocol and existing Harbor/Apptainer route without reading task instructions/tests/solutions.
-- [ ] Commit and push the preregistration to the current experiment branch.
+- [x] Record the one-task exception, selection, exclusion rule, and no-Oracle boundary before model execution.
+- [x] Resolve and freeze the Docker Registry manifest digest; do not rely on the mutable task image tag.
+- [x] Add a durable exclusion manifest and a tested filtered split loader for all future confirmatory TB2 consumers.
+- [x] Get independent review of the protocol and existing Harbor/Apptainer route without reading task instructions/tests/solutions.
+- [x] Commit and push the preregistration to the current experiment branch.
 
 ### Task 2: Preflight and run one task
 
@@ -48,8 +48,8 @@
 - Create: `docs/cluster/tb2-pilot/02_one_task_pilot.sbatch`
 - Create after execution: `docs/experiments/artifacts/tb2-one-task-pilot-2026-11-19.json`
 
-- [ ] Pull the frozen Docker image by immutable manifest digest into the Apptainer cache and record its SIF hash. Stop on failure.
-- [ ] Run a scripted, model-free startup/network/control check for the exact task image. Stop on any mismatch.
-- [ ] Submit one RTX Pro 6000 Slurm job with one model attempt and no Oracle/reference solution.
-- [ ] Extract only task status, Harbor reward, timings, hashes, and resource metrics; keep raw logs on scratch.
-- [ ] Update the report and decision log with the outcome, then commit/push the sanitized record.
+- [x] Pull the frozen Docker image by immutable manifest digest into the Apptainer cache and record its SIF hash.
+- [x] Run the scripted, model-free startup/network/control check for the exact task image. It failed before UDS/network checks because Harbor could not find `/usr/bin/python3` and could not install it without task networking.
+- [x] Stop before model launch under the frozen stop rule; no replacement task or runtime injection was used.
+- [x] Record the preflight outcome and hashes in the report and sanitized artifact; keep raw logs on scratch.
+- [ ] Submit one RTX Pro 6000 Slurm job with one model attempt and no Oracle/reference solution. Blocked by the failed exact-image preflight.

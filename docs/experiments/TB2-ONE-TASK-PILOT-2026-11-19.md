@@ -1,6 +1,6 @@
 # Terminal-Bench 2.0 one-task pilot
 
-**Status:** preregistered exploratory pilot; no agent episode has started.
+**Status:** stopped at exact-image infrastructure preflight; no agent episode started.
 
 ## Purpose and claim boundary
 
@@ -44,4 +44,17 @@ The earlier assistant review exposed instruction text for 13 candidate pairs (19
 
 ## Results
 
-To be completed after Slurm finishes: job ID/state, reward, attempt outcome, runtime and image hashes, VRAM/resources, artifact hash, and deviations. A zero or missing reward is reported as a pilot outcome, not silently retried.
+The pilot stopped before model startup because Harbor could not start its execution server in the selected task image.
+
+| Check | Evidence |
+|---|---|
+| Snapshot provenance | Revision `f2e8c75e23add71613117eecc9498f53bcd7e04e` verified against Hugging Face file metadata and content IDs; tree SHA-256 `ff1b9e47c776786c7b82757a5af006921600e7283082c802d6785c2c769522f6`. |
+| Image provenance | Docker Registry manifest `sha256:593ab9df3d83f771e927888b2d9436b380cdf7ec4d0af2a9f0802d541edebba0`; pulled SIF SHA-256 `e7fc37ce09d4ee50e4a71a6e2c9941c0cdacdeb979fcaf99182728b3d0e0dd49`. |
+| Exact-image Harbor preflight | Job `4869467`, `FAILED 1:0`, 2:15. Apptainer launched with `--net --network none --writable-tmpfs --containall` and no fakeroot, but Harbor's server failed before UDS health because `/usr/bin/python3` was absent and Harbor could not install it with task networking disabled. |
+| Network/control result | Not established for this image: the server failed before the UDS control check and external/metadata probes. The prior synthetic-image egress tests do not substitute for this task-image check. |
+| Workspace exposure check | Not reached. |
+| Model / agent / Harbor trial | None. No Oracle, reference solution, or task verifier was run. No benchmark reward exists. |
+
+Two earlier model-free attempts failed in preflight code before the image was pulled: job `4869462` used the cluster default Python without `tomllib`; job `4869464` mishandled Hugging Face LFS metadata. Those implementation issues were fixed. Job `4869467` reached the exact task-image startup check and exposed the blocker above. Per the frozen stop rule, the pilot stops here; no runtime injection, replacement task, or model episode was attempted.
+
+The sanitized record is [`artifacts/tb2-one-task-pilot-2026-11-19.json`](artifacts/tb2-one-task-pilot-2026-11-19.json). Raw startup logs remain on Rohan scratch and are not copied to Git.
