@@ -89,6 +89,22 @@ The denominator remains six. An unrun or infrastructure-failed task is reported 
 
 The four eligible IDs were run on Rohan's RTX Pro 6000 with the pinned local gpt-oss-20b model, Harbor 0.23.0, the pinned Python 3.11 SIF, frozen `S0`, and task/agent/verifier network mode set to `no-network`. Each Slurm job requested 8 CPUs and 64 GiB; the recorded job cgroup CPU and memory limit files were empty, so hard process-tree limits were not confirmed. The model endpoint was bound to localhost and Harbor used its private Unix-socket control channel. The separate synthetic egress preflight had passed before task execution. The task-run tripwire recorded no flagged commands. This records the configured and preflight-checked boundary; it is not a fresh per-trial external-network probe.
 
+### Run pins and request settings
+
+- Project source commit used by the cluster job: `e09485610ba65c18ff9bda6f4d96f828c83be17f`; Harbor: `1e5c5c6db929a10a140d05e606882c671ae20729`; Aider Polyglot: `7e0611e77b54e2dea774cdc0aa00cf9f7ed6144f`.
+- SHA-256: model GGUF `27cd6c432c7672cb812a92f611cf3ba7bbc35928262bb1e1253ff4ee6ae35901`; llama.cpp server SIF `dd8110164788b9deb354e06cb984214b2ef8b6b0598c2ef73dd0ab9828957d56`; Python task SIF `1188aca02532530596e5e2c4642244ebb1020469ef489fe60ed55a5ea8ec56d8`; Harbor UDS provider patch `cc0aa94d13de99681d727b110e96e36ed246a8085a851f25a40d659f919fd48f`; generated-task manifest `efe21e8c51ae610cc23a77145adb95a7b9e652bb084193edd02738dd1aa84e7d`.
+- The frozen S0 JSON had SHA-256 `f188aec01596b279f90867a9c7770935d4a7f917d8da0bc402631c86d48f273a`. It used full conversation history, 60 maximum steps, a 64,000-token episode budget, a 1,200-second episode wall limit, a 120-second tool-command timeout, and `run_visible_tests` before submission.
+- The model client used temperature `0.6`, top-p `0.95`, top-k `20`, non-streaming requests, and a 180-second provider timeout. A deterministic seed was derived from root `20261119`, run ID, task environment name, and attempt index, then advanced per request. The server ran with one slot, `-c 8192`, `-ngl 999`, 8 generation/batch threads, `--jinja`, and metrics enabled.
+- The runner used for job `4868765` had SHA-256 `03443b68d24f55af7d3869670ff79d48ae3b3ce1eeab6f032395cb262b72cb96`. After the run, the checked-in script's failure-status labeling and formatting were cleaned up; it now hashes to `f9b2d3f1821608f4ebd161f40177df67144f53333848a4e8900a328b2660786d`. No model trial was rerun after that reporting-only change.
+- The per-task package hashes below cover the generated task descriptor, instructions, and verifier inputs; they exclude the agent-writable `environment/workspace` and do not encode file permissions. They were computed after the run, but these verifier inputs were not mounted writable by the agent. The sample-draw Python version was not recorded, so exact `random.Random` replay has that limitation.
+
+| Task ID | Generated task-package SHA-256 |
+|---|---|
+| `hangman` | `b609f3bb026c16f7a35bb723a14540cc6882c9bee1a18352ab9add82643dd5d1` |
+| `poker` | `ca3b4ddff3c485ed5d127cb64d9a903183cfb27ab5f883e5d0a0cf8f02484aa1` |
+| `rest-api` | `31cae0cfccfadeba42c73ec8a4199aab0676b4c8703733bea370afc63cccb1de` |
+| `variable-length-quantity` | `9f463c679eea5344ff34b8b112895b2ef482cda69f953bf36a5d679be6e896a6` |
+
 | Task ID | Harbor trials | Result | Model calls | Tokens (input / output) |
 |---|---:|---|---:|---:|
 | `hangman` | 1 | Provider HTTP 400 with a context-related error; no verifier result | 10 | 39,677 / 4,895 |
@@ -108,7 +124,7 @@ The harness correction is documented and retained in the generator. It does not 
 
 ### Interpretation and next gate
 
-The setup stack can launch gpt-oss inside Harbor and execute task tools with the configured no-network mode, but the current model-to-agent interface is not reliable enough for a task benchmark: malformed tool-call JSON occurred on three task IDs, and the remaining task stopped at a context-related provider error. The synthetic one-tool smoke did not predict this multi-step behavior.
+The setup stack can launch gpt-oss inside Harbor and execute task tools with the configured no-network mode, but the current model-to-agent interface is not reliable enough for a task benchmark: malformed tool-call JSON occurred on three task IDs, and the remaining task stopped at a context-related provider error. The server context was only 8,192 tokens while S0 retained the full history. That is a plausible contributor to the context error and possibly the malformed tool calls, but the run does not establish causality. The synthetic one-tool smoke did not predict this multi-step behavior.
 
 Do not rerun these same tasks under a changed parser and present the result as this pilot. The next step is a separately logged, no-benchmark **tool-contract diagnostic** using synthetic tool schemas: quantify valid/invalid gpt-oss argument JSON over a fixed request set, then fix or reject the model/adapter combination. If a follow-up task pilot is justified, amend its protocol first and use a fresh predeclared task sample. The main proposal and its existing gates remain unchanged.
 
