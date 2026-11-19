@@ -1,0 +1,130 @@
+{
+  "benchmark": "Aider Polyglot Python subset",
+  "model": "gpt-oss-20b MXFP4, local llama.cpp server",
+  "harbor_version": "0.23.0",
+  "gpu": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+  "slurm_requested_cpus": 8,
+  "slurm_requested_memory_gib": 64,
+  "recorded_cgroup_cpu_and_memory_limits_confirmed": false,
+  "strategy": "frozen S0",
+  "original_sample_size": 6,
+  "pre_run_safety_excluded": [
+    "beer-song",
+    "food-chain"
+  ],
+  "unique_eligible_task_ids_attempted": [
+    "hangman",
+    "poker",
+    "rest-api",
+    "variable-length-quantity"
+  ],
+  "replacement_tasks": [],
+  "harbor_trials": 5,
+  "slurm_jobs": [
+    {
+      "job_id": "4868759",
+      "state": "FAILED",
+      "exit_code": "1:0",
+      "note": "Runner stopped after the first trial lacked a verifier reward."
+    },
+    {
+      "job_id": "4868761",
+      "state": "COMPLETED",
+      "exit_code": "0:0",
+      "note": "Slurm export syntax selected only Poker; the verifier script lacked execute permission."
+    },
+    {
+      "job_id": "4868765",
+      "state": "COMPLETED",
+      "exit_code": "0:0",
+      "note": "Ran Poker retry, Rest API, and variable-length-quantity; each ended before a verifier reward."
+    }
+  ],
+  "valid_verifier_rewards": 0,
+  "pass_rate_claimed": false,
+  "tripwire_flags": [],
+  "attempts": [
+    {
+      "task_id": "hangman",
+      "slurm_job_id": "4868759",
+      "trial_number_for_task": 1,
+      "model_calls": 10,
+      "input_tokens": 39677,
+      "cached_tokens": 32919,
+      "output_tokens": 4895,
+      "status": "unscored_provider_error",
+      "provider_http_status": 400,
+      "context_related_error": true,
+      "verifier_reward": null,
+      "tripwire_flags": []
+    },
+    {
+      "task_id": "poker",
+      "slurm_job_id": "4868761",
+      "trial_number_for_task": 1,
+      "model_calls": 13,
+      "input_tokens": 62315,
+      "cached_tokens": 55333,
+      "output_tokens": 5647,
+      "status": "unscored_verifier_harness_error",
+      "failure_type": "RewardFileNotFoundError",
+      "detail": "The staged verifier shell script lacked execute permission; Harbor could not run it.",
+      "verifier_reward": null,
+      "tripwire_flags": []
+    },
+    {
+      "task_id": "poker",
+      "slurm_job_id": "4868765",
+      "trial_number_for_task": 2,
+      "model_calls": 12,
+      "input_tokens": 52825,
+      "cached_tokens": 45807,
+      "output_tokens": 3386,
+      "status": "unscored_agent_protocol_error",
+      "failure_type": "HarborAgentProtocolError",
+      "detail": "Tool-call arguments were invalid JSON.",
+      "verifier_reward": null,
+      "tripwire_flags": []
+    },
+    {
+      "task_id": "rest-api",
+      "slurm_job_id": "4868765",
+      "trial_number_for_task": 1,
+      "model_calls": 6,
+      "input_tokens": 16572,
+      "cached_tokens": 11449,
+      "output_tokens": 4213,
+      "status": "unscored_agent_protocol_error",
+      "failure_type": "HarborAgentProtocolError",
+      "detail": "Tool-call arguments were invalid JSON.",
+      "verifier_reward": null,
+      "tripwire_flags": []
+    },
+    {
+      "task_id": "variable-length-quantity",
+      "slurm_job_id": "4868765",
+      "trial_number_for_task": 1,
+      "model_calls": 9,
+      "input_tokens": 39109,
+      "cached_tokens": 32769,
+      "output_tokens": 4675,
+      "status": "unscored_agent_protocol_error",
+      "failure_type": "HarborAgentProtocolError",
+      "detail": "Tool-call arguments were invalid JSON.",
+      "verifier_reward": null,
+      "tripwire_flags": []
+    }
+  ],
+  "totals": {
+    "model_calls": 50,
+    "input_tokens": 210498,
+    "cached_tokens": 178277,
+    "output_tokens": 22816
+  },
+  "limitations": [
+    "No numeric Harbor verifier reward was returned, so no pass rate or task-correctness claim is valid.",
+    "Slurm exposed no job cgroup CPU or memory limit values in the recorded locations; hard process-tree enforcement was not confirmed.",
+    "Tripwire monitoring reported no flags; this is not a fresh per-trial egress probe.",
+    "One extra Poker trial was run to correct the verifier script mode issue; it remains in the attempt record. The retry stopped before verification, so the mode correction was not confirmed end to end."
+  ]
+}

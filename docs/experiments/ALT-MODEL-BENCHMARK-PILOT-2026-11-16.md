@@ -1,12 +1,12 @@
 # Exploratory non-Qwen benchmark pilot: gpt-oss-20b on Aider Polyglot
 
-**Status:** the gpt-oss serving-only tool-call smoke passed; Aider benchmark episodes have not run. This document is an additive, exploratory track for a separate follow-on PR. It does not replace the current proposal, change its primary benchmark/model, or close any existing gate.
+**Status:** gpt-oss serving and synthetic Harbor checks passed, but the Aider task pilot returned no valid verifier rewards across four eligible task IDs. Three trials stopped on malformed JSON tool-call arguments and one on a context-related provider error; Poker also had one initial verifier harness failure before a retry. This additive exploratory track does not replace the current proposal, change its primary benchmark/model, or close any existing gate. See the [pilot result report](aider-six-task-pilot-2026-11-19.md).
 
 ## Decision for the exploratory track
 
 - **Model candidate:** OpenAI gpt-oss-20b, served locally. It is a non-Qwen, open-weight model with an Apache-2.0 license and documented function-calling support. The model page lists 21B total parameters, 3.6B active parameters, and a 131,072-token context. A serving-only tool-call smoke passed on Rohan; the exact model and SIF hashes are recorded in [the run report](gpt-oss-serving-smoke-2026-11-17.md). This does not qualify it on benchmark tasks.
 - **Benchmark candidate:** the Aider Polyglot benchmark through Harbor's adapter at the project's existing Harbor v0.23.0 pin (`1e5c5c6db929a10a140d05e606882c671ae20729`). The adapter documents 225 code-editing tasks in six languages and MIT licensing for the benchmark and its Exercism source material. Start with the Python subset only; do not claim a full Polyglot score from that sample.
-- **Pilot size:** six Python tasks, one frozen starting strategy and one attempt per task. Freeze task IDs by a documented seed before reading their instructions. Report each task's official verifier outcome, aggregate pass fraction, model/tool errors, tokens, and wall time. Treat this as descriptive feasibility evidence, not a confirmatory result or a comparison with the main proposal.
+- **Original pilot design:** six frozen Python tasks and one attempt per task under a frozen starting strategy. A pre-run content screen excluded two lyric-generation tasks, leaving four eligible IDs. Poker has one additional trial after a verifier harness error; the result report retains both attempts. No aggregate pass fraction is reported because no trial returned a valid verifier reward.
 - **Scoring rule:** use only the benchmark's official verifier; do not run or inspect its bundled oracle/reference solution. Keep task data and generated run artifacts outside the public repository.
 
 This choice separates the pilot from both Terminal-Bench Pro and Terminal-Bench 2. No TB2 task, instruction, test, solution, or outcome is part of this pilot.
@@ -25,13 +25,13 @@ flowchart LR
   C -. external network blocked .-> X((Internet))
 ```
 
-The task data and verifier stay inside the isolated environment; the agent uses Harbor's private Unix socket to issue commands. The preflight gate must pass before any model-driven task run.
+The task data and verifier stay inside the isolated environment; the agent uses Harbor's private Unix socket to issue commands. The no-model preflight and a separate real-model synthetic trial passed. The Aider task attempt record is available in the [pilot report](aider-six-task-pilot-2026-11-19.md); it found model/agent protocol failures before any valid benchmark reward.
 
 ## Why this model and benchmark
 
 The local non-Qwen model already available on the workstation (Llama 3 8B, Q4_0) does not expose tool calling through the installed Ollama registry entry, so it is not a suitable agent candidate without changing the model package or adding a nonstandard tool parser. gpt-oss-20b is a stronger next candidate because its published interface includes function calling and its weight license permits local experimentation. It also provides a meaningful response to A2I2's advice to exercise caution with the recent Qwen family.
 
-Aider Polyglot is a coding benchmark with editable repositories and unit-test-based verification, so it exercises the project's coding-agent question on a benchmark distinct from the Terminal-Bench tasks. Its Harbor adapter is pinned with the existing Harbor version. The adapter's documented setup uses Docker. The task-image route is not yet established on Rohan, where A2I2 also provides Apptainer and rootless Docker.
+Aider Polyglot is a coding benchmark with editable repositories and unit-test-based verification, so it exercises the project's coding-agent question on a benchmark distinct from the Terminal-Bench tasks. Its Harbor adapter is pinned with the existing Harbor version. Although the adapter documents Docker, its Python runtime was reproduced as a pinned Apptainer SIF on Rohan. The actual task trials showed that this setup launches, but the gpt-oss tool-call arguments are not reliably valid JSON for the project's agent protocol.
 
 ## Workstation Llama 3 smoke
 
@@ -56,7 +56,7 @@ The pinned gpt-oss-20b MXFP4 file and llama.cpp SIF loaded on Rohan's RTX Pro 60
 
 ## Execution blockers and gates
 
-The Aider benchmark pilot has not run. The workstation has no Docker or Apptainer executable and only an 8 GiB GPU. Key-only SSH reached Rohan, transferred the scripts, and completed the serving-only job without using a password.
+The Aider task pilot ran on Rohan, but no trial returned a numeric verifier reward. The workstation has no Docker or Apptainer executable and only an 8 GiB GPU. Key-only SSH reached Rohan, transferred the scripts, and completed the serving-only and synthetic Harbor jobs without using a password.
 
 ### Cluster checks and serving-only run files
 
@@ -66,17 +66,19 @@ The [fetch script](../cluster/serving-sweep/01_gpt_oss_fetch.sbatch) downloaded 
 
 Rohan also provides a `rootless-docker/rootless-docker` module, which looked like a route for Harbor's Docker-based Aider adapter. The no-model probe reached the rootless daemon and pulled a small Python image, but Docker could not start a container because the compute node lacked `/sys/fs/cgroup/user.slice/.../cgroup.controllers`. It did not test `network=none` or Harbor control. Do not run Aider tasks through this route unless A2I2 resolves the cgroup issue or identifies a supported setup. The probe is [recorded in the run report](gpt-oss-serving-smoke-2026-11-17.md).
 
-### Python 3.11 Apptainer preflight
+### Python 3.11 Apptainer preflight and real-model synthetic Harbor smoke
 
-No-model job 4801425 passed a synthetic Python 3.11.18 + offline-pytest check through the patched Harbor provider's private Unix socket. Follow-up job 4801512 completed one synthetic task through Harbor's normal CLI lifecycle. It blocked the recorded IPv4, IPv6, DNS, and metadata probes, preserved UDS control, and verified `/wheels` and `/runtime-deps` were read-only. An independent review found the initial CLI run 4801507 had writable dependency mounts; the provider patch and fixture were corrected before 4801512. These remain setup checks using a generic `python:3.11-slim` SIF, not the Aider adapter's generated image. They do not resolve task dependency/image fidelity or hard resource-limit questions. See the [provider run record](aider-python-image-preflight-2026-11-17.md) and [normal-CLI follow-up](harbor-cli-egress-preflight-2026-11-17.md).
+No-model job 4801425 passed a synthetic Python 3.11.18 + offline-pytest check through the patched Harbor provider's private Unix socket. Follow-up job 4801512 completed one synthetic task through Harbor's normal CLI lifecycle. It blocked the recorded IPv4, IPv6, DNS, and metadata probes, preserved UDS control, and verified `/wheels` and `/runtime-deps` were read-only. An independent review found the initial CLI run 4801507 had writable dependency mounts; the provider patch and fixture were corrected before 4801512. These were setup checks using a generic `python:3.11-slim` SIF. See the [provider run record](aider-python-image-preflight-2026-11-17.md) and [normal-CLI follow-up](harbor-cli-egress-preflight-2026-11-17.md).
 
-Before the six-task pilot:
+The adapter-matched `buildpack-deps:jammy` Python 3.11 SIF was then built and checked offline in job 4802966. No-model normal-CLI job 4802971 passed the synthetic UDS/isolation fixture using that SIF. Real-model job 4802977 then passed a separate synthetic file-write task through gpt-oss and the same Harbor/Apptainer control path. Its one-trial reward was 1.0 with zero Harbor exceptions. These synthetic checks are setup evidence, not Aider benchmark results; the real-model task itself did not repeat network probes. See [runtime preflight](aider-runtime-preflight-2026-11-19.md) and [real-model Harbor smoke](gpt-oss-harbor-synthetic-smoke-2026-11-19.md).
 
-1. Keep the gpt-oss model, SIF, sampling settings, and localhost tool-call smoke pinned as recorded.
-2. Reproduce the pinned Aider Python runtime in an Apptainer task image, including the required command-line tools and offline test dependencies. The generic Python 3.11 SIF has now passed a normal Harbor CLI synthetic trial, but the adapter-generated task image and its dependency fidelity remain unverified; the rootless Docker route still fails at container startup.
-3. Reproduce the exact adapter runtime in an Apptainer task image, then repeat the scripted no-model Harbor trial. The generic-image trial verifies the private control path, `network=none`, external/DNS/metadata failure, read-only staged dependencies, checked mount/environment patterns, and cleanup. It also shows Harbor's best-effort artifact check cannot run as root in this unprivileged provider. Check whether Aider tasks require root-dependent setup or complete root artifact collection, and resolve or explicitly bound task-level resource enforcement before model episodes; the provider currently advertises no hard per-task CPU or memory limits.
-4. Freeze six Python task IDs and data/license handling before reading their instructions. Keep task data and generated run artifacts outside the public repository.
-5. Run six one-attempt episodes only after the image and isolation checks pass. Report raw per-task verifier outcomes and the exact denominator. Do not tune on these tasks or infer a general benchmark score.
+Follow-up after the six-ID feasibility pilot:
+
+1. Keep the gpt-oss model, serving SIF, task SIF, sampling settings, and localhost tool-call smoke pinned as recorded.
+2. Audit only the six already-frozen task instructions and setup metadata for offline dependencies, privilege needs, and runtime compatibility. Do not inspect or run tests, solutions, or outcomes in this audit.
+3. Modify task generation so it omits the adapter's optional Oracle/reference-solution artifacts entirely; then inspect the generation diff and output manifest to verify no solution content is read, encrypted, or retained. If Harbor cannot generate the six tasks without processing Oracle material, stop this Aider route.
+4. Allocate one GPU per sequential episode with sufficient CPU/RAM for the combined model server and task process tree. Harbor reports no hard per-task resource limit controls, so record Slurm cgroup evidence and set conservative per-job allocations before starting.
+5. Do not rerun the same sample under changed model/parser settings and present it as the original pilot. First run a fixed synthetic tool-contract diagnostic for gpt-oss, then amend and freeze a fresh task protocol if the model/agent interface passes. Retain all infrastructure failures in the denominator and do not infer a general benchmark score from a small pilot.
 
 If the image route or isolation check fails, the pilot remains blocked. Do not switch to TB2 or TB-Pro as a workaround. The primary proposal and its existing gates remain unchanged.
 

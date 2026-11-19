@@ -1,0 +1,175 @@
+{
+  "checks": {
+    "harbor_cli_exit_zero": true,
+    "harbor_trial_no_exception": true,
+    "isolated_argv_with_uds": true,
+    "isolation_artifact_present": true,
+    "memory_watchdog_active": true,
+    "no_fakeroot_or_tcp_port": true,
+    "offline_pytest_install": true,
+    "one_trial_log": true,
+    "one_trial_result": true,
+    "private_uds_cleaned": true,
+    "pytest_tests_pass": true,
+    "pytest_uses_pinned_version": true,
+    "read_only_wheel_and_runtime_mounts": true,
+    "synthetic_reward_one": true
+  },
+  "core_synthetic_cli_gate": "PASS",
+  "harbor_cli_exit_code": 0,
+  "host_resource_observation": {
+    "cgroup_filesystems": [
+      "cgroup2"
+    ],
+    "cpus_allowed_list": "88",
+    "limits_visible_at_current_or_ancestor": {
+      "cpu_v1_period": [],
+      "cpu_v1_quota": [],
+      "cpu_v2": [
+        "max 100000"
+      ],
+      "cpuset_v1": [],
+      "cpuset_v2": [
+        "0-127",
+        "88"
+      ],
+      "memory_v1": [],
+      "memory_v2": [
+        "4294967296",
+        "max"
+      ]
+    },
+    "mounted_v1_controllers": [],
+    "proc_cgroup_controller_groups": [
+      "cgroup2"
+    ],
+    "process_affinity_cpu_count": 1
+  },
+  "image_sha256": "1188aca02532530596e5e2c4642244ebb1020469ef489fe60ed55a5ea8ec56d8",
+  "isolation_checks": {
+    "app_write_read": true,
+    "external_dns": {
+      "blocked": true,
+      "errno": -3,
+      "error": "gaierror"
+    },
+    "external_ip": {
+      "blocked": true,
+      "errno": 101,
+      "error": "OSError"
+    },
+    "external_ipv6": {
+      "blocked": true,
+      "errno": 101,
+      "error": "OSError"
+    },
+    "interfaces": [
+      "lo"
+    ],
+    "ipv6_interfaces": [
+      "lo"
+    ],
+    "ipv6_route_count": 3,
+    "ipv6_route_interfaces": [
+      "lo"
+    ],
+    "metadata_address": {
+      "blocked": true,
+      "errno": 101,
+      "error": "OSError"
+    },
+    "mount_audit": {
+      "checked_mount_targets": [
+        "/",
+        "/app",
+        "/dev",
+        "/dev/mqueue",
+        "/dev/null",
+        "/dev/pts",
+        "/dev/random",
+        "/dev/shm",
+        "/dev/tty",
+        "/dev/urandom",
+        "/dev/zero",
+        "/etc/group",
+        "/etc/passwd",
+        "/etc/resolv.conf",
+        "/harbor-control",
+        "/logs/agent",
+        "/logs/artifacts",
+        "/logs/verifier",
+        "/proc",
+        "/runtime-deps",
+        "/staging",
+        "/sys",
+        "/sys/fs/bpf",
+        "/sys/fs/cgroup",
+        "/sys/fs/fuse/connections",
+        "/sys/fs/pstore",
+        "/sys/kernel/config",
+        "/sys/kernel/debug",
+        "/sys/kernel/debug/tracing",
+        "/sys/kernel/security",
+        "/sys/kernel/tracing",
+        "/wheels"
+      ],
+      "checked_read_only_mounts": {
+        "/runtime-deps": "ro",
+        "/wheels": "ro"
+      },
+      "credential_environment_names": [],
+      "forbidden_mount_targets": [],
+      "missing_required_mounts": [],
+      "pass": true,
+      "writable_read_only_mounts": []
+    },
+    "python_311": true,
+    "python_version": "3.11.18",
+    "resource_observation": {
+      "cgroup_filesystems": [
+        "cgroup2"
+      ],
+      "cpus_allowed_list": "88",
+      "limits_visible_at_current_or_ancestor": {
+        "cpu_v1_period": [],
+        "cpu_v1_quota": [],
+        "cpu_v2": [
+          "max 100000"
+        ],
+        "cpuset_v1": [],
+        "cpuset_v2": [
+          "0-127",
+          "88"
+        ],
+        "memory_v1": [],
+        "memory_v2": [
+          "4294967296",
+          "max"
+        ]
+      },
+      "mounted_v1_controllers": [],
+      "proc_cgroup_controller_groups": [
+        "cgroup2"
+      ],
+      "process_affinity_cpu_count": 1
+    },
+    "route_count": 0,
+    "task_level_cpu_memory_limit_enforcement": "not_asserted"
+  },
+  "limitations": [
+    "The synthetic reward is harness plumbing, not a benchmark result.",
+    "A no-op agent was used; no model or agent behavior was evaluated.",
+    "The synthetic task uses an Aider-compatible Python runtime image but contains no Aider benchmark task or task-specific workspace.",
+    "The provider has a sampled software memory watchdog but advertises no hard CPU or memory resource capability.",
+    "No resource stress test was run; task-level resource controls are inherited from the Slurm job allocation, not enforced by Harbor."
+  ],
+  "provider_resource_capabilities": {
+    "cpu_limit": false,
+    "cpu_request": false,
+    "memory_limit": false,
+    "memory_request": false
+  },
+  "status": "PARTIAL",
+  "synthetic_reward": 1.0,
+  "task_level_resource_limits": "NOT_VERIFIED"
+}

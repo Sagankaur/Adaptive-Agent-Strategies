@@ -109,9 +109,9 @@ def main() -> int:
         "limitations": [
             "The synthetic reward is harness plumbing, not a benchmark result.",
             "A no-op agent was used; no model or agent behavior was evaluated.",
-            "The task image is generic python:3.11-slim, not the Aider adapter image.",
+            "The synthetic task uses an Aider-compatible Python runtime image but contains no Aider benchmark task or task-specific workspace.",
             "The provider has a sampled software memory watchdog but advertises no hard CPU or memory resource capability.",
-            "No resource stress test was run; task-level CPU/memory enforcement remains unverified.",
+            "No resource stress test was run; task-level resource controls are inherited from the Slurm job allocation, not enforced by Harbor.",
         ],
     }
     output = args.output / "postflight.json"
