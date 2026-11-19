@@ -51,6 +51,7 @@ for required in "$TASK/task.toml" "$PATCH_FILE" "$HARNESS" "$SITE/harbor/environ
   "$SOURCE/docs/cluster/tb2-pilot/03_task_workspace_path_preflight.py"; do
   [ -e "$required" ] || { echo "missing required artifact: $required"; exit 2; }
 done
+source "$VENV/bin/activate"
 THIS_SCRIPT_SHA=$(sha256sum "$0" | awk '{print $1}')
 ARCHIVE_SCRIPT_SHA=$(sha256sum "$SOURCE/docs/cluster/tb2-pilot/01_task_image_preflight.sbatch" | awk '{print $1}')
 [ "$THIS_SCRIPT_SHA" = "$ARCHIVE_SCRIPT_SHA" ] || { echo "executed preflight script differs from verified archive"; exit 6; }
@@ -81,7 +82,6 @@ echo "snapshot_revision=$SNAPSHOT_REV snapshot_tree_sha256=$SNAPSHOT_TREE"
 echo "job=$SLURM_JOB_ID host=$(hostname) date=$(date -Is)"
 echo "snapshot_task_directory_present=yes"
 "$APPTAINER" --version
-source "$VENV/bin/activate"
 python --version
 "$VENV/bin/harbor" --version
 echo "HARBOR_TELEMETRY=$HARBOR_TELEMETRY"
