@@ -1,6 +1,6 @@
 # gpt-oss tool-call/context diagnostic — protocol
 
-**Status:** preregistered engineering diagnostic; implementation review pending; no requests have been sent yet.
+**Status:** preregistered engineering diagnostic; submitted to Slurm and waiting for GPU priority; no inference requests have been sent yet.
 
 ## Question and claim boundary
 
@@ -33,3 +33,10 @@ For each context and prompt-size cell, report planned and attempted calls, HTTP 
 ## Result record
 
 After the run, update this document with the Slurm job ID, commit and artifact hashes, aggregate counts, observed resource limits, deviations, and limitations. Store only sanitized aggregate JSON under `docs/experiments/artifacts/`; raw server logs remain on scratch and are not copied into the repository.
+
+### Submission record (2026-11-19)
+
+- Slurm job `4869012` was submitted to Rohan's `gpu` partition under the `short` QoS. `sbatch --test-only` accepted the request and selected an RTX Pro 6000 node.
+- The pinned model and server SIF SHA-256 values were verified on Rohan and match the values above. The runner, batch script, and preregistration file were staged with hashes matching the committed files.
+- GitHub Actions passed on Python 3.11 and 3.12 for the PR branch before submission.
+- At 22:39 AEDT the job remained `PENDING (Priority)` with no start time. No model inference has run yet; this is submission evidence only, not an experiment result.
