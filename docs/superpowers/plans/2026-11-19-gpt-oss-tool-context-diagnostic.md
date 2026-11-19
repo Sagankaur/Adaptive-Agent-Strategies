@@ -40,6 +40,6 @@
 - [x] Add cancellable inference, conservative stop behavior, explicit metric denominators, and protocol hash input.
 - [x] Get independent review of the revised implementation and address blockers (VRAM monitor fail-closed; zero-attempt cells retained; JSON syntax rate independent of tool-name validity).
 - [x] Run syntax/whitespace checks and inspect the staged diff.
-- [ ] Commit and push the preregistration/runner to the experiment branch.
-- [ ] Stage inputs on Rohan, verify pinned hashes, submit one short job, and collect only sanitized `results.json`.
-- [ ] Update the report with observed counts, resource evidence, deviations, and limitations; push the result record.
+- [x] Commit and push the preregistration/runner to the experiment branch.
+- [x] Stage inputs on Rohan, verify pinned hashes, submit one short job, and collect only sanitized `results.json`.
+- [x] Update the report with observed counts, resource evidence, deviations, and limitations; push the result record.

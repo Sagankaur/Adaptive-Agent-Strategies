@@ -1,6 +1,6 @@
 # gpt-oss tool-call/context diagnostic — protocol
 
-**Status:** preregistered engineering diagnostic; submitted to Slurm and waiting for GPU priority; no inference requests have been sent yet.
+**Status:** completed as a synthetic serving diagnostic; no benchmark task or agent episode was run.
 
 ## Question and claim boundary
 
@@ -34,9 +34,27 @@ For each context and prompt-size cell, report planned and attempted calls, HTTP 
 
 After the run, update this document with the Slurm job ID, commit and artifact hashes, aggregate counts, observed resource limits, deviations, and limitations. Store only sanitized aggregate JSON under `docs/experiments/artifacts/`; raw server logs remain on scratch and are not copied into the repository.
 
-### Submission record (2026-11-19)
+### Execution record (2026-11-19)
 
 - Slurm job `4869012` was submitted to Rohan's `gpu` partition under the `short` QoS. `sbatch --test-only` accepted the request and selected an RTX Pro 6000 node.
 - The pinned model and server SIF SHA-256 values were verified on Rohan and match the values above. The runner, batch script, and preregistration file were staged with hashes matching the committed files.
 - GitHub Actions passed on Python 3.11 and 3.12 for the PR branch before submission.
-- At 22:39 AEDT the job remained `PENDING (Priority)` with no start time. No model inference has run yet; this is submission evidence only, not an experiment result.
+- At 22:39 AEDT the job was initially `PENDING (Priority)`, then started at 22:47 and completed at 22:48. `sacct` reports `COMPLETED`, exit code `0:0`, elapsed `00:01:06`.
+
+### Results
+
+All 50 planned synthetic requests returned HTTP 200, exactly one tool call, parseable JSON arguments, schema-valid arguments, and the requested values. No context-error candidate occurred. This indicates that the pinned model/server combination handled these synthetic prompts at the tested lengths; it does not establish task-solving ability or explain every failure in the earlier Aider pilot.
+
+| Context | History target | Calls matching schema/request | Mean request latency | Mean generation speed |
+|---:|---:|---:|---:|---:|
+| 8,192 | 4,096 | 10/10 | 0.33 s | 282.07 tok/s |
+| 8,192 | 6,656 | 10/10 | 0.36 s | 273.14 tok/s |
+| 32,768 | 4,096 | 10/10 | 0.58 s | 282.68 tok/s |
+| 32,768 | 6,656 | 10/10 | 0.35 s | 275.90 tok/s |
+| 32,768 | 24,576 | 10/10 | 1.27 s | 255.29 tok/s |
+
+The 8K server reached healthy status in 9.02 s; the 32K server in 8.01 s. GPU memory peaked at 11,953 MiB and 12,553 MiB respectively, leaving at least 85,334 MiB free on the 97,887 MiB device. The 1 GiB headroom stop was never approached. Slurm allocated 8 CPUs and requested 64 GiB RAM, but `cpu.max` and `memory.max` were unavailable and the visible CPU set was `0-95`; hard CPU and memory enforcement is therefore unverified.
+
+Prompt-throughput figures are not interpreted: some reported values were implausibly high, consistent with prompt-cache reuse in this repeated-prefix synthetic design. A separate cache-controlled serving test is needed before using prefill speed for cost estimates. The measured generation rates and latencies are descriptive for this run only.
+
+The sanitized artifact is [`artifacts/gpt-oss-tool-context-diagnostic-2026-11-19.json`](artifacts/gpt-oss-tool-context-diagnostic-2026-11-19.json). It retains aggregate and per-call counters/timings only; no prompts, completions, tool names, or argument values. Its SHA-256 is `80a203092ffa07fe066b1f03804d46fb1ea98b499f11f9ebaccf585ef3fceb1d`. The result records protocol hash `fa311de4816faa966f87aa9633662ba9aea9e5c4a8ddcf206571280d911f23f2` and experiment commit `f9ba4e9`.
