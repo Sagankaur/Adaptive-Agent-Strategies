@@ -490,6 +490,10 @@ At the researcher's request, permit exactly one exploratory Harbor attempt on th
 
 The source snapshot and task image manifest/SIF were pinned and verified, but Rohan job 4869467 could not start Harbor 0.23.0's execution server in the exact task image: `/usr/bin/python3` was missing and Harbor could not install it with task networking disabled. The UDS health, exact-image egress probes, and agent-workspace mount inspection were not reached. No model, agent trial, Oracle, reference solution, or verifier ran; there is no benchmark reward. Follow the Entry 26 stop rule: do not inject a runtime, substitute a task, or launch a model under this pilot. The attempted task remains excluded through the pilot-exposure registry. The sanitized result is [`TB2-ONE-TASK-PILOT-2026-11-19.md`](experiments/TB2-ONE-TASK-PILOT-2026-11-19.md).
 
+### Entry 28: separate model-free Python 3.13 runtime preflight
+
+After Entry 27, inspection found Python 3.13.7 and pip 25.2 already in the pinned task SIF at `/usr/local/bin/python3`. The researcher approved testing this as a separate, model-free infrastructure route. The route stages hash-locked Harbor server wheels, installs them offline into a read-only runtime mount, and tests the exact SIF with Harbor's UDS provider under `--net --network none --writable-tmpfs --containall`, without fakeroot. This does not resume the stopped attempt, does not authorize a model episode, and leaves the task permanently excluded from confirmatory use. A pass only permits preparation and review of a separate one-episode preregistration; any failed check stops the route. Results are recorded in [`TB2-HARBOR-PYTHON313-RUNTIME-PREFLIGHT-2026-11-20.md`](experiments/TB2-HARBOR-PYTHON313-RUNTIME-PREFLIGHT-2026-11-20.md).
+
 **To be logged when they happen.**
 
 - The route pilot's GO or NO-GO, and any TB2 re-split (M2).

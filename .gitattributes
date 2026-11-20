@@ -1,1 +1,3 @@
 docs/cluster/tb2-pilot/*.sbatch text eol=lf
+docs/cluster/tb2-pilot/*.py text eol=lf
+docs/cluster/tb2-pilot/*.sh text eol=lf

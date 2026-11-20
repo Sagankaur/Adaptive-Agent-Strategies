@@ -1,49 +1,47 @@
-# TB2 one-task pilot on Rohan
+# TB2 one-task feasibility route on Rohan
 
-This is one exploratory feasibility attempt, not a benchmark estimate. It uses the local gpt-oss-20b model on `cobol-modernization`, an A-split task not listed in Decision 21's prior instruction exposure. The result is excluded from future confirmatory analysis by `evaluation/data/tb2_pilot_exclusions.json`.
+## Current status
 
-## Frozen inputs and stop conditions
+The first one-task attempt stopped before model execution at job `4869467`; Harbor's default bootstrap required `/usr/bin/python3` and attempted installation while the task network was disabled. The report and sanitized artifact remain unchanged. Do not resume that job or submit `02_one_task_pilot.sbatch`.
 
-- Task snapshot: `harborframework/terminal-bench-2.0`, revision `f2e8c75e23add71613117eecc9498f53bcd7e04e`.
-- Docker Registry source image: `alexgshaw/cobol-modernization:20251031`, resolved to manifest digest `sha256:593ab9df3d83f771e927888b2d9436b380cdf7ec4d0af2a9f0802d541edebba0`.
-- Model: `/scratch/$USER/models/gpt-oss-20b-MXFP4.gguf`.
-- Harbor: 0.23.0; Apptainer: 1.3.3; UDS patch: `docs/cluster/harbor-egress-safety/harbor-0.23.0-uds.patch`.
-- Stop if the exact-image network/UDS preflight fails, the SIF or UDS patch hash changes, the task metadata image tag differs, local NVMe is unavailable, or required inputs are missing. Do not retry or select another task.
+The current follow-up is model-free. It uses Python 3.13.7 already present inside the same pinned task SIF, installs hash-locked Harbor server dependencies offline, and verifies the exact Harbor UDS and egress controls. Full rationale and stop rules are in [`TB2-HARBOR-PYTHON313-RUNTIME-PREFLIGHT-2026-11-20.md`](../../experiments/TB2-HARBOR-PYTHON313-RUNTIME-PREFLIGHT-2026-11-20.md).
 
-## Stage the committed source snapshot
+## Stage committed source on Rohan
 
-From the repository root in PowerShell, after committing the preregistration and scripts:
+Run from the repository root in PowerShell after committing the scripts and documentation:
 
 ```powershell
-$archive = Join-Path $env:TEMP 'aas-tb2-pilot-source.tar'
 $commit = (git rev-parse HEAD).Trim()
+$archive = Join-Path $env:TEMP "aas-tb2-runtime-$commit.tar"
 git archive --format=tar --output=$archive HEAD
 $archiveHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $archive).Hash.ToLower()
-scp $archive rohan:tb2-pilot-source.tar
-ssh rohan "mkdir -p /scratch/`$USER/tb2-pilot/source-$commit && mv ~/tb2-pilot-source.tar /scratch/`$USER/tb2-pilot/source.tar && tar -xf /scratch/`$USER/tb2-pilot/source.tar -C /scratch/`$USER/tb2-pilot/source-$commit && printf '%s\\n' '$commit' > /scratch/`$USER/tb2-pilot/expected-source-commit.txt && printf '%s\\n' '$archiveHash' > /scratch/`$USER/tb2-pilot/source-archive.sha256"
+scp $archive rohan:tb2-runtime-source.tar
+ssh rohan "mkdir -p /scratch/`$USER/tb2-pilot/source-$commit && mv ~/tb2-runtime-source.tar /scratch/`$USER/tb2-pilot/source.tar && tar -xf /scratch/`$USER/tb2-pilot/source.tar -C /scratch/`$USER/tb2-pilot/source-$commit && printf '%s\n' '$commit' > /scratch/`$USER/tb2-pilot/expected-source-commit.txt && printf '%s\n' '$archiveHash' > /scratch/`$USER/tb2-pilot/source-archive.sha256"
 Remove-Item -LiteralPath $archive
 ```
 
-This archives tracked files only; `.env`, model weights, benchmark data, and local secrets are not included. The dataset and model remain on cluster scratch.
+This archive contains tracked project files only. It does not include `.env`, models, task data, or credentials.
 
-## Run order
+## Run the model-free gate
 
-In the commands below, replace `<commit>` with the value of `$commit` printed by `git rev-parse HEAD` above.
-
-1. Submit only the model-free exact-image preflight:
+1. Submit the binary-wheel preparation job:
 
    ```bash
-   sbatch /scratch/$USER/tb2-pilot/source-<commit>/docs/cluster/tb2-pilot/01_task_image_preflight.sbatch
+   sbatch /scratch/$USER/tb2-pilot/source-<commit>/docs/cluster/tb2-pilot/04_prepare_harbor_runtime.sbatch
    ```
 
-2. Inspect only `/scratch/$USER/tb2-pilot/preflight-<job-id>.txt` and `sacct -X -j <job-id>`. Continue only when that exact record says `status=PASS` and Slurm says `COMPLETED`; keep the full probe log on scratch. The preflight verifies the snapshot content against the pinned Hugging Face revision, model/server hashes, exact task SIF, UDS control, blocked DNS/external-IP/metadata access, `--writable-tmpfs`, `--containall`, absence of `--fakeroot`, and path-only absence of verifier/reference-like artifacts in the agent work directory.
+   It uses network access only to download Python wheels into a dedicated wheelhouse. Installation runs offline, with hashes, inside the pinned task SIF. No task setup or task command runs.
 
-3. If and only if preflight passes, submit the single GPU episode:
+2. Wait for `sacct -X -j <prep-job-id>` to report `COMPLETED`. Check that `/scratch/$USER/tb2-pilot/runtime-manifest-<prep-job-id>.json` exists and the output reports `RUNTIME_PREP_STATUS=PASS`.
+
+3. Submit the exact-image Harbor check using that setup job ID:
 
    ```bash
-   sbatch --export=ALL,AAS_PREFLIGHT_JOB_ID=<preflight-job-id> /scratch/$USER/tb2-pilot/source-<commit>/docs/cluster/tb2-pilot/02_one_task_pilot.sbatch
+   sbatch --export=ALL,AAS_RUNTIME_PREP_JOB_ID=<prep-job-id> /scratch/$USER/tb2-pilot/source-<commit>/docs/cluster/tb2-pilot/05_exact_runtime_preflight.sbatch
    ```
 
-4. Do not submit a replacement job after any model, Harbor, or verifier failure. Keep raw model, Harbor, task, and verifier logs on scratch. Copy only the sanitized summary and hashes to the repository after review.
+4. Continue only if Slurm reports `COMPLETED` and `/scratch/$USER/tb2-pilot/exact-runtime-<job-id>.txt` says `status=PASS`. The record must confirm pinned dependencies and tree hash, UDS health and `environment.exec`, blocked external/DNS/metadata connections, a read-only dependency mount, expected Apptainer arguments, and no fakeroot.
 
-Slurm scripts use the account-specific Rohan partitions/QoS. This pilot does not use Oracle or reference solutions, does not grant general permission for other TB2 tasks, and does not clear the TB-Pro route/licence gate.
+Any failed or missing check ends this route. Do not relax isolation or switch tasks. A pass permits preparing a separate one-episode preregistration and review; it does not itself start or authorize a model run. No Oracle, reference solution, verifier, benchmark task, or model runs during these two jobs.
+
+Raw logs, wheel files, and runtimes remain on scratch. Copy only reviewed, sanitized records and hashes into Git.
