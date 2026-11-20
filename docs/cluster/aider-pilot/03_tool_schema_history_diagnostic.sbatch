@@ -39,7 +39,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-for required in "$MODEL" "$SERVER_IMAGE" "$SOURCE/docs/cluster/aider-pilot/03_agent_protocol_diagnostic.py" \
+for required in "$MODEL" "$SERVER_IMAGE" "$SOURCE/docs/cluster/aider-pilot/03_tool_schema_history_diagnostic.py" \
   "$SOURCE/environments/harbor_agent.py" "$SOURCE/llm/async_openai_compatible.py" \
   "$SOURCE/strategy_schema/defaults.py"; do
   [ -e "$required" ] || { echo "missing required input: $required"; exit 2; }
