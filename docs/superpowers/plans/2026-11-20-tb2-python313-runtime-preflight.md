@@ -37,10 +37,10 @@
 - Create: `docs/cluster/tb2-pilot/04_prepare_harbor_runtime.sbatch`
 - Modify: `docs/cluster/tb2-pilot/bootstrap_harbor_python3.sh`
 
-- [ ] Download only binary wheels for the pinned server packages through the task image's Python 3.13.7.
-- [ ] Generate a complete lock containing every wheel's name, version, and SHA-256.
-- [ ] Install offline with `--require-hashes`; run `pip check` and import/version/origin checks inside the exact SIF.
-- [ ] Make the runtime and wheelhouse non-writable and record their deterministic hashes in a manifest.
+- [x] Download only binary wheels for the pinned server packages through the task image's Python 3.13.7.
+- [x] Generate a complete lock containing every wheel's name, version, and SHA-256.
+- [x] Install offline with `--require-hashes`; run `pip check` and import/version/origin checks inside the exact SIF.
+- [x] Make the runtime and wheelhouse non-writable and record their deterministic hashes in a manifest (job 4870172, `COMPLETED 0:0`).
 
 ### Task 2: Exercise Harbor on the exact task image
 
@@ -49,7 +49,7 @@
 - Create: `docs/cluster/tb2-pilot/05_exact_runtime_preflight.sbatch`
 - Modify: `docs/cluster/tb2-pilot/README.md`
 
-- [ ] Use the exact Python 3.13 bootstrap and a read-only runtime mount in the patched Harbor provider.
+- [ ] Use the exact Python 3.13 bootstrap and a read-only runtime mount in the patched Harbor provider. Driver job 4870174 stopped before container startup because the host system Python lacked `tomllib`; the script now activates Harbor's Python 3.12 virtual environment for one corrected run.
 - [ ] Check Harbor UDS health, a nonce round trip, harmless `/app` write, dependency origin/version, read-only mount, path-only workspace guard, loopback-only routes, DNS failure, external-IP failure, and metadata-IP failure.
 - [ ] Capture and assert the actual Apptainer argv, including network-none and UDS flags, read-only runtime bind, writable tmpfs, containall, and absence of fakeroot.
 - [ ] Record pass/fail and hashes without copying raw task logs into Git.
@@ -60,6 +60,6 @@
 - Create: `docs/experiments/TB2-HARBOR-PYTHON313-RUNTIME-PREFLIGHT-2026-11-20.md`
 - Modify: `docs/DECISIONS.md`
 
-- [ ] Obtain independent review of scripts and protocol without reading task instructions/tests/solutions.
-- [ ] Run local static checks, then the CPU setup and exact-image jobs on Rohan.
-- [ ] If either job fails, record the failure and stop. If both pass, prepare a separate single-episode preregistration; do not launch it as part of this plan.
+- [x] Obtain independent review of scripts and protocol without reading task instructions/tests/solutions.
+- [x] Run local static checks and the CPU setup job on Rohan. Job 4870174 exposed a host-Python selection bug before the container started; it is recorded, and one model-free rerun is permitted after correction.
+- [ ] If the corrected exact-image check passes, prepare a separate single-episode preregistration; do not launch it as part of this plan.

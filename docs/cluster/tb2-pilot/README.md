@@ -4,7 +4,7 @@
 
 The first one-task attempt stopped before model execution at job `4869467`; Harbor's default bootstrap required `/usr/bin/python3` and attempted installation while the task network was disabled. The report and sanitized artifact remain unchanged. Do not resume that job or submit `02_one_task_pilot.sbatch`.
 
-The current follow-up is model-free. It uses Python 3.13.7 already present inside the same pinned task SIF, installs hash-locked Harbor server dependencies offline, and verifies the exact Harbor UDS and egress controls. Full rationale and stop rules are in [`TB2-HARBOR-PYTHON313-RUNTIME-PREFLIGHT-2026-11-20.md`](../../experiments/TB2-HARBOR-PYTHON313-RUNTIME-PREFLIGHT-2026-11-20.md).
+The current follow-up is model-free. The dependency setup job passed, while the first exact-image driver stopped before starting Harbor because it selected the cluster's system Python without `tomllib`. A single corrected driver run is allowed; it will use Harbor's Python 3.12 virtual environment. Full rationale and stop rules are in [`TB2-HARBOR-PYTHON313-RUNTIME-PREFLIGHT-2026-11-20.md`](../../experiments/TB2-HARBOR-PYTHON313-RUNTIME-PREFLIGHT-2026-11-20.md).
 
 ## Stage committed source on Rohan
 
@@ -42,6 +42,6 @@ This archive contains tracked project files only. It does not include `.env`, mo
 
 4. Continue only if Slurm reports `COMPLETED` and `/scratch/$USER/tb2-pilot/exact-runtime-<job-id>.txt` says `status=PASS`. The record must confirm pinned dependencies and tree hash, UDS health and `environment.exec`, blocked external/DNS/metadata connections, a read-only dependency mount, expected Apptainer arguments, and no fakeroot.
 
-Any failed or missing check ends this route. Do not relax isolation or switch tasks. A pass permits preparing a separate one-episode preregistration and review; it does not itself start or authorize a model run. No Oracle, reference solution, verifier, benchmark task, or model runs during these two jobs.
+Any failed or missing check after the exact task container starts ends this route. The driver failure before container startup is recorded in the experiment report; one corrected model-free driver run is allowed. Do not relax isolation or switch tasks. A pass permits preparing a separate one-episode preregistration and review; it does not itself start or authorize a model run. No Oracle, reference solution, verifier, benchmark task, or model runs during these jobs.
 
 Raw logs, wheel files, and runtimes remain on scratch. Copy only reviewed, sanitized records and hashes into Git.

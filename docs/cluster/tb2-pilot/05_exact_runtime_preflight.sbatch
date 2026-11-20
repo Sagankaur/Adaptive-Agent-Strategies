@@ -50,6 +50,7 @@ tar -xf "$ROOT/source.tar" -C "$SOURCE"
 chmod -R a-w "$SOURCE"
 
 for required in "$TASK/task.toml" "$TASK/environment" "$IMAGE" "$RUNTIME_DEPS" "$RUNTIME_MANIFEST" "$RUNTIME_LOCK" \
+  "$VENV/bin/activate" \
   "$HELPER" "$BOOTSTRAP" "$PATCH_FILE" "$SITE/harbor/environments/singularity/singularity.py"; do
   [ -e "$required" ] || { echo "missing required input: $required"; exit 2; }
 done
@@ -103,6 +104,7 @@ PY
 echo "job=$SLURM_JOB_ID host=$(hostname) source_commit=$EXPECTED_SOURCE runtime_prep_job=$RUNTIME_PREP_JOB_ID"
 "$APPTAINER" --version
 "$VENV/bin/harbor" --version
+source "$VENV/bin/activate"
 echo "HARBOR_TELEMETRY=$HARBOR_TELEMETRY"
 sha256sum "$IMAGE" "$PATCH_FILE" "$RUNTIME_MANIFEST"
 

@@ -1,6 +1,6 @@
 # TB2 Harbor Python 3.13 runtime preflight
 
-**Status:** Prepared; cluster jobs not yet run. No model episode is authorized by this preflight record.
+**Status:** One setup job passed. The first exact-image driver job stopped before starting a task container because it used an old host Python without `tomllib`; the model-free driver is being corrected and may be rerun once. No model episode is authorized by this preflight record.
 
 ## Why this follow-up exists
 
@@ -28,15 +28,15 @@ The exact-image check must confirm Python/dependency versions and import origins
 
 ## Stop rule
 
-Any missing package, hash mismatch, task-SIF mismatch, unexpected mount, route, successful network probe, failed UDS operation, or argv mismatch is a failure. Stop without relaxing network isolation, using fakeroot, switching tasks, or launching a model. A pass permits preparation of a separate one-episode preregistration; it does not itself authorize model execution.
+Any missing package, hash mismatch, task-SIF mismatch, unexpected mount, route, successful network probe, failed UDS operation, or argv mismatch after the exact task container starts is a failure. Stop without relaxing network isolation, using fakeroot, switching tasks, or launching a model. A driver failure before the task container starts is recorded separately; this happened once because the driver used system Python without `tomllib`. The driver now explicitly activates Harbor's Python 3.12 virtual environment, and one model-free rerun is allowed under unchanged task/image/network inputs. A pass permits preparation of a separate one-episode preregistration; it does not itself authorize model execution.
 
 ## Results
 
 | Check | Result |
 |---|---|
 | Login-side SSH and exact SIF inspection | PASS; Rohan reported the pinned SIF hash and Python 3.13.7/pip 25.2. |
-| Hash-locked runtime preparation | Not run. |
-| Exact-image Harbor UDS/network/mount preflight | Not run. |
+| Hash-locked runtime preparation | PASS; job `4870172`, `COMPLETED 0:0`. Fourteen binary wheels were downloaded and installed offline; `pip check` passed. Lock SHA-256 `4e23d6f973ccd34514c8d33e8642edb84b239bc0d8fc1cfe669f52e7c67fcca9`; runtime tree SHA-256 `e271c9a426b3afa8b4cb7d7d058875424199e5321d9b7d59047d325e0c45bbfc`. |
+| Exact-image Harbor UDS/network/mount preflight | Job `4870174`, `FAILED 1:0` after 12 seconds. The host-side driver imported `tomllib` under the cluster system Python and exited before Harbor/Apptainer startup. UDS, egress, mounts, and task paths were not checked. |
 | Model, Harbor task trial, Oracle/reference/verifier | None run. |
 
-The previous pilot remains stopped at job `4869467`; its report and sanitized artifact are unchanged. This report will be updated with job IDs, Slurm states, runtime manifest hash, and sanitized check results after the CPU jobs finish.
+The previous pilot remains stopped at job `4869467`; its report and sanitized artifact are unchanged. Job `4870174` started no task container, model, Harbor trial, task setup, Oracle, reference solution, or verifier. A single corrected model-free driver run is next; no model job follows automatically.

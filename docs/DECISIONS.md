@@ -494,6 +494,10 @@ The source snapshot and task image manifest/SIF were pinned and verified, but Ro
 
 After Entry 27, inspection found Python 3.13.7 and pip 25.2 already in the pinned task SIF at `/usr/local/bin/python3`. The researcher approved testing this as a separate, model-free infrastructure route. The route stages hash-locked Harbor server wheels, installs them offline into a read-only runtime mount, and tests the exact SIF with Harbor's UDS provider under `--net --network none --writable-tmpfs --containall`, without fakeroot. This does not resume the stopped attempt, does not authorize a model episode, and leaves the task permanently excluded from confirmatory use. A pass only permits preparation and review of a separate one-episode preregistration; any failed check stops the route. Results are recorded in [`TB2-HARBOR-PYTHON313-RUNTIME-PREFLIGHT-2026-11-20.md`](experiments/TB2-HARBOR-PYTHON313-RUNTIME-PREFLIGHT-2026-11-20.md).
 
+### Entry 29: one corrected runtime-preflight driver run
+
+Runtime preparation job 4870172 passed, but exact-image driver job 4870174 exited before Harbor or Apptainer started because the driver used the cluster system Python, which lacks `tomllib`. No task container, task command, model, or safety check ran. Correct the driver to use Harbor's Python 3.12 virtual environment and permit one model-free rerun with the same task SIF, runtime tree, network isolation, and checks. This does not relax Entry 28's safety criteria and does not authorize model execution. Any failure after the exact task container starts ends this route.
+
 **To be logged when they happen.**
 
 - The route pilot's GO or NO-GO, and any TB2 re-split (M2).
