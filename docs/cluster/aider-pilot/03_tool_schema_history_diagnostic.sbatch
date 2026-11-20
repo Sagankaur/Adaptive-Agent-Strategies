@@ -11,8 +11,9 @@
 #SBATCH --mem=64G
 #SBATCH --time=00:30:00
 
-set -euo pipefail
+set -eo pipefail
 source /etc/profile
+set -euo pipefail
 module load apptainer/apptainer
 
 SCR=/scratch/$USER
