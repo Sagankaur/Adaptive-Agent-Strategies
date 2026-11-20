@@ -59,6 +59,7 @@ ARCHIVE_SCRIPT_SHA=$(sha256sum "$SOURCE/docs/cluster/tb2-pilot/05_exact_runtime_
 [ "$THIS_SCRIPT_SHA" = "$ARCHIVE_SCRIPT_SHA" ] || { echo "executed script differs from committed source archive"; exit 5; }
 IMAGE_SHA=$(sha256sum "$IMAGE" | awk '{print $1}')
 [ "$IMAGE_SHA" = e7fc37ce09d4ee50e4a71a6e2c9941c0cdacdeb979fcaf99182728b3d0e0dd49 ] || { echo "task SIF hash mismatch"; exit 5; }
+source "$VENV/bin/activate"
 python - "$RUNTIME_MANIFEST" "$IMAGE_SHA" <<'PY'
 import json, sys
 from pathlib import Path
@@ -104,7 +105,6 @@ PY
 echo "job=$SLURM_JOB_ID host=$(hostname) source_commit=$EXPECTED_SOURCE runtime_prep_job=$RUNTIME_PREP_JOB_ID"
 "$APPTAINER" --version
 "$VENV/bin/harbor" --version
-source "$VENV/bin/activate"
 echo "HARBOR_TELEMETRY=$HARBOR_TELEMETRY"
 sha256sum "$IMAGE" "$PATCH_FILE" "$RUNTIME_MANIFEST"
 
