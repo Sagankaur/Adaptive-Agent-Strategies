@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "benchmark": "terminal-bench@2.0",
+  "purpose": "Exploratory pilot exposure exclusions; never use these tasks in confirmatory adaptation, candidate selection, or evaluation.",
+  "excluded_tasks": [
+    {
+      "task_id": "cobol-modernization",
+      "run_id": "tb2-one-task-pilot-2026-11-19",
+      "reason": "Exposed to one local-model Harbor pilot; permanently excluded from confirmatory analysis and future adaptation or candidate selection."
+    }
+  ]
+}

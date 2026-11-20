@@ -39,6 +39,8 @@ from pydantic import BaseModel, ConfigDict, model_validator
 
 TERMINAL_BENCH_2_SIZES: dict[str, int] = {"A": 25, "V": 12, "M": 15, "H": 37}
 HELD_OUT = "H"
+ROOT = Path(__file__).resolve().parents[1]
+TB2_PILOT_EXCLUSIONS = ROOT / "evaluation" / "data" / "tb2_pilot_exclusions.json"
 
 
 class TaskInfo(BaseModel):
@@ -155,6 +157,38 @@ def save_split(split: Split, path: Path) -> None:
 
 def load_split(path: Path) -> Split:
     return Split.model_validate_json(path.read_text())
+
+
+def load_confirmatory_split(path: Path, exclusions_path: Path = TB2_PILOT_EXCLUSIONS) -> Split:
+    """Load a split after removing every task exposed in an exploratory TB2 pilot.
+
+    ``load_split`` remains available for historical split integrity checks. Any
+    future confirmatory selector or scorer must use this function instead.
+    """
+    split = load_split(path)
+    if not split.benchmark.startswith("terminal-bench@2.0"):
+        return split
+    manifest = json.loads(exclusions_path.read_text(encoding="utf-8"))
+    if manifest.get("benchmark") != "terminal-bench@2.0" or manifest.get("schema_version") != 1:
+        raise ValueError("invalid TB2 pilot exclusion manifest")
+    excluded = {entry["task_id"] for entry in manifest.get("excluded_tasks", [])}
+    inventory_path = ROOT / "evaluation" / "data" / "tb2_tasks.jsonl"
+    known = {
+        json.loads(line)["task_id"]
+        for line in inventory_path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    }
+    unknown = excluded - known
+    if unknown:
+        raise ValueError(f"TB2 exclusion manifest names unknown tasks: {sorted(unknown)}")
+    filtered = {name: [task_id for task_id in ids if task_id not in excluded] for name, ids in split.splits.items()}
+    return Split(
+        benchmark=split.benchmark,
+        seed=split.seed,
+        sizes={name: len(ids) for name, ids in filtered.items()},
+        task_ids_sha256=_fingerprint([task_id for ids in filtered.values() for task_id in ids]),
+        splits=filtered,
+    )
 
 
 def _parse_sizes(text: str) -> dict[str, int]:

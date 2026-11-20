@@ -1,0 +1,46 @@
+{
+  "pilot_id": "tb2-one-task-pilot-2026-11-19",
+  "status": "stopped_pre_model_at_task_image_startup",
+  "task_id": "cobol-modernization",
+  "confirmatory_use": false,
+  "model_episode_started": false,
+  "harbor_trial_count": 0,
+  "oracle_or_reference_run": false,
+  "task_snapshot_revision": "f2e8c75e23add71613117eecc9498f53bcd7e04e",
+  "task_snapshot_tree_sha256": "ff1b9e47c776786c7b82757a5af006921600e7283082c802d6785c2c769522f6",
+  "task_image_manifest_sha256": "593ab9df3d83f771e927888b2d9436b380cdf7ec4d0af2a9f0802d541edebba0",
+  "task_image_sif_sha256": "e7fc37ce09d4ee50e4a71a6e2c9941c0cdacdeb979fcaf99182728b3d0e0dd49",
+  "preflight_jobs": [
+    {
+      "job_id": "4869462",
+      "state": "FAILED",
+      "exit_code": "1:0",
+      "failure_class": "preflight_python_missing_tomllib",
+      "model_started": false
+    },
+    {
+      "job_id": "4869464",
+      "state": "FAILED",
+      "exit_code": "1:0",
+      "failure_class": "preflight_huggingface_lfs_metadata_parser",
+      "model_started": false
+    },
+    {
+      "job_id": "4869467",
+      "state": "FAILED",
+      "exit_code": "1:0",
+      "elapsed": "00:02:15",
+      "failure_class": "harbor_execution_server_python_missing_in_task_image",
+      "details": "Harbor could not find /usr/bin/python3 and could not install it with task networking disabled.",
+      "apptainer_network_none_requested": true,
+      "fakeroot_used": false,
+      "harbor_uds_health": "not_reached",
+      "external_and_metadata_egress_checks": "not_reached",
+      "agent_workspace_mount_check": "not_reached",
+      "model_started": false
+    }
+  ],
+  "model_sha256": "27cd6c432c7672cb812a92f611cf3ba7bbc35928262bb1e1253ff4ee6ae35901",
+  "server_sif_sha256": "dd8110164788b9deb354e06cb984214b2ef8b6b0598c2ef73dd0ab9828957d56",
+  "raw_logs_copied_to_repository": false
+}

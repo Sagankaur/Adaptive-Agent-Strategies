@@ -1,0 +1,21 @@
+{
+    "model":  "/models/gpt-oss-20b-MXFP4.gguf",
+    "seed":  20261116,
+    "temperature":  0.6,
+    "top_p":  0.95,
+    "max_tokens":  256,
+    "tool_choice":  "auto (server default)",
+    "tool_call_count":  1,
+    "tool_name":  "reverse_words",
+    "tool_arguments":  {
+                           "text":  "red blue green"
+                       },
+    "tool_call_correct":  true,
+    "finish_reason":  "tool_calls",
+    "wall_seconds":  0.308,
+    "prompt_tokens":  149,
+    "completion_tokens":  41,
+    "total_tokens":  190,
+    "task_or_benchmark_run":  false,
+    "tool_was_executed":  false
+}

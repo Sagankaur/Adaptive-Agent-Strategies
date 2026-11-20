@@ -1,0 +1,58 @@
+{
+  "attempted_model_calls": 26,
+  "client": "llm.async_openai_compatible.AsyncOpenAICompatibleModel",
+  "date": "2026-11-20",
+  "experiment": "synthetic_tool_schema_history_diagnostic",
+  "gpu_monitor": {
+    "gpu_uuid": "GPU-1f44edfa-c64b-b5f8-4157-726ea9a5573a",
+    "headroom_mib": 1024,
+    "minimum_free_mib": 85934,
+    "peak_used_mib": 11953,
+    "samples": 40,
+    "stop_reason": null
+  },
+  "history_targets": {
+    "long": 6400,
+    "medium": 4096,
+    "short": 1024
+  },
+  "max_calls_per_conversation": 2,
+  "mean_input_tokens": {
+    "long": 6353,
+    "medium": 4142,
+    "short": 1004.9
+  },
+  "mean_latency_seconds": {
+    "long": 0.8142,
+    "medium": 0.8142,
+    "short": 0.6214
+  },
+  "mean_output_tokens": {
+    "long": 192,
+    "medium": 192,
+    "short": 157.9
+  },
+  "model": "gpt-oss-20b-MXFP4.gguf",
+  "model_sha256": "27cd6c432c7672cb812a92f611cf3ba7bbc35928262bb1e1253ff4ee6ae35901",
+  "outcomes": {
+    "long": {
+      "no_tool_call": 8
+    },
+    "medium": {
+      "no_tool_call": 8
+    },
+    "short": {
+      "no_tool_call": 6,
+      "valid_schema_A": 4
+    }
+  },
+  "raw_prompt_completion_or_arguments_written": false,
+  "repetitions_per_target": 8,
+  "server_sif_sha256": "dd8110164788b9deb354e06cb984214b2ef8b6b0598c2ef73dd0ab9828957d56",
+  "source_commit": "be772b82563a0a13e3c5167784c4fad6b9f05367",
+  "strategy_id": "s0",
+  "strategy_sha256": "8059e7bb20fe5085ebab6c93ced464023f957d8424f305f689ec65204ca4a114",
+  "task_oracle_reference_solution_used": false,
+  "tool_executor_instantiated": false,
+  "tools_sha256": "e37a070c3dc16599fb3735c0fd1e67e3d0eef9e925692d0ad909603ce4d5c497"
+}
