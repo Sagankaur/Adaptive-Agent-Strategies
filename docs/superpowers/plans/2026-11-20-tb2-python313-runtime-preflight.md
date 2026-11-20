@@ -1,6 +1,6 @@
 # TB2 Python 3.13 Runtime Preflight Plan
 
-> **Status:** In progress. This is a new model-free infrastructure check; it does not resume the stopped 2026-11-19 pilot.
+> **Status:** Complete. The exact-image model-free preflight passed; the current TB2 task scope prohibits model or agent runs on TB2.
 
 **Goal:** Test whether Harbor 0.23.0 can use Python 3.13 already present in the pinned task SIF while preserving a private UDS control channel and verified network isolation.
 
@@ -17,7 +17,7 @@
 - The task container must use `--net --network none --writable-tmpfs --containall`, a private UDS, and no `--fakeroot`.
 - Network access in the first CPU job is only for downloading binary wheels; installation into the runtime is offline and hash-checked.
 - The runtime dependency directory is mounted read-only in the exact-image check.
-- Do not start a model episode until this preflight passes and a separate model-run preregistration is reviewed.
+- The current TB2 task scope prohibits model or agent episodes on TB2; this route ends with infrastructure evidence only.
 - Preserve the stopped status and result of the 2026-11-19 attempt.
 
 ## Review Focus
@@ -49,10 +49,10 @@
 - Create: `docs/cluster/tb2-pilot/05_exact_runtime_preflight.sbatch`
 - Modify: `docs/cluster/tb2-pilot/README.md`
 
-- [ ] Use the exact Python 3.13 bootstrap and a read-only runtime mount in the patched Harbor provider. Driver job 4870174 stopped before container startup because the host system Python lacked `tomllib`; the script now activates Harbor's Python 3.12 virtual environment for one corrected run.
-- [ ] Check Harbor UDS health, a nonce round trip, harmless `/app` write, dependency origin/version, read-only mount, path-only workspace guard, loopback-only routes, DNS failure, external-IP failure, and metadata-IP failure.
-- [ ] Capture and assert the actual Apptainer argv, including network-none and UDS flags, read-only runtime bind, writable tmpfs, containall, and absence of fakeroot.
-- [ ] Record pass/fail and hashes without copying raw task logs into Git.
+- [x] Use the exact Python 3.13 bootstrap and a read-only runtime mount in the patched Harbor provider. Driver job 4870174 stopped before container startup because system Python lacked `tomllib`; corrected job 4870175 used Harbor's Python 3.12 virtual environment.
+- [x] Check Harbor UDS health, a nonce round trip, harmless `/app` write, dependency origin/version, read-only mount, path-only workspace guard, loopback-only routes, DNS failure, external-IP failure, and metadata-IP failure.
+- [x] Capture and assert the actual Apptainer argv, including network-none and UDS flags, read-only runtime bind, writable tmpfs, containall, and absence of fakeroot.
+- [x] Record pass/fail and hashes without copying raw task logs into Git.
 
 ### Task 3: Review and disposition
 
@@ -61,5 +61,5 @@
 - Modify: `docs/DECISIONS.md`
 
 - [x] Obtain independent review of scripts and protocol without reading task instructions/tests/solutions.
-- [x] Run local static checks and the CPU setup job on Rohan. Job 4870174 exposed a host-Python selection bug before the container started; it is recorded, and one model-free rerun is permitted after correction.
-- [ ] If the corrected exact-image check passes, prepare a separate single-episode preregistration; do not launch it as part of this plan.
+- [x] Run local static checks and both CPU jobs on Rohan; retain the initial host-Python driver failure and corrected pass in the record.
+- [x] End at infrastructure evidence. No task setup, task command, model, agent, Oracle, reference solution, verifier, or benchmark score was produced; current scope prohibits model or agent runs on TB2.
