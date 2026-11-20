@@ -2,7 +2,7 @@
 
 ## Status
 
-The task-free diagnostic script and Slurm wrapper are prepared; no diagnostic inference or benchmark task has run under this record yet. This is an engineering diagnostic, not a benchmark result or a full Harbor agent replay.
+The task-free diagnostic ran once on Rohan RTX Pro 6000 (Slurm job `4870222`, `COMPLETED 0:0`). This is an engineering diagnostic, not a benchmark result or a full Harbor agent replay.
 
 ## Why this is the next step
 
@@ -31,6 +31,23 @@ The predeclared conditions are 1,024, 4,096, and 6,400 measured input tokens; ei
 
 This diagnostic can establish only whether the model/client interface handles the tested synthetic protocol. It cannot establish coding ability, Aider benchmark performance, Harbor task success, egress isolation, or the root cause of every earlier failure. If failures reproduce, inspect only sanitized error categories and minimal source-level protocol evidence; do not rerun the four frozen Aider tasks. If all conditions pass, freeze a fresh, unattempted Aider task sample and preregister a one-task lifecycle check before any new benchmark episode.
 
+## Results (2026-11-20)
+
+The pinned model and server SIF hashes matched. The model server was localhost-only. No benchmark task, Oracle, reference solution, or tool executor was used. The assigned GPU monitor recorded 40 samples, a peak of 11,953 MiB used, and minimum free memory of 85,934 MiB; the 1 GiB headroom stop was not approached. The job completed in 1 minute 16 seconds. Slurm's CPU and memory cgroup limit files were empty, so hard CPU/RAM enforcement remains unverified.
+
+| Synthetic input condition | Mean input tokens | Calls | Outcome |
+|---|---:|---:|---|
+| Short (target 1,024) | 1,004.9 | 10 | 4 schema-valid terminal calls; 6 no-tool responses |
+| Medium (target 4,096) | 4,142 | 8 | 8 no-tool responses |
+| Long (target 6,400) | 6,353 | 8 | 8 no-tool responses |
+| **Total** | — | **26** | **4 valid terminal calls; 22 no-tool responses** |
+
+There were no malformed-JSON outcomes because most responses contained no structured tool call to parse. Mean output length was exactly the 192-token cap in the medium and long conditions. This suggests the cap may be too low for this system prompt and model; it does not prove why the model omitted calls. The diagnostic therefore does **not** clear the Harbor tool protocol and does not explain the Aider pilot's invalid-JSON errors. A separate, preregistered output-cap sensitivity check would be needed before another task episode.
+
+Two earlier submissions failed before inference and are excluded: job `4870215` hit an A2I2 profile startup error (`LC_BYOBU` under nounset), and job `4870220` had a stale runner filename in its preflight. Neither started the model server or sent a model request.
+
+The sanitized result artifact is [`aider_tool_schema_history_diagnostic_2026-11-20.json`](artifacts/aider_tool_schema_history_diagnostic_2026-11-20.json). It records source commit `be772b82563a0a13e3c5167784c4fad6b9f05367` and contains aggregate outcomes only.
+
 ## Prior evidence
 
 - [Aider Polyglot pilot](aider-six-task-pilot-2026-11-19.md): 4 eligible IDs attempted, 5 Harbor trials, no valid verifier reward.
@@ -40,4 +57,4 @@ This diagnostic can establish only whether the model/client interface handles th
 
 - Runner: [`03_tool_schema_history_diagnostic.py`](../cluster/aider-pilot/03_tool_schema_history_diagnostic.py)
 - Slurm wrapper: [`03_tool_schema_history_diagnostic.sbatch`](../cluster/aider-pilot/03_tool_schema_history_diagnostic.sbatch)
-- Results: not run yet.
+- Results artifact: [`aider_tool_schema_history_diagnostic_2026-11-20.json`](artifacts/aider_tool_schema_history_diagnostic_2026-11-20.json)
