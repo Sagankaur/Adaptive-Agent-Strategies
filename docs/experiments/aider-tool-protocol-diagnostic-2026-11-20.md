@@ -58,3 +58,11 @@ The sanitized result artifact is [`aider_tool_schema_history_diagnostic_2026-11-
 - Runner: [`03_tool_schema_history_diagnostic.py`](../cluster/aider-pilot/03_tool_schema_history_diagnostic.py)
 - Slurm wrapper: [`03_tool_schema_history_diagnostic.sbatch`](../cluster/aider-pilot/03_tool_schema_history_diagnostic.sbatch)
 - Results artifact: [`aider_tool_schema_history_diagnostic_2026-11-20.json`](artifacts/aider_tool_schema_history_diagnostic_2026-11-20.json)
+
+## Pre-registered cap sensitivity follow-up (2026-11-23)
+
+The first run's medium and long mean output lengths equaled the 192-token cap, but the client does not retain the server's `finish_reason`; saturation is a hypothesis, not a confirmed truncation event. To test that hypothesis with a controlled comparison, run paired 192- and 512-token output-cap arms using the same fresh synthetic prompt and seed for each pair. Keep the pinned model/server, system text, schemas, context targets, sampler settings, eight repetitions per length, and maximum two-turn trajectory fixed. The only treatment difference is output cap. Use seed root `20261123`, with separate client instances per arm so each paired conversation uses the same request-seed sequence. Report the arms descriptively; do not claim a task-level effect or statistical significance.
+
+The maximum is 96 model calls (3 history lengths × 8 repetitions × 2 caps × 2 turns). The initial prompt target is checked against each arm's output cap plus the 1,024-token margin. At the long target, the first call fits under the 8,192-token context; if a second-turn history no longer fits, the runner records a context-headroom stop and does not send it. The artifact also counts responses whose reported output tokens reach the configured cap; this is only a saturation proxy because the client does not capture `finish_reason`. No benchmark task or task text is involved. This is a separate engineering follow-up, not a rerun of the Aider task pilot.
+
+Planned artifact: `artifacts/aider_tool_schema_history_cap_sensitivity_2026-11-23.json` (to be added after the job completes).

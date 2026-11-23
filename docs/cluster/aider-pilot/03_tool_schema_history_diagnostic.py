@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import copy
 import hashlib
 import json
 import os
@@ -23,7 +24,9 @@ from llm.async_openai_compatible import AsyncOpenAICompatibleModel
 from strategy_schema.defaults import s0
 
 MODEL = "gpt-oss-20b-MXFP4.gguf"
-OUTPUT_TOKENS = 192
+OUTPUT_CAPS = (192, 512)
+PREFLIGHT_OUTPUT_TOKENS = max(OUTPUT_CAPS)
+SEED_ROOT = 20261123
 REPETITIONS = 8
 CONTEXT_LIMIT = 8192
 CONTEXT_MARGIN = 1024
@@ -137,12 +140,12 @@ class MemoryMonitor:
 async def guarded_complete(
     model: AsyncOpenAICompatibleModel,
     messages: list[dict[str, Any]],
-    seed: int,
     monitor: MemoryMonitor,
+    output_tokens: int,
 ) -> Any:
     monitor.assert_safe()
     request = asyncio.create_task(
-        model.complete(messages, seed=seed, tools=_TOOLS, max_output_tokens=OUTPUT_TOKENS)
+        model.complete(messages, tools=_TOOLS, max_output_tokens=output_tokens)
     )
     while not request.done():
         await asyncio.sleep(0.1)
@@ -172,8 +175,14 @@ def post_json(base: str, route: str, payload: dict[str, Any]) -> tuple[int, Any]
         return 0, None
 
 
-def prompt_tokens(base: str, model: AsyncOpenAICompatibleModel, messages: list[dict[str, Any]], seed: int) -> int:
-    body = model._request_body(messages, seed, _TOOLS, OUTPUT_TOKENS)
+def prompt_tokens(
+    base: str,
+    model: AsyncOpenAICompatibleModel,
+    messages: list[dict[str, Any]],
+    seed: int,
+    output_tokens: int,
+) -> int:
+    body = model._request_body(messages, seed, _TOOLS, output_tokens)
     status, value = post_json(base, "/chat/completions/input_tokens", body)
     if status == 200 and isinstance(value, dict) and isinstance(value.get("input_tokens"), int):
         return value["input_tokens"]
@@ -201,12 +210,13 @@ def messages_for_target(
     model: AsyncOpenAICompatibleModel,
     target: int,
     seed: int,
+    output_tokens: int,
 ) -> tuple[list[dict[str, Any]], int]:
     messages: list[dict[str, Any]] = [
         {"role": "system", "content": s0().render() + SYSTEM_SUFFIX},
         {"role": "user", "content": USER_REQUEST},
     ]
-    measured = prompt_tokens(base, model, messages, seed)
+    measured = prompt_tokens(base, model, messages, seed, output_tokens)
     if measured > target:
         raise SafeDiagnosticError("base_prompt_exceeds_target")
 
@@ -215,7 +225,7 @@ def messages_for_target(
     for _ in range(16):
         repeats = (low + high) // 2
         candidate = [dict(messages[0]), {"role": "user", "content": USER_REQUEST + "\n" + FILLER * repeats}]
-        count = prompt_tokens(base, model, candidate, seed)
+        count = prompt_tokens(base, model, candidate, seed, output_tokens)
         if abs(count - target) < abs(best[1] - target):
             best = (candidate, count)
         if abs(count - target) <= 64:
@@ -229,7 +239,7 @@ def messages_for_target(
 
     if abs(best[1] - target) > 256:
         raise SafeDiagnosticError("history_target_not_reached")
-    if best[1] + OUTPUT_TOKENS + CONTEXT_MARGIN >= CONTEXT_LIMIT:
+    if best[1] + output_tokens + CONTEXT_MARGIN >= CONTEXT_LIMIT:
         raise SafeDiagnosticError("context_headroom_preflight_failed")
     return best
 
@@ -265,20 +275,15 @@ async def run(
     source_commit: str,
     server_pid: int,
 ) -> None:
-    model = AsyncOpenAICompatibleModel(
-        base_url=base + "/v1",
-        model=MODEL,
-        timeout_s=120,
-        temperature=0.6,
-        top_p=0.95,
-        top_k=20,
-        seed=20261120,
-        max_tokens=OUTPUT_TOKENS,
-    )
-    outcomes: dict[str, Counter[str]] = {name: Counter() for name, _ in TARGETS}
-    latencies: dict[str, list[float]] = {name: [] for name, _ in TARGETS}
-    input_tokens: dict[str, list[int]] = {name: [] for name, _ in TARGETS}
-    output_tokens: dict[str, list[int]] = {name: [] for name, _ in TARGETS}
+    outcomes = {
+        str(cap): {name: Counter() for name, _ in TARGETS} for cap in OUTPUT_CAPS
+    }
+    latencies = {str(cap): {name: [] for name, _ in TARGETS} for cap in OUTPUT_CAPS}
+    input_tokens = {str(cap): {name: [] for name, _ in TARGETS} for cap in OUTPUT_CAPS}
+    output_tokens = {str(cap): {name: [] for name, _ in TARGETS} for cap in OUTPUT_CAPS}
+    cap_reached = {
+        str(cap): {name: 0 for name, _ in TARGETS} for cap in OUTPUT_CAPS
+    }
     attempted = 0
     monitor = MemoryMonitor(server_pid)
     monitor.start()
@@ -287,65 +292,99 @@ async def run(
         for condition_index, (condition, target) in enumerate(TARGETS):
             for repetition in range(REPETITIONS):
                 monitor.assert_safe()
-                seed = 20261120 + condition_index * 1000 + repetition * 10
+                seed = SEED_ROOT + condition_index * 1000 + repetition * 10
+                preflight_model = AsyncOpenAICompatibleModel(
+                    base_url=base + "/v1",
+                    model=MODEL,
+                    timeout_s=120,
+                    temperature=0.6,
+                    top_p=0.95,
+                    top_k=20,
+                    seed=seed,
+                    max_tokens=PREFLIGHT_OUTPUT_TOKENS,
+                )
                 try:
-                    messages, measured = messages_for_target(base, model, target, seed)
+                    messages, measured = messages_for_target(
+                        base,
+                        preflight_model,
+                        target,
+                        seed,
+                        PREFLIGHT_OUTPUT_TOKENS,
+                    )
                 except SafeDiagnosticError as exc:
-                    outcomes[condition][str(exc)] += 1
+                    for cap in OUTPUT_CAPS:
+                        outcomes[str(cap)][condition][str(exc)] += 1
                     continue
                 monitor.assert_safe()
-                if measured + OUTPUT_TOKENS + CONTEXT_MARGIN >= CONTEXT_LIMIT:
-                    outcomes[condition]["context_headroom_preflight_failed"] += 1
-                    continue
-
-                # Two client requests with Harbor-shaped assistant/tool roles.
-                # Synthetic results are fixture text; no executor is available.
-                for turn in range(2):
-                    attempted += 1
-                    started = time.monotonic()
-                    try:
-                        response = await guarded_complete(model, messages, seed + turn, monitor)
-                    except Exception as exc:
-                        if isinstance(exc, SafeDiagnosticError):
-                            outcomes[condition][str(exc)] += 1
-                            break
-                        outcomes[condition][f"client_error:{type(exc).__name__}"] += 1
-                        break
-                    latencies[condition].append(time.monotonic() - started)
-                    input_tokens[condition].append(response.input_tokens)
-                    output_tokens[condition].append(response.output_tokens)
-                    category = check_tool_call(response)
-                    outcomes[condition][category] += 1
-                    if category == "valid_schema_B":
-                        break
-                    if category != "valid_schema_A":
-                        break
-
-                    call = response.tool_calls[0]
-                    messages.append(HarborStrategyAgent._response_message(response))
-                    messages.append(
-                        {
-                            "role": "tool",
-                            "tool_call_id": call.id,
-                            "content": "exit=0\nSynthetic tool result; no command was executed.",
-                        }
+                for cap in OUTPUT_CAPS:
+                    cap_key = str(cap)
+                    if measured + cap + CONTEXT_MARGIN >= CONTEXT_LIMIT:
+                        outcomes[cap_key][condition]["context_headroom_preflight_failed"] += 1
+                        continue
+                    model = AsyncOpenAICompatibleModel(
+                        base_url=base + "/v1",
+                        model=MODEL,
+                        timeout_s=120,
+                        temperature=0.6,
+                        top_p=0.95,
+                        top_k=20,
+                        seed=seed,
+                        max_tokens=cap,
                     )
-                    try:
-                        current_tokens = prompt_tokens(base, model, messages, seed + turn + 1)
-                    except SafeDiagnosticError as exc:
-                        outcomes[condition][str(exc)] += 1
-                        break
-                    monitor.assert_safe()
-                    if current_tokens + OUTPUT_TOKENS + CONTEXT_MARGIN >= CONTEXT_LIMIT:
-                        outcomes[condition]["context_headroom_stop"] += 1
-                        break
+                    arm_messages = copy.deepcopy(messages)
+                    # Matched cap arms share the exact synthetic prompt and seed.
+                    for turn in range(2):
+                        attempted += 1
+                        started = time.monotonic()
+                        try:
+                            response = await guarded_complete(
+                                model, arm_messages, monitor, cap
+                            )
+                        except Exception as exc:
+                            if isinstance(exc, SafeDiagnosticError):
+                                outcomes[cap_key][condition][str(exc)] += 1
+                                break
+                            outcomes[cap_key][condition][f"client_error:{type(exc).__name__}"] += 1
+                            break
+                        latencies[cap_key][condition].append(time.monotonic() - started)
+                        input_tokens[cap_key][condition].append(response.input_tokens)
+                        output_tokens[cap_key][condition].append(response.output_tokens)
+                        if response.output_tokens >= cap:
+                            cap_reached[cap_key][condition] += 1
+                        category = check_tool_call(response)
+                        outcomes[cap_key][condition][category] += 1
+                        if category == "valid_schema_B":
+                            break
+                        if category != "valid_schema_A":
+                            break
+
+                        call = response.tool_calls[0]
+                        arm_messages.append(HarborStrategyAgent._response_message(response))
+                        arm_messages.append(
+                            {
+                                "role": "tool",
+                                "tool_call_id": call.id,
+                                "content": "exit=0\nSynthetic tool result; no command was executed.",
+                            }
+                        )
+                        try:
+                            current_tokens = prompt_tokens(
+                                base, model, arm_messages, seed + turn + 1, cap
+                            )
+                        except SafeDiagnosticError as exc:
+                            outcomes[cap_key][condition][str(exc)] += 1
+                            break
+                        monitor.assert_safe()
+                        if current_tokens + cap + CONTEXT_MARGIN >= CONTEXT_LIMIT:
+                            outcomes[cap_key][condition]["context_headroom_stop"] += 1
+                            break
 
     finally:
         monitor.stop()
 
     result = {
-        "experiment": "synthetic_tool_schema_history_diagnostic",
-        "date": "2026-11-20",
+        "experiment": "paired_synthetic_tool_schema_history_cap_sensitivity",
+        "date": "2026-11-23",
         "task_oracle_reference_solution_used": False,
         "tool_executor_instantiated": False,
         "raw_prompt_completion_or_arguments_written": False,
@@ -360,20 +399,36 @@ async def run(
         "history_targets": dict(TARGETS),
         "repetitions_per_target": REPETITIONS,
         "max_calls_per_conversation": 2,
+        "output_token_caps": list(OUTPUT_CAPS),
+        "seed_root": SEED_ROOT,
         "attempted_model_calls": attempted,
-        "outcomes": {key: dict(value) for key, value in outcomes.items()},
+        "outcomes": {
+            cap: {key: dict(value) for key, value in conditions.items()}
+            for cap, conditions in outcomes.items()
+        },
+        "output_token_count_at_or_over_cap": cap_reached,
         "mean_latency_seconds": {
-            key: round(statistics.mean(value), 4) if value else None
-            for key, value in latencies.items()
+            cap: {
+                key: round(statistics.mean(value), 4) if value else None
+                for key, value in conditions.items()
+            }
+            for cap, conditions in latencies.items()
         },
         "mean_input_tokens": {
-            key: round(statistics.mean(value), 1) if value else None
-            for key, value in input_tokens.items()
+            cap: {
+                key: round(statistics.mean(value), 1) if value else None
+                for key, value in conditions.items()
+            }
+            for cap, conditions in input_tokens.items()
         },
         "mean_output_tokens": {
-            key: round(statistics.mean(value), 1) if value else None
-            for key, value in output_tokens.items()
+            cap: {
+                key: round(statistics.mean(value), 1) if value else None
+                for key, value in conditions.items()
+            }
+            for cap, conditions in output_tokens.items()
         },
+        "finish_reason_captured": False,
         "gpu_monitor": {
             "gpu_uuid": monitor.gpu_uuid,
             "peak_used_mib": monitor.peak_used_mib,
@@ -385,7 +440,12 @@ async def run(
     }
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    print(json.dumps({"attempted_model_calls": attempted, "outcomes": result["outcomes"]}, sort_keys=True))
+    print(
+        json.dumps(
+            {"attempted_model_calls": attempted, "outcomes": result["outcomes"]},
+            sort_keys=True,
+        )
+    )
 
 
 def main() -> None:
