@@ -9,7 +9,7 @@
 #SBATCH --gpus=rtxp6000:1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=64G
-#SBATCH --time=00:30:00
+#SBATCH --time=00:15:00
 
 set -eo pipefail
 source /etc/profile
