@@ -84,6 +84,19 @@ The 192-token arm had 24 first-turn requests and no conditional second turns. Th
 
 The aggregate artifact is [`aider_tool_schema_history_cap_sensitivity_2026-11-24.json`](artifacts/aider_tool_schema_history_cap_sensitivity_2026-11-24.json). It records runner commit, seeds, hashes, per-arm outcomes, and GPU metrics; it contains no prompts, completions, or argument values.
 
-## Turn-separated cap follow-up (planned 2026-11-24)
+## Turn-separated cap follow-up (2026-11-24)
 
-The first paired run did not preserve turn-specific counters, so its arm-level counts cannot isolate the first-call cap effect. Repeat the same paired 192/512-token design with fresh seed root `20261125`, and add outcomes, attempted-call denominators, output-token counts, and cap-reach counts separately for the first request and conditional second request. Record preflight stops separately from model calls and include a matched-pair first-turn cross-tab (valid tool call / no valid tool call / not observed for each arm). Keep eight repetitions per history length, same prompt within each pair, same model/server/sampler, and existing context/headroom guards. The primary comparison is first-request structured-tool validity by cap with its paired cross-tab; report conditional second requests separately with actual call denominators. Do not save raw text or arguments. This remains synthetic and task-free; it does not authorize a TB2/TB-Pro episode or rerunning the failed Aider sample. Artifact pending completion of the follow-up job.
+Slurm job `4889039` ran on Rohan's L40S and completed `COMPLETED 0:0` in 2 minutes 50 seconds. It ran the committed source at `cf5eec5d4d92c7c13691153627454136b7dad8a6`, using `gpt-oss-20b-MXFP4.gguf` and the same pinned server image hash as the prior diagnostic. It sent 48 first-turn model requests (24 paired prompts × two caps), seven conditional second-turn requests, and recorded one context-headroom stop before a second request. No task, task text, oracle, reference solution, or command executor was used. The artifact contains no prompts, completions, or tool arguments. GPU monitoring sampled 178 times, with peak use of 11,781 MiB and minimum free memory of 34,287 MiB. The Slurm CPU and memory cgroup limit files were empty, so hard enforcement of those limits remains unverified.
+
+| History target | Cap | First-turn calls | First-turn valid terminal calls | First-turn no-tool responses | Invalid JSON | Conditional second calls |
+|---:|---:|---:|---:|---:|---:|---:|
+| 1,024 | 192 | 8 | 0 | 8 | 0 | 0 |
+| 1,024 | 512 | 8 | 3 | 4 | 1 | 3 |
+| 4,096 | 192 | 8 | 1 | 7 | 0 | 1 |
+| 4,096 | 512 | 8 | 3 | 5 | 0 | 3 |
+| 6,400 | 192 | 8 | 0 | 8 | 0 | 0 |
+| 6,400 | 512 | 8 | 1 | 7 | 0 | 0 |
+
+Across the 24 matched first-turn prompts, cap 192 produced one schema-valid `terminal` call and cap 512 produced seven. The paired cross-tab had six prompts valid only at 512, none valid only at 192, one valid in both arms, and 17 valid in neither. One 512-cap first turn returned invalid JSON. This is a small, synthetic, descriptive signal that the larger output cap may help the first-turn tool contract for these prompts; it is not an estimate of benchmark success or a general model capability. No first turn produced a valid `submit` call. Conditional second-turn requests are reported separately: one at cap 192 and six at cap 512; all seven returned schema-valid `terminal` calls. The long-history 512 arm stopped before a second request once because of the context headroom guard. These conditional results do not change the paired first-turn denominator.
+
+The run still does not justify an Aider/Harbor episode: 17/24 paired prompts had no valid first-turn call under either cap, no `submit` call was observed, and the test never executes a tool. It does not authorize TB2/TB-Pro work. Full per-turn counters and hashes are in [`aider_tool_schema_history_turn_separated_2026-11-24.json`](artifacts/aider_tool_schema_history_turn_separated_2026-11-24.json).
