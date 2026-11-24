@@ -2,7 +2,7 @@
 
 ## Status
 
-The task-free diagnostic ran once on Rohan RTX Pro 6000 (Slurm job `4870222`, `COMPLETED 0:0`). This is an engineering diagnostic, not a benchmark result or a full Harbor agent replay.
+The task-free diagnostic ran first on Rohan's RTX Pro 6000 (job `4870222`) and then as a paired cap sensitivity check on an L40S (job `4882620`). Both completed at Slurm level. These are engineering diagnostics, not benchmark results or full Harbor agent replays.
 
 ## Why this is the next step
 
@@ -29,7 +29,7 @@ The predeclared conditions are 1,024, 4,096, and 6,400 measured input tokens; ei
 
 ## Interpretation and decision rule
 
-This diagnostic can establish only whether the model/client interface handles the tested synthetic protocol. It cannot establish coding ability, Aider benchmark performance, Harbor task success, egress isolation, or the root cause of every earlier failure. If failures reproduce, inspect only sanitized error categories and minimal source-level protocol evidence; do not rerun the four frozen Aider tasks. If all conditions pass, freeze a fresh, unattempted Aider task sample and preregister a one-task lifecycle check before any new benchmark episode.
+These diagnostics can establish only whether the model/client interface handles the tested synthetic protocol. They cannot establish coding ability, Aider benchmark performance, Harbor task success, egress isolation, or the root cause of every earlier failure. The paired run still produced many no-tool responses and no valid submit call, so the task-level pilot remains premature. Do not rerun the four frozen Aider tasks. Before any new benchmark episode, resolve the remaining synthetic protocol failures, then freeze and preregister a fresh, unattempted Aider sample and one-task lifecycle check.
 
 ## Results (2026-11-20)
 
@@ -65,4 +65,25 @@ The first run's medium and long mean output lengths equaled the 192-token cap, b
 
 The maximum is 96 model calls (3 history lengths × 8 repetitions × 2 caps × 2 turns). The initial prompt target is checked against each arm's output cap plus the 1,024-token margin. At the long target, the first call fits under the 8,192-token context; if a second-turn history no longer fits, the runner records a context-headroom stop and does not send it. The artifact also counts responses whose reported output tokens reach the configured cap; this is only a saturation proxy because the client does not capture `finish_reason`. No benchmark task or task text is involved. This is a separate engineering follow-up, not a rerun of the Aider task pilot.
 
-Planned artifact: `artifacts/aider_tool_schema_history_cap_sensitivity_2026-11-23.json` (to be added after the job completes).
+## Paired cap sensitivity results (2026-11-24)
+
+Slurm job `4882620` ran on an Rohan L40S and completed `COMPLETED 0:0` in 2 minutes 56 seconds. It used the pinned model and server hashes and sent no benchmark task or task text. The 192- and 512-token arms used the same synthetic prompts and paired request seeds, with eight repetitions at each history length. The L40S monitor recorded 188 samples, peak use of 11,771 MiB, and minimum free memory of 34,297 MiB. The 1 GiB headroom stop was not approached. Slurm's CPU and RAM cgroup limit files were empty, so hard enforcement of those limits remains unverified.
+
+| History target | Output cap | Model calls | Terminal-schema responses (any turn) | No-tool responses (any turn) | Mean output tokens |
+|---:|---:|---:|---:|---:|---:|
+| 1,024 | 192 | 8 | 0 | 8 | 192 |
+| 1,024 | 512 | 11 | 6 | 5 | 401.5 |
+| 4,096 | 192 | 8 | 0 | 8 | 192 |
+| 4,096 | 512 | 9 | 2 | 7 | 434.4 |
+| 6,400 | 192 | 8 | 0 | 8 | 192 |
+| 6,400 | 512 | 8 | 2 | 6 | 498.1 |
+
+The long 512-token arm also recorded two context-headroom stops before a second request; these were not model calls. Across the 512-token arm, 10 of 28 model calls returned schema-valid terminal calls, while 18 returned no tool call. Neither arm produced a valid `submit` call or an invalid-JSON outcome. All 24 calls in the 192-token arm used all 192 output tokens; the 512-token arm also frequently reached its cap. The client does not record `finish_reason`, so output counts at the cap do not prove truncation.
+
+The 192-token arm had 24 first-turn requests and no conditional second turns. The 512-token arm had 24 first-turn requests plus four conditional second-turn requests. Because outcomes were aggregated across turns, the result does **not** isolate the cap's first-turn effect: it reports 10 terminal-schema responses among 28 calls at cap 512 versus none among 24 calls at cap 192, but four of the 512 calls were extra opportunities after a valid terminal response. This is descriptive evidence only, not a clean paired cap-effect estimate. It does not explain the earlier malformed-JSON responses, and the no-tool and submit failures mean it does not clear a benchmark task run. The GPU differed from the first diagnostic (L40S here, RTX Pro 6000 previously); this is not a speed comparison across hardware.
+
+The aggregate artifact is [`aider_tool_schema_history_cap_sensitivity_2026-11-24.json`](artifacts/aider_tool_schema_history_cap_sensitivity_2026-11-24.json). It records runner commit, seeds, hashes, per-arm outcomes, and GPU metrics; it contains no prompts, completions, or argument values.
+
+## Turn-separated cap follow-up (planned 2026-11-24)
+
+The first paired run did not preserve turn-specific counters, so its arm-level counts cannot isolate the first-call cap effect. Repeat the same paired 192/512-token design with fresh seed root `20261125`, and add outcomes, attempted-call denominators, output-token counts, and cap-reach counts separately for the first request and conditional second request. Record preflight stops separately from model calls and include a matched-pair first-turn cross-tab (valid tool call / no valid tool call / not observed for each arm). Keep eight repetitions per history length, same prompt within each pair, same model/server/sampler, and existing context/headroom guards. The primary comparison is first-request structured-tool validity by cap with its paired cross-tab; report conditional second requests separately with actual call denominators. Do not save raw text or arguments. This remains synthetic and task-free; it does not authorize a TB2/TB-Pro episode or rerunning the failed Aider sample. Artifact pending completion of the follow-up job.

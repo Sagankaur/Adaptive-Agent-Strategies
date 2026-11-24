@@ -16,6 +16,8 @@ import time
 import urllib.error
 import urllib.request
 from collections import Counter
+from collections.abc import Callable
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -26,7 +28,8 @@ from strategy_schema.defaults import s0
 MODEL = "gpt-oss-20b-MXFP4.gguf"
 OUTPUT_CAPS = (192, 512)
 PREFLIGHT_OUTPUT_TOKENS = max(OUTPUT_CAPS)
-SEED_ROOT = 20261123
+SEED_ROOT = 20261125
+TURN_NAMES = ("first", "second")
 REPETITIONS = 8
 CONTEXT_LIMIT = 8192
 CONTEXT_MARGIN = 1024
@@ -142,8 +145,10 @@ async def guarded_complete(
     messages: list[dict[str, Any]],
     monitor: MemoryMonitor,
     output_tokens: int,
+    on_request_start: Callable[[], None],
 ) -> Any:
     monitor.assert_safe()
+    on_request_start()
     request = asyncio.create_task(
         model.complete(messages, tools=_TOOLS, max_output_tokens=output_tokens)
     )
@@ -284,7 +289,42 @@ async def run(
     cap_reached = {
         str(cap): {name: 0 for name, _ in TARGETS} for cap in OUTPUT_CAPS
     }
-    attempted = 0
+    outcomes_by_turn = {
+        str(cap): {
+            turn: {name: Counter() for name, _ in TARGETS} for turn in TURN_NAMES
+        }
+        for cap in OUTPUT_CAPS
+    }
+    output_tokens_by_turn = {
+        str(cap): {turn: {name: [] for name, _ in TARGETS} for turn in TURN_NAMES}
+        for cap in OUTPUT_CAPS
+    }
+    cap_reached_by_turn = {
+        str(cap): {turn: {name: 0 for name, _ in TARGETS} for turn in TURN_NAMES}
+        for cap in OUTPUT_CAPS
+    }
+    model_calls_by_turn = {
+        str(cap): {turn: {name: 0 for name, _ in TARGETS} for turn in TURN_NAMES}
+        for cap in OUTPUT_CAPS
+    }
+    preflight_events_by_turn = {
+        str(cap): {
+            turn: {name: Counter() for name, _ in TARGETS} for turn in TURN_NAMES
+        }
+        for cap in OUTPUT_CAPS
+    }
+    paired_first_turn = {name: Counter() for name, _ in TARGETS}
+    attempted = [0]
+
+    def request_start_callback(
+        cap_key: str, turn_name: str, condition: str
+    ) -> Callable[[], None]:
+        def mark_request_started() -> None:
+            attempted[0] += 1
+            model_calls_by_turn[cap_key][turn_name][condition] += 1
+
+        return mark_request_started
+
     monitor = MemoryMonitor(server_pid)
     monitor.start()
 
@@ -293,6 +333,7 @@ async def run(
             for repetition in range(REPETITIONS):
                 monitor.assert_safe()
                 seed = SEED_ROOT + condition_index * 1000 + repetition * 10
+                first_turn_status = {str(cap): "not_observed" for cap in OUTPUT_CAPS}
                 preflight_model = AsyncOpenAICompatibleModel(
                     base_url=base + "/v1",
                     model=MODEL,
@@ -314,12 +355,17 @@ async def run(
                 except SafeDiagnosticError as exc:
                     for cap in OUTPUT_CAPS:
                         outcomes[str(cap)][condition][str(exc)] += 1
+                        preflight_events_by_turn[str(cap)]["first"][condition][str(exc)] += 1
+                    paired_first_turn[condition]["not_observed__not_observed"] += 1
                     continue
                 monitor.assert_safe()
                 for cap in OUTPUT_CAPS:
                     cap_key = str(cap)
                     if measured + cap + CONTEXT_MARGIN >= CONTEXT_LIMIT:
                         outcomes[cap_key][condition]["context_headroom_preflight_failed"] += 1
+                        preflight_events_by_turn[cap_key]["first"][condition][
+                            "context_headroom_preflight_failed"
+                        ] += 1
                         continue
                     model = AsyncOpenAICompatibleModel(
                         base_url=base + "/v1",
@@ -334,25 +380,49 @@ async def run(
                     arm_messages = copy.deepcopy(messages)
                     # Matched cap arms share the exact synthetic prompt and seed.
                     for turn in range(2):
-                        attempted += 1
+                        turn_name = TURN_NAMES[turn]
                         started = time.monotonic()
+
                         try:
                             response = await guarded_complete(
-                                model, arm_messages, monitor, cap
+                                model,
+                                arm_messages,
+                                monitor,
+                                cap,
+                                request_start_callback(cap_key, turn_name, condition),
                             )
                         except Exception as exc:
                             if isinstance(exc, SafeDiagnosticError):
                                 outcomes[cap_key][condition][str(exc)] += 1
+                                outcomes_by_turn[cap_key][turn_name][condition][str(exc)] += 1
+                                if turn == 0:
+                                    first_turn_status[cap_key] = "not_observed"
                                 break
                             outcomes[cap_key][condition][f"client_error:{type(exc).__name__}"] += 1
+                            outcomes_by_turn[cap_key][turn_name][condition][
+                                f"client_error:{type(exc).__name__}"
+                            ] += 1
+                            if turn == 0:
+                                first_turn_status[cap_key] = "not_observed"
                             break
                         latencies[cap_key][condition].append(time.monotonic() - started)
                         input_tokens[cap_key][condition].append(response.input_tokens)
                         output_tokens[cap_key][condition].append(response.output_tokens)
                         if response.output_tokens >= cap:
                             cap_reached[cap_key][condition] += 1
+                            cap_reached_by_turn[cap_key][turn_name][condition] += 1
+                        output_tokens_by_turn[cap_key][turn_name][condition].append(
+                            response.output_tokens
+                        )
                         category = check_tool_call(response)
                         outcomes[cap_key][condition][category] += 1
+                        outcomes_by_turn[cap_key][turn_name][condition][category] += 1
+                        if turn == 0:
+                            first_turn_status[cap_key] = (
+                                "valid_tool_call"
+                                if category in {"valid_schema_A", "valid_schema_B"}
+                                else "no_valid_tool_call"
+                            )
                         if category == "valid_schema_B":
                             break
                         if category != "valid_schema_A":
@@ -373,18 +443,26 @@ async def run(
                             )
                         except SafeDiagnosticError as exc:
                             outcomes[cap_key][condition][str(exc)] += 1
+                            preflight_events_by_turn[cap_key]["second"][condition][
+                                str(exc)
+                            ] += 1
                             break
                         monitor.assert_safe()
                         if current_tokens + cap + CONTEXT_MARGIN >= CONTEXT_LIMIT:
                             outcomes[cap_key][condition]["context_headroom_stop"] += 1
+                            preflight_events_by_turn[cap_key]["second"][condition][
+                                "context_headroom_stop"
+                            ] += 1
                             break
+                pair_key = f"{first_turn_status['192']}__{first_turn_status['512']}"
+                paired_first_turn[condition][pair_key] += 1
 
     finally:
         monitor.stop()
 
     result = {
-        "experiment": "paired_synthetic_tool_schema_history_cap_sensitivity",
-        "date": "2026-11-23",
+        "experiment": "paired_synthetic_tool_schema_history_cap_sensitivity_turn_separated",
+        "date": datetime.now(UTC).date().isoformat(),
         "task_oracle_reference_solution_used": False,
         "tool_executor_instantiated": False,
         "raw_prompt_completion_or_arguments_written": False,
@@ -401,12 +479,41 @@ async def run(
         "max_calls_per_conversation": 2,
         "output_token_caps": list(OUTPUT_CAPS),
         "seed_root": SEED_ROOT,
-        "attempted_model_calls": attempted,
+        "attempted_model_calls": attempted[0],
         "outcomes": {
             cap: {key: dict(value) for key, value in conditions.items()}
             for cap, conditions in outcomes.items()
         },
+        "outcomes_by_turn": {
+            cap: {
+                turn: {key: dict(value) for key, value in conditions.items()}
+                for turn, conditions in turns.items()
+            }
+            for cap, turns in outcomes_by_turn.items()
+        },
+        "model_calls_by_turn": model_calls_by_turn,
+        "preflight_events_by_turn": {
+            cap: {
+                turn: {key: dict(value) for key, value in conditions.items()}
+                for turn, conditions in turns.items()
+            }
+            for cap, turns in preflight_events_by_turn.items()
+        },
+        "paired_first_turn_cross_tab": {
+            condition: dict(counter) for condition, counter in paired_first_turn.items()
+        },
         "output_token_count_at_or_over_cap": cap_reached,
+        "output_token_count_at_or_over_cap_by_turn": cap_reached_by_turn,
+        "mean_output_tokens_by_turn": {
+            cap: {
+                turn: {
+                    key: round(statistics.mean(value), 1) if value else None
+                    for key, value in conditions.items()
+                }
+                for turn, conditions in turns.items()
+            }
+            for cap, turns in output_tokens_by_turn.items()
+        },
         "mean_latency_seconds": {
             cap: {
                 key: round(statistics.mean(value), 4) if value else None
