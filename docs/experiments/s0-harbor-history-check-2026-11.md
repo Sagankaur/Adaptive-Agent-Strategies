@@ -26,4 +26,6 @@ Do not interpret submit frequency as task success. S0's visible-test check is sk
 
 ## Execution record
 
-Pending cluster run. Runner: `docs/cluster/aider-pilot/04_harbor_s0_history_check.py`; job: `docs/cluster/aider-pilot/04_harbor_s0_history_check.sbatch`.
+Attempt 1, Slurm job `4890453`, failed before starting a conversation (`FAILED`, `ExitCode=2:0`, 58 seconds). It made zero model requests and zero mock terminal calls; the lowest free VRAM sample was 85,992 MiB. The cause was Harbor 0.23.0's read-only `extra_env` property: the runner assigned it after construction. The runner now passes `extra_env` through the supported constructor argument. This was a runner setup failure, not an experimental outcome.
+
+Corrected runner: `docs/cluster/aider-pilot/04_harbor_s0_history_check.py`; batch job: `docs/cluster/aider-pilot/04_harbor_s0_history_check.sbatch`. A retry is pending after the correction is pushed.

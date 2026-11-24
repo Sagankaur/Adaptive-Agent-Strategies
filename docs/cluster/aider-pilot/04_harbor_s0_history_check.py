@@ -118,8 +118,7 @@ async def run_conversation(
     )
     log_dir = Path(".") / f"agent-logs-{condition}-{repetition + 1:02d}"
     log_dir.mkdir(parents=True, exist_ok=False)
-    agent = HarborStrategyAgent(logs_dir=log_dir, model_name=MODEL)
-    agent.extra_env = {
+    agent_env = {
         "AAS_STRATEGY_PATH": str(strategy_path),
         "AAS_MODEL_BASE_URL": base + "/v1",
         "AAS_MODEL": MODEL,
@@ -130,6 +129,7 @@ async def run_conversation(
         # Explicitly empty: S0's optional visible-test hook cannot run a command.
         "AAS_CHECK_RUN_VISIBLE_TESTS": "",
     }
+    agent = HarborStrategyAgent(logs_dir=log_dir, model_name=MODEL, extra_env=agent_env)
     context = SimpleNamespace(
         n_input_tokens=0,
         n_cache_tokens=0,
