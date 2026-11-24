@@ -6,7 +6,7 @@
 #SBATCH --error=/scratch/%u/aider-protocol-diagnostic/slurm-%j.err
 #SBATCH --partition=gpu
 #SBATCH --qos=short
-#SBATCH --gpus=rtxp6000:1
+#SBATCH --gpus=l40s:1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=64G
 #SBATCH --time=01:00:00
