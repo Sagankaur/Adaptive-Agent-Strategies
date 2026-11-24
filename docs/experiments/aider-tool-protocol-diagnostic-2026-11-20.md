@@ -101,7 +101,7 @@ Across the 24 matched first-turn prompts, cap 192 produced one schema-valid `ter
 
 The run still does not justify an Aider/Harbor episode: 17/24 paired prompts had no valid first-turn call under either cap, no `submit` call was observed, and the test never executes a tool. It does not authorize TB2/TB-Pro work. Full per-turn counters and hashes are in [`aider_tool_schema_history_turn_separated_2026-11-24.json`](artifacts/aider_tool_schema_history_turn_separated_2026-11-24.json).
 
-## Planned cap and sequence follow-up (2026-11-24)
+## Pre-registered cap and sequence follow-up (2026-11-24)
 
 **Question.** Does increasing the synthetic request cap from 512 to 1,024 tokens improve completion of the two-call tool protocol: one schema-valid `terminal` call followed by one schema-valid `submit` call?
 
@@ -110,3 +110,22 @@ The run still does not justify an Aider/Harbor episode: 17/24 paired prompts had
 **Primary measure.** Count exact `terminal`-then-`submit` sequences per cap and the paired outcome table. Also report first-turn tool validity, second-turn outcomes and denominators, preflight/context stops separately from model calls, output-token cap-hit counts, latency, and GPU headroom. Do not calculate significance tests at this sample size or infer task success. Do not store raw prompts, completions, or arguments.
 
 **Stop and interpretation rules.** Stop on any source/model/image hash mismatch, inability to classify requests without recording content, server failure, output leakage, OOM, or less than 1 GiB free GPU memory. A context-margin stop is recorded as a preflight event, never as a model call. Even if the synthetic sequence completes, it is not permission to run a benchmark task; task execution still requires verified egress isolation. If neither cap produces the full sequence, keep the agent pilot paused and investigate prompt/protocol handling offline.
+
+### Results (2026-11-24)
+
+Slurm job `4889660` completed `COMPLETED 0:0` on an Rohan L40S in 3 minutes 49 seconds. It used source commit `08e5a488cd21f320e286b213d74175476c594e72`, runner SHA-256 `a74f7bb755f4b916c62a7fc9860c9e42794bf21d194a1dde3a2e2e34ab2fbedc`, and the pinned model and server hashes. It sent 24 first-turn requests per cap and 31 conditional second-turn requests total. No task, task text, oracle, reference solution, or tool executor was used. The sanitized artifact contains no prompts, completions, or argument values.
+
+| History target | Cap | First-turn valid `terminal` | Second-turn calls | Complete `terminal` → `submit` sequences |
+|---:|---:|---:|---:|---:|
+| 1,024 | 512 | 4/8 | 4/8 | 1/8 |
+| 1,024 | 1,024 | 8/8 | 8/8 | 1/8 |
+| 4,096 | 512 | 3/8 | 3/8 | 0/8 |
+| 4,096 | 1,024 | 8/8 | 8/8 | 0/8 |
+| 5,500 | 512 | 3/8 | 3/8 | 0/8 |
+| 5,500 | 1,024 | 7/8 | 5/8 | 0/8 |
+
+Across all 24 matched prompts, the 1,024-token cap produced 23 valid first-turn `terminal` calls, compared with 10 at 512. However, **both caps completed the full terminal-then-submit sequence only once out of 24**, on the same short-history pair. In the other observed second turns, the model returned `terminal` again rather than `submit`. For two of the seven long-history 1,024-cap terminal calls, the context guard prevented a second request. Thus, more output room improved first-turn schema adherence in this synthetic sample, but did not improve full-sequence completion. It does not establish benchmark success. The client does not capture `finish_reason`, so token counts at the cap remain a saturation proxy and do not prove truncation.
+
+The generated artifact recorded three long-history 1,024-cap context stops. Review of the per-turn request counts shows that only two blocked an eligible second call; the runner also performed one unnecessary context check after a second and final allowed response. That post-final check could not block an allowed request and did not affect inference, tool outcomes, or sequence counts. The artifact preserves the original counters and adds this correction explicitly. A subsequent runner commit skips context preflight after its final allowed call; job `4889660` used the earlier runner commit listed above.
+
+GPU monitoring sampled 291 times, with peak use of 11,781 MiB and minimum free memory of 34,287 MiB. Slurm's CPU and memory cgroup limit files were empty, so hard enforcement of those limits remains unverified. Full aggregate results are in [`aider_tool_protocol_sequence_cap_512_vs_1024_2026-11-24.json`](artifacts/aider_tool_protocol_sequence_cap_512_vs_1024_2026-11-24.json).

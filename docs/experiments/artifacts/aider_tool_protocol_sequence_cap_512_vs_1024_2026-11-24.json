@@ -1,0 +1,354 @@
+{
+  "attempted_model_calls": 79,
+  "analysis_corrections": {
+    "context_headroom_stop": {
+      "1024": {
+        "long": {
+          "blocks_before_second_model_call": 2,
+          "nonblocking_check_after_final_allowed_call": 1,
+          "raw_runner_count": 3,
+          "reason": "The runner performed a context preflight after the second and final allowed response, although no third model call could occur. This does not change model-call or sequence outcomes."
+        }
+      }
+    }
+  },
+  "client": "llm.async_openai_compatible.AsyncOpenAICompatibleModel",
+  "date": "2026-11-24",
+  "experiment": "paired_synthetic_tool_schema_sequence_cap_sensitivity",
+  "finish_reason_captured": false,
+  "gpu_monitor": {
+    "gpu_uuid": "GPU-c6526932-48bb-0e35-1993-fd7547d80d8d",
+    "headroom_mib": 1024,
+    "minimum_free_mib": 34287,
+    "peak_used_mib": 11781,
+    "samples": 291,
+    "stop_reason": null
+  },
+  "history_targets": {
+    "long": 5500,
+    "medium": 4096,
+    "short": 1024
+  },
+  "max_calls_per_conversation": 2,
+  "mean_input_tokens": {
+    "1024": {
+      "long": 5689.2,
+      "medium": 4467.4,
+      "short": 1261.5
+    },
+    "512": {
+      "long": 5633.9,
+      "medium": 4234.5,
+      "short": 1104
+    }
+  },
+  "mean_latency_seconds": {
+    "1024": {
+      "long": 2.1261,
+      "medium": 1.8716,
+      "short": 1.7402
+    },
+    "512": {
+      "long": 1.9848,
+      "medium": 1.8301,
+      "short": 1.7529
+    }
+  },
+  "mean_output_tokens": {
+    "1024": {
+      "long": 375.5,
+      "medium": 325.1,
+      "short": 317.4
+    },
+    "512": {
+      "long": 351.5,
+      "medium": 325.8,
+      "short": 319.8
+    }
+  },
+  "mean_output_tokens_by_turn": {
+    "1024": {
+      "first": {
+        "long": 592.1,
+        "medium": 623.8,
+        "short": 570
+      },
+      "second": {
+        "long": 28.8,
+        "medium": 26.4,
+        "short": 64.9
+      }
+    },
+    "512": {
+      "first": {
+        "long": 470.6,
+        "medium": 437.1,
+        "short": 454
+      },
+      "second": {
+        "long": 33.7,
+        "medium": 29,
+        "short": 51.5
+      }
+    }
+  },
+  "model": "gpt-oss-20b-MXFP4.gguf",
+  "model_calls_by_turn": {
+    "1024": {
+      "first": {
+        "long": 8,
+        "medium": 8,
+        "short": 8
+      },
+      "second": {
+        "long": 5,
+        "medium": 8,
+        "short": 8
+      }
+    },
+    "512": {
+      "first": {
+        "long": 8,
+        "medium": 8,
+        "short": 8
+      },
+      "second": {
+        "long": 3,
+        "medium": 3,
+        "short": 4
+      }
+    }
+  },
+  "model_sha256": "27cd6c432c7672cb812a92f611cf3ba7bbc35928262bb1e1253ff4ee6ae35901",
+  "outcomes": {
+    "1024": {
+      "long": {
+        "context_headroom_stop": 3,
+        "no_tool_call": 1,
+        "valid_schema_A": 12
+      },
+      "medium": {
+        "valid_schema_A": 16
+      },
+      "short": {
+        "valid_schema_A": 15,
+        "valid_schema_B": 1
+      }
+    },
+    "512": {
+      "long": {
+        "no_tool_call": 5,
+        "valid_schema_A": 6
+      },
+      "medium": {
+        "no_tool_call": 5,
+        "valid_schema_A": 6
+      },
+      "short": {
+        "no_tool_call": 4,
+        "valid_schema_A": 7,
+        "valid_schema_B": 1
+      }
+    }
+  },
+  "outcomes_by_turn": {
+    "1024": {
+      "first": {
+        "long": {
+          "no_tool_call": 1,
+          "valid_schema_A": 7
+        },
+        "medium": {
+          "valid_schema_A": 8
+        },
+        "short": {
+          "valid_schema_A": 8
+        }
+      },
+      "second": {
+        "long": {
+          "valid_schema_A": 5
+        },
+        "medium": {
+          "valid_schema_A": 8
+        },
+        "short": {
+          "valid_schema_A": 7,
+          "valid_schema_B": 1
+        }
+      }
+    },
+    "512": {
+      "first": {
+        "long": {
+          "no_tool_call": 5,
+          "valid_schema_A": 3
+        },
+        "medium": {
+          "no_tool_call": 5,
+          "valid_schema_A": 3
+        },
+        "short": {
+          "no_tool_call": 4,
+          "valid_schema_A": 4
+        }
+      },
+      "second": {
+        "long": {
+          "valid_schema_A": 3
+        },
+        "medium": {
+          "valid_schema_A": 3
+        },
+        "short": {
+          "valid_schema_A": 3,
+          "valid_schema_B": 1
+        }
+      }
+    }
+  },
+  "output_token_caps": [
+    512,
+    1024
+  ],
+  "output_token_count_at_or_over_cap": {
+    "1024": {
+      "long": 1,
+      "medium": 0,
+      "short": 0
+    },
+    "512": {
+      "long": 5,
+      "medium": 5,
+      "short": 4
+    }
+  },
+  "output_token_count_at_or_over_cap_by_turn": {
+    "1024": {
+      "first": {
+        "long": 1,
+        "medium": 0,
+        "short": 0
+      },
+      "second": {
+        "long": 0,
+        "medium": 0,
+        "short": 0
+      }
+    },
+    "512": {
+      "first": {
+        "long": 5,
+        "medium": 5,
+        "short": 4
+      },
+      "second": {
+        "long": 0,
+        "medium": 0,
+        "short": 0
+      }
+    }
+  },
+  "paired_first_turn_cross_tab": {
+    "long": {
+      "no_valid_tool_call__no_valid_tool_call": 1,
+      "no_valid_tool_call__valid_tool_call": 4,
+      "valid_tool_call__valid_tool_call": 3
+    },
+    "medium": {
+      "no_valid_tool_call__valid_tool_call": 5,
+      "valid_tool_call__valid_tool_call": 3
+    },
+    "short": {
+      "no_valid_tool_call__valid_tool_call": 4,
+      "valid_tool_call__valid_tool_call": 4
+    }
+  },
+  "paired_sequence_cross_tab": {
+    "long": {
+      "first_turn_without_valid_terminal__first_turn_without_valid_terminal": 1,
+      "first_turn_without_valid_terminal__terminal_then_no_submit": 2,
+      "first_turn_without_valid_terminal__terminal_then_second_not_observed": 2,
+      "terminal_then_no_submit__terminal_then_no_submit": 3
+    },
+    "medium": {
+      "first_turn_without_valid_terminal__terminal_then_no_submit": 5,
+      "terminal_then_no_submit__terminal_then_no_submit": 3
+    },
+    "short": {
+      "first_turn_without_valid_terminal__terminal_then_no_submit": 4,
+      "terminal_then_no_submit__terminal_then_no_submit": 3,
+      "terminal_then_submit__terminal_then_submit": 1
+    }
+  },
+  "preflight_events_by_turn": {
+    "1024": {
+      "first": {
+        "long": {},
+        "medium": {},
+        "short": {}
+      },
+      "second": {
+        "long": {
+          "context_headroom_stop": 3
+        },
+        "medium": {},
+        "short": {}
+      }
+    },
+    "512": {
+      "first": {
+        "long": {},
+        "medium": {},
+        "short": {}
+      },
+      "second": {
+        "long": {},
+        "medium": {},
+        "short": {}
+      }
+    }
+  },
+  "raw_prompt_completion_or_arguments_written": false,
+  "repetitions_per_target": 8,
+  "runner_sha256": "a74f7bb755f4b916c62a7fc9860c9e42794bf21d194a1dde3a2e2e34ab2fbedc",
+  "seed_root": 20261126,
+  "sequence_outcomes": {
+    "1024": {
+      "long": {
+        "first_turn_without_valid_terminal": 1,
+        "terminal_then_no_submit": 5,
+        "terminal_then_second_not_observed": 2
+      },
+      "medium": {
+        "terminal_then_no_submit": 8
+      },
+      "short": {
+        "terminal_then_no_submit": 7,
+        "terminal_then_submit": 1
+      }
+    },
+    "512": {
+      "long": {
+        "first_turn_without_valid_terminal": 5,
+        "terminal_then_no_submit": 3
+      },
+      "medium": {
+        "first_turn_without_valid_terminal": 5,
+        "terminal_then_no_submit": 3
+      },
+      "short": {
+        "first_turn_without_valid_terminal": 4,
+        "terminal_then_no_submit": 3,
+        "terminal_then_submit": 1
+      }
+    }
+  },
+  "server_sif_sha256": "dd8110164788b9deb354e06cb984214b2ef8b6b0598c2ef73dd0ab9828957d56",
+  "source_commit": "08e5a488cd21f320e286b213d74175476c594e72",
+  "strategy_id": "s0",
+  "strategy_sha256": "8059e7bb20fe5085ebab6c93ced464023f957d8424f305f689ec65204ca4a114",
+  "task_oracle_reference_solution_used": false,
+  "tool_executor_instantiated": false,
+  "tools_sha256": "e37a070c3dc16599fb3735c0fd1e67e3d0eef9e925692d0ad909603ce4d5c497"
+}

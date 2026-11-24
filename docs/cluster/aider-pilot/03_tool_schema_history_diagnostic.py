@@ -449,6 +449,8 @@ async def run(
                             break
                         if category != "valid_schema_A":
                             break
+                        if turn + 1 >= len(TURN_NAMES):
+                            break
 
                         call = response.tool_calls[0]
                         arm_messages.append(HarborStrategyAgent._response_message(response))
