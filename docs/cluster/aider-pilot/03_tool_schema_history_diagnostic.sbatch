@@ -60,10 +60,13 @@ PYTHON=/scratch/$USER/venvs/harbor-0.23.0/bin/python
 SOURCE_COMMIT=$(git -C "$SOURCE" rev-parse HEAD)
 EXPECTED_SOURCE_COMMIT=${AAS_EXPECTED_SOURCE_COMMIT:?set AAS_EXPECTED_SOURCE_COMMIT to the reviewed commit}
 [ "$SOURCE_COMMIT" = "$EXPECTED_SOURCE_COMMIT" ] || { echo "source_commit_mismatch"; exit 3; }
+SOURCE_STATUS=$(git -C "$SOURCE" status --porcelain=v1)
+[ -z "$SOURCE_STATUS" ] || { echo "source_tree_dirty"; exit 3; }
+RUNNER_HASH=$(sha256sum "$SOURCE/docs/cluster/aider-pilot/03_tool_schema_history_diagnostic.py" | awk '{print $1}')
 export PYTHONPATH="$SOURCE"
 export PYTHONDONTWRITEBYTECODE=1
 
-echo "job=$SLURM_JOB_ID host=$(hostname) source_commit=$SOURCE_COMMIT"
+echo "job=$SLURM_JOB_ID host=$(hostname) source_commit=$SOURCE_COMMIT runner_sha256=$RUNNER_HASH"
 echo "apptainer=$(apptainer --version)"
 echo "model_sha256=$MODEL_HASH server_sif_sha256=$SERVER_HASH"
 echo "cgroup_cpu_max=$(cat /sys/fs/cgroup/cpu.max 2>/dev/null || true)"

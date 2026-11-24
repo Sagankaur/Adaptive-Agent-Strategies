@@ -26,15 +26,15 @@ from llm.async_openai_compatible import AsyncOpenAICompatibleModel
 from strategy_schema.defaults import s0
 
 MODEL = "gpt-oss-20b-MXFP4.gguf"
-OUTPUT_CAPS = (192, 512)
+OUTPUT_CAPS = (512, 1024)
 PREFLIGHT_OUTPUT_TOKENS = max(OUTPUT_CAPS)
-SEED_ROOT = 20261125
+SEED_ROOT = 20261126
 TURN_NAMES = ("first", "second")
 REPETITIONS = 8
 CONTEXT_LIMIT = 8192
 CONTEXT_MARGIN = 1024
 VRAM_HEADROOM_MIB = 1024
-TARGETS = (("short", 1024), ("medium", 4096), ("long", 6400))
+TARGETS = (("short", 1024), ("medium", 4096), ("long", 5500))
 FILLER = "Synthetic inert history marker; no task or environment exists. "
 SYSTEM_SUFFIX = (
     "\n\nThis is a synthetic interface diagnostic, not a real task. Use the "
@@ -314,6 +314,10 @@ async def run(
         for cap in OUTPUT_CAPS
     }
     paired_first_turn = {name: Counter() for name, _ in TARGETS}
+    sequence_outcomes = {
+        str(cap): {name: Counter() for name, _ in TARGETS} for cap in OUTPUT_CAPS
+    }
+    paired_sequence_cross_tab = {name: Counter() for name, _ in TARGETS}
     attempted = [0]
 
     def request_start_callback(
@@ -334,6 +338,8 @@ async def run(
                 monitor.assert_safe()
                 seed = SEED_ROOT + condition_index * 1000 + repetition * 10
                 first_turn_status = {str(cap): "not_observed" for cap in OUTPUT_CAPS}
+                first_turn_category = {str(cap): None for cap in OUTPUT_CAPS}
+                second_turn_category = {str(cap): None for cap in OUTPUT_CAPS}
                 preflight_model = AsyncOpenAICompatibleModel(
                     base_url=base + "/v1",
                     model=MODEL,
@@ -354,12 +360,24 @@ async def run(
                     )
                 except SafeDiagnosticError as exc:
                     for cap in OUTPUT_CAPS:
-                        outcomes[str(cap)][condition][str(exc)] += 1
-                        preflight_events_by_turn[str(cap)]["first"][condition][str(exc)] += 1
+                        cap_key = str(cap)
+                        outcomes[cap_key][condition][str(exc)] += 1
+                        preflight_events_by_turn[cap_key]["first"][condition][str(exc)] += 1
+                        sequence_outcomes[cap_key][condition][
+                            "first_turn_not_observed"
+                        ] += 1
                     paired_first_turn[condition]["not_observed__not_observed"] += 1
+                    paired_sequence_cross_tab[condition][
+                        "first_turn_not_observed__first_turn_not_observed"
+                    ] += 1
                     continue
                 monitor.assert_safe()
-                for cap in OUTPUT_CAPS:
+                cap_order = (
+                    OUTPUT_CAPS
+                    if (condition_index + repetition) % 2 == 0
+                    else tuple(reversed(OUTPUT_CAPS))
+                )
+                for cap in cap_order:
                     cap_key = str(cap)
                     if measured + cap + CONTEXT_MARGIN >= CONTEXT_LIMIT:
                         outcomes[cap_key][condition]["context_headroom_preflight_failed"] += 1
@@ -415,6 +433,10 @@ async def run(
                             response.output_tokens
                         )
                         category = check_tool_call(response)
+                        if turn == 0:
+                            first_turn_category[cap_key] = category
+                        else:
+                            second_turn_category[cap_key] = category
                         outcomes[cap_key][condition][category] += 1
                         outcomes_by_turn[cap_key][turn_name][condition][category] += 1
                         if turn == 0:
@@ -454,14 +476,42 @@ async def run(
                                 "context_headroom_stop"
                             ] += 1
                             break
-                pair_key = f"{first_turn_status['192']}__{first_turn_status['512']}"
+                pair_key = (
+                    f"{first_turn_status[str(OUTPUT_CAPS[0])]}__"
+                    f"{first_turn_status[str(OUTPUT_CAPS[1])]}"
+                )
                 paired_first_turn[condition][pair_key] += 1
+                sequence_statuses = {}
+                for cap in OUTPUT_CAPS:
+                    cap_key = str(cap)
+                    first_category = first_turn_category[cap_key]
+                    second_category = second_turn_category[cap_key]
+                    if first_category == "valid_schema_A":
+                        if second_category == "valid_schema_B":
+                            sequence_status = "terminal_then_submit"
+                        elif second_category is None:
+                            sequence_status = "terminal_then_second_not_observed"
+                        else:
+                            sequence_status = "terminal_then_no_submit"
+                    elif first_category == "valid_schema_B":
+                        sequence_status = "submit_before_terminal"
+                    elif first_category is None:
+                        sequence_status = "first_turn_not_observed"
+                    else:
+                        sequence_status = "first_turn_without_valid_terminal"
+                    sequence_outcomes[cap_key][condition][sequence_status] += 1
+                    sequence_statuses[cap_key] = sequence_status
+                sequence_pair_key = (
+                    f"{sequence_statuses[str(OUTPUT_CAPS[0])]}__"
+                    f"{sequence_statuses[str(OUTPUT_CAPS[1])]}"
+                )
+                paired_sequence_cross_tab[condition][sequence_pair_key] += 1
 
     finally:
         monitor.stop()
 
     result = {
-        "experiment": "paired_synthetic_tool_schema_history_cap_sensitivity_turn_separated",
+        "experiment": "paired_synthetic_tool_schema_sequence_cap_sensitivity",
         "date": datetime.now(UTC).date().isoformat(),
         "task_oracle_reference_solution_used": False,
         "tool_executor_instantiated": False,
@@ -470,6 +520,7 @@ async def run(
         "model_sha256": model_hash,
         "server_sif_sha256": server_hash,
         "source_commit": source_commit,
+        "runner_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         "strategy_id": "s0",
         "strategy_sha256": hashlib.sha256(s0().to_json().encode()).hexdigest(),
         "tools_sha256": hashlib.sha256(json.dumps(_TOOLS, sort_keys=True).encode()).hexdigest(),
@@ -501,6 +552,14 @@ async def run(
         },
         "paired_first_turn_cross_tab": {
             condition: dict(counter) for condition, counter in paired_first_turn.items()
+        },
+        "sequence_outcomes": {
+            cap: {key: dict(value) for key, value in conditions.items()}
+            for cap, conditions in sequence_outcomes.items()
+        },
+        "paired_sequence_cross_tab": {
+            condition: dict(counter)
+            for condition, counter in paired_sequence_cross_tab.items()
         },
         "output_token_count_at_or_over_cap": cap_reached,
         "output_token_count_at_or_over_cap_by_turn": cap_reached_by_turn,
@@ -549,7 +608,7 @@ async def run(
     output.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(
         json.dumps(
-            {"attempted_model_calls": attempted, "outcomes": result["outcomes"]},
+            {"attempted_model_calls": attempted[0], "outcomes": result["outcomes"]},
             sort_keys=True,
         )
     )
