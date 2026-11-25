@@ -30,4 +30,6 @@ Attempt 1, Slurm job `4890453`, failed before starting a conversation (`FAILED`,
 
 Slurm job `4890460` was cancelled while pending because the RTX Pro 6000 was fully allocated. The retry now targets an available L40S on Rohan; the same pinned model already fit the L40S in prior serving work. This is a protocol/history check, not a GPU comparison, and no speed comparison will be inferred.
 
+Job `4890462` was submitted with a malformed expected-source-commit value. Cancellation and live status checks could not reach Rohan after workstation DNS stopped resolving both login hosts. The batch script validates the source commit before starting the model server, so this job should fail closed before any model request; its final Slurm state remains unverified until SSH access returns.
+
 Corrected runner: `docs/cluster/aider-pilot/04_harbor_s0_history_check.py`; batch job: `docs/cluster/aider-pilot/04_harbor_s0_history_check.sbatch`. Retry is pending after the corrected resource request is pushed.
