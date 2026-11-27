@@ -104,6 +104,14 @@
     .step.current::before { background: var(--amber); }
     .step strong { display: block; margin-bottom: 5px; }
     .step p { margin: 0; color: var(--muted); font-size: .88rem; }
+    .flow { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; margin: 18px 0; }
+    .flow-node { position: relative; min-width: 0; min-height: 150px; padding: 17px 15px; border: 1px solid var(--line); border-radius: 14px; background: white; box-shadow: var(--shadow); }
+    .flow-node:not(:last-child)::after { content: "→"; position: absolute; z-index: 2; top: 50%; right: -12px; transform: translate(50%, -50%); color: var(--teal); font-size: 1.45rem; font-weight: 800; }
+    .flow-node .flow-num { display: grid; place-items: center; width: 27px; height: 27px; margin-bottom: 11px; border-radius: 50%; color: white; background: var(--navy); font-size: .84rem; font-weight: 800; }
+    .flow-node strong { display: block; margin-bottom: 5px; color: var(--navy); }
+    .flow-node p { margin: 0; color: var(--muted); font-size: .86rem; }
+    .flow-gate { margin: 14px 0; padding: 15px 18px; border: 1px solid #e5c47e; border-radius: 14px; background: var(--amber-pale); color: #62420d; }
+    .flow-gate strong { color: #744507; }
     .decision { position: relative; padding-top: 52px; }
     .decision .index { position: absolute; top: 16px; left: 20px; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--navy); color: white; font-weight: 800; }
     .decision p { color: var(--muted); }
@@ -122,11 +130,13 @@
       .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .three { grid-template-columns: 1fr; }
       .steps, .timeline { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .flow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .flow-node:not(:last-child)::after { content: "↓"; top: auto; right: 50%; bottom: -14px; transform: translate(50%, 50%); }
     }
     @media (max-width: 560px) {
       .wrap { width: min(100% - 24px, 1120px); }
       header { padding: 38px 0 34px; }
-      .metrics, .two, .steps, .timeline { grid-template-columns: 1fr; }
+      .metrics, .two, .steps, .timeline, .flow { grid-template-columns: 1fr; }
       .bar-row { grid-template-columns: 1fr 70px; gap: 6px 10px; }
       .bar-label { grid-column: 1 / -1; }
       .bar-value { grid-column: 2; grid-row: 2; }
@@ -238,6 +248,22 @@
       </div>
     </section>
 
+    <section aria-labelledby="pilot-flow-title">
+      <h2 id="pilot-flow-title">Proposed alternate pilot: follow the path</h2>
+      <p class="lede">This is a new exploratory route, separate from the current proposal. The gpt-oss serving smoke passed; no Aider task episode has run.</p>
+      <div class="flow" role="img" aria-label="Proposed path: gpt-oss-20b talks to the project agent in Harbor; the agent uses Harbor's private Unix-socket control channel to work inside a network-isolated Apptainer Aider Polyglot Python task; the official verifier records pass or fail, tokens, and time.">
+        <article class="flow-node"><span class="flow-num">1</span><strong>Model server</strong><p>gpt-oss-20b loaded on RTX Pro; one synthetic tool call passed.</p></article>
+        <article class="flow-node"><span class="flow-num">2</span><strong>Project agent</strong><p>Harbor starts the agent with the frozen starting strategy.</p></article>
+        <article class="flow-node"><span class="flow-num">3</span><strong>Aider task</strong><p>Six Python code-editing tasks, each with one attempt.</p></article>
+        <article class="flow-node"><span class="flow-num">4</span><strong>Isolated container</strong><p>Apptainer blocks outside network access. Harbor commands use a private Unix socket.</p></article>
+        <article class="flow-node"><span class="flow-num">5</span><strong>Measured outcome</strong><p>Official tests give pass/fail; log tokens, errors, and wall time.</p></article>
+      </div>
+      <div class="flow-gate"><strong>Still gated:</strong> build a reproducible Aider image and pass an exact-image, no-model network/control test before any task episode. The tool-call smoke is complete; the Aider image and task isolation are not.</div>
+      <div class="callout">
+        <p><strong>What has run:</strong> gpt-oss-20b returned one native function call on Rohan's RTX Pro 6000; the function was not executed and no benchmark task was involved. A no-model Python 3.11 Apptainer preflight passed offline pytest, UDS control, and external/DNS/metadata blocking with a generic image. It did not use the Aider image or a full Harbor trial. The supplied rootless-Docker route still fails at container startup because the node lacks a cgroup controller path. <a href="experiments/gpt-oss-serving-smoke-2026-11-17.md">Read the exact gpt-oss run record.</a> <a href="experiments/aider-python-image-preflight-2026-11-17.md">Read the Python preflight record.</a> <a href="experiments/ALT-MODEL-BENCHMARK-PILOT-2026-11-16.md">Read the separate pilot protocol.</a></p>
+      </div>
+    </section>
+
     <section aria-labelledby="done-title">
       <h2 id="done-title">Work completed</h2>
       <div class="grid two">
@@ -295,7 +321,7 @@
     </section>
 
     <section aria-labelledby="decisions-title">
-      <h2 id="decisions-title">Four decisions to seek in the meeting</h2>
+      <h2 id="decisions-title">Decisions and next actions</h2>
       <div class="grid two">
         <article class="card decision">
           <span class="index">1</span>
@@ -312,8 +338,8 @@
         <article class="card decision">
           <span class="index">3</span>
           <h3>G1 recovery scope</h3>
-          <p>Either identify a budget-preserving Harbor reset, or remove `restart_task` from the edit space and narrow the paper claim honestly.</p>
-          <p class="ask">Ask: “Do you know a reset mechanism we should use? If not, may I revise the recovery scope and preregistration?”</p>
+          <p>Keep `restart_task` in the strategy space. It remains unimplemented until a real same-trial reset preserves the task state and episode budget.</p>
+          <p class="ask">Next: implement and test the real reset before claiming the field is compiled or marking G1 green.</p>
         </article>
         <article class="card decision">
           <span class="index">4</span>

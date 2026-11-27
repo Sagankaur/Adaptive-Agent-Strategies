@@ -7,7 +7,15 @@ from pathlib import Path
 
 import pytest
 
-from evaluation.splits import TERMINAL_BENCH_2_SIZES, TaskInfo, load_split, main, make_split, save_split
+from evaluation.splits import (
+    TERMINAL_BENCH_2_SIZES,
+    TaskInfo,
+    load_confirmatory_split,
+    load_split,
+    main,
+    make_split,
+    save_split,
+)
 
 
 def _pool(n: int = 89) -> list[TaskInfo]:
@@ -106,3 +114,26 @@ def test_committed_terminal_bench_split_matches_the_task_list() -> None:
     assert sorted(assigned) == sorted(task_ids)  # covers every task
     assert {name: len(ids) for name, ids in split.splits.items()} == TERMINAL_BENCH_2_SIZES
     assert split.task_ids_sha256 == hashlib.sha256("\n".join(sorted(task_ids)).encode()).hexdigest()
+
+
+def test_confirmatory_tb2_split_excludes_pilot_exposures() -> None:
+    split_path = ROOT / "splits" / "terminal-bench-2.0.json"
+    historical = load_split(split_path)
+    eligible = load_confirmatory_split(split_path)
+    assert "cobol-modernization" in historical.tasks("A")
+    assert "cobol-modernization" not in {task_id for ids in eligible.splits.values() for task_id in ids}
+    assert sum(eligible.sizes.values()) == 88
+
+
+def test_confirmatory_split_rejects_unknown_exclusions(tmp_path: Path) -> None:
+    exclusion_path = tmp_path / "exclusions.json"
+    exclusion_path.write_text(
+        json.dumps({
+            "schema_version": 1,
+            "benchmark": "terminal-bench@2.0",
+            "excluded_tasks": [{"task_id": "not-a-task"}],
+        }),
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="unknown tasks"):
+        load_confirmatory_split(ROOT / "splits" / "terminal-bench-2.0.json", exclusion_path)

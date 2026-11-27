@@ -18,6 +18,28 @@ The project has working infrastructure and several completed engineering checks,
 
 **Current research result:** zero TB-Pro benchmark episodes, zero project Oracle/reference-solution runs on TB-Pro, and no solve-rate or cost-per-task claim.
 
+## Proposed alternate pilot at a glance
+
+This is an additive exploratory route for the separate follow-on PR. It does not replace the current proposal or its primary benchmark.
+
+```mermaid
+flowchart LR
+  G{Preflight gates pass?}
+  G -->|yes| M[gpt-oss-20b local model]
+  G -->|no| S[Stop; no benchmark episode]
+  M <-->|tool calls| A[Project agent in Harbor]
+  A -->|private Unix socket| C[Apptainer-isolated Aider Python task]
+  C --> V[Official task verifier]
+  V --> R[Pass/fail, tokens, errors, wall time]
+  C -. external network blocked .-> X((Internet))
+```
+
+The gpt-oss serving-only tool-call smoke passed on Rohan's RTX Pro 6000. A no-model Python 3.11 synthetic preflight also passed through the Apptainer/Harbor provider: offline pytest ran, Harbor control worked over a private Unix socket, and external IP, DNS, and metadata checks were blocked. It used a generic Python SIF and called provider internals directly, so the Aider adapter's image and normal Harbor trial lifecycle remain unverified. Rootless Docker still cannot start a container because the node lacks a cgroup controller path. If the exact image and trial gates pass, the proposed pilot is six Python tasks with one frozen starting strategy and one attempt per task. It is descriptive evidence only, not a confirmatory score. The existing `restart_task` option stays in the proposal; this pilot does not establish that its controller action is implemented. See the [gpt-oss run record](experiments/gpt-oss-serving-smoke-2026-11-17.md) and [Python preflight record](experiments/aider-python-image-preflight-2026-11-17.md).
+
+**Local checks completed:** cached `llama3:latest` (8.0B, Q4_0) returned the correct answer to one synthetic word-reversal prompt in 8.62 seconds (28 prompt tokens, 40 generated), but its installed Ollama package rejected tool calls. On Rohan, gpt-oss-20b returned a native `reverse_words` call on the RTX Pro 6000; that function was not executed. A Python 3.11.18 Apptainer smoke ran one synthetic pytest test with offline wheels while UDS control worked and network probes failed as intended. The rootless-Docker task-container probe failed at container startup because the node lacks a cgroup controller path. These are engineering checks, not Aider tasks or benchmark results. No Aider task has run.
+
+Full model/benchmark selection, run gates, and the exact local smoke record are in the [alternate pilot note](experiments/ALT-MODEL-BENCHMARK-PILOT-2026-11-16.md).
+
 ## Work completed and evidence
 
 ### 1. Model serving and synthetic Harbor runs
@@ -117,7 +139,7 @@ On 5 November, an AI assistant read public `instruction.md` files for 13 TB2 sib
 
 1. **Model:** Should the project retain pinned Qwen3.6 as a candidate under the tested isolation controls, qualify another model, or defer the decision? No choice will be inferred from the support reply.
 2. **TB-Pro route:** If the authors/maintainers have not responded by 20 November, should I seek explicit approval for the proposed GHCR fallback and its revised licence/equivalence rules? The external user's 199/200 cumulative result is supporting context, not approval. Any changed route still needs the registered per-task checks and at least 120 eligible tasks.
-3. **G1 recovery scope:** Do you know of a Harbor reset that preserves the trial and episode budget? If not, may I revise the paper-1 edit space to remove `restart_task` and narrow the preregistered typed-strategy claim accordingly?
+3. **G1 recovery implementation:** Keep `restart_task` in the strategy space. Implement and test a real same-trial task reset that preserves the episode budget; until then, do not claim the field is compiled or mark G1 green.
 4. **Five-task smoke:** What must the smoke demonstrate to count as passing G-INFRA, including model choice, network isolation, acceptable task permissions, and zero harness errors?
 5. **Prior research framing, if time:** Confirm the working interpretation of the adaptation-efficiency/intelligence-index question and whether strategy switching is per-task selection from a library or within-task switching. These decisions affect the protocol and effort estimates.
 

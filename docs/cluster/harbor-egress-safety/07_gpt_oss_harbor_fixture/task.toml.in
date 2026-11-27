@@ -1,0 +1,25 @@
+schema_version = "1.4"
+
+[task]
+name = "aas/synthetic-gpt-oss-harbor-smoke"
+version = "1.0.0"
+authors = []
+keywords = ["synthetic", "engineering-smoke"]
+
+[metadata]
+difficulty = "easy"
+category = "infrastructure"
+
+[verifier]
+timeout_sec = 120.0
+environment_mode = "shared"
+
+[agent]
+timeout_sec = 300.0
+
+[environment]
+docker_image = "@@IMAGE@@"
+network_mode = "no-network"
+cpus = 1
+memory_mb = 2048
+storage_mb = 1024

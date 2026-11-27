@@ -482,6 +482,26 @@ A2I2 advises caution with these models and recommends a different model where po
 
 On 2026-11-10 AEDT, job 4698238 on Rohan CPU node `cpu-f-01` repeated the scripted test successfully (`COMPLETED`, exit `0:0`, 20 seconds). It again showed only loopback/no routes, denied external-IP, DNS and metadata requests, served health and a job-derived nonce over UDS, wrote under `/app`, and removed the private socket on shutdown. It ran no model, benchmark task, Oracle or reference solution. The repeat increases confidence in this exact configuration but does not establish blanket site approval, arbitrary task compatibility without fakeroot, or Qwen3.6 behavior.
 
+### Entry 26: one-task TB2 feasibility pilot
+
+At the researcher's request, permit exactly one exploratory Harbor attempt on the previously unexposed TB2 task `cobol-modernization`, using local gpt-oss-20b and fixed S0 with the optional visible-test self-check disabled. The Docker Registry tag resolved on 2026-11-19 to immutable manifest `sha256:593ab9df3d83f771e927888b2d9436b380cdf7ec4d0af2a9f0802d541edebba0`. Before any model request, pull by this digest and run a scripted, model-free check on that exact image: confirm the Harbor UDS control channel works and outbound DNS, external-IP, and metadata requests fail under Apptainer `--net --network none --writable-tmpfs --containall`, with no `--fakeroot`. If that preflight fails or the effective Apptainer arguments differ, stop without starting the model. If it passes, run one Harbor trial only, with Harbor's official verifier and no Oracle/reference solution; never retry or replace the task. Keep raw logs on scratch and publish only a sanitized record. `evaluation/data/tb2_pilot_exclusions.json` registers this exposure; future confirmatory TB2 split consumers must use `evaluation.splits.load_confirmatory_split`, which removes it and recomputes split sizes and the task fingerprint. This exception does not supersede Decision 21 for other TB2 tasks, reopen the prior exposed tasks, clear P-M2, or authorize broader TB2 runs. The result is exploratory pipeline-feasibility evidence only.
+
+### Entry 27: TB2 one-task pilot stopped before model execution
+
+The source snapshot and task image manifest/SIF were pinned and verified, but Rohan job 4869467 could not start Harbor 0.23.0's execution server in the exact task image: `/usr/bin/python3` was missing and Harbor could not install it with task networking disabled. The UDS health, exact-image egress probes, and agent-workspace mount inspection were not reached. No model, agent trial, Oracle, reference solution, or verifier ran; there is no benchmark reward. Follow the Entry 26 stop rule: do not inject a runtime, substitute a task, or launch a model under this pilot. The attempted task remains excluded through the pilot-exposure registry. The sanitized result is [`TB2-ONE-TASK-PILOT-2026-11-19.md`](experiments/TB2-ONE-TASK-PILOT-2026-11-19.md).
+
+### Entry 28: separate model-free Python 3.13 runtime preflight
+
+After Entry 27, inspection found Python 3.13.7 and pip 25.2 already in the pinned task SIF at `/usr/local/bin/python3`. The researcher approved testing this as a separate, model-free infrastructure route. The route stages hash-locked Harbor server wheels, installs them offline into a read-only runtime mount, and tests the exact SIF with Harbor's UDS provider under `--net --network none --writable-tmpfs --containall`, without fakeroot. This does not resume the stopped attempt, does not authorize a model episode, and leaves the task permanently excluded from confirmatory use. Results are recorded in [`TB2-HARBOR-PYTHON313-RUNTIME-PREFLIGHT-2026-11-20.md`](experiments/TB2-HARBOR-PYTHON313-RUNTIME-PREFLIGHT-2026-11-20.md).
+
+### Entry 29: one corrected runtime-preflight driver run
+
+Runtime preparation job 4870172 passed, but exact-image driver job 4870174 exited before Harbor or Apptainer started because the driver used the cluster system Python, which lacks `tomllib`. No task container, task command, model, or safety check ran. Correct the driver to use Harbor's Python 3.12 virtual environment and permit one model-free rerun with the same task SIF, runtime tree, network isolation, and checks. This does not relax Entry 28's safety criteria and does not authorize model execution. Any failure after the exact task container starts ends this route.
+
+### Entry 30: Python 3.13 exact-image infrastructure preflight passed
+
+Rohan jobs 4870172 and 4870175 completed successfully. Fourteen hash-pinned Python 3.13 wheels were installed offline; on the exact task SIF, Harbor's UDS health and `environment.exec` passed, the runtime dependency mount was read-only, the workspace path guard passed, and external IP, DNS, and metadata probes were blocked. Captured Apptainer arguments included `--net --network none --writable-tmpfs --containall` and no fakeroot. This is infrastructure evidence only: no task setup, task command, model, agent trial, Oracle, reference solution, or verifier ran, and there is no benchmark score. The current TB2 task scope prohibits model or agent runs on TB2. See the sanitized [runtime preflight record](experiments/TB2-HARBOR-PYTHON313-RUNTIME-PREFLIGHT-2026-11-20.md).
+
 **To be logged when they happen.**
 
 - The route pilot's GO or NO-GO, and any TB2 re-split (M2).

@@ -93,3 +93,11 @@ This is operational guidance, not formal blanket approval or a guarantee that ev
 | Adapter tripwire | Implemented as monitoring; unit tests cover flags, warning behavior, and continued execution |
 | Harbor telemetry opt-out | Verified from pinned 0.23.0 source; set `HARBOR_TELEMETRY=off` for future jobs |
 | Real-model command jobs | Paused; synthetic network/control checks pass, support expects the Apptainer flags to be permitted, and P-M2 licence/image-route plus the professor's model decision remain unresolved |
+
+## Reverification on Rohan (2026-11-25 AEDT)
+
+I rechecked Slurm accounting and the saved logs for jobs `4626138`, `4626144`, `4698238`, and `4870175`; all report `COMPLETED 0:0`. The exact-image preflight record for `4870175` says `status=PASS`, with Harbor UDS health and `environment.exec` passing alongside blocked external IP, DNS, and metadata probes. It records `model_started=no`, `harbor_trial_count=0`, and no Oracle/reference verifier.
+
+A fresh, model-free, synthetic-container check ran as job `4889803` on `cpu-f-08` and completed `COMPLETED 0:0` in 22 seconds. It used Harbor 0.23.0 and Apptainer 1.3.3 with `--net --network none --writable-tmpfs --containall`, a private Unix socket at `/harbor-control/control.sock`, and no `--fakeroot`. The captured argv and run log are under the per-job scratch results on Rohan. On the same isolated container, Harbor health and a unique-nonce `environment.exec` round trip succeeded; `/proc/net/dev` showed only loopback and `/proc/net/route` had no routes; `curl` to `1.1.1.1:443` failed with exit 7, DNS lookup for `example.com` failed with exit 6, and the metadata request to `169.254.169.254:80` failed with exit 7. Socket shutdown and cleanup passed. `HARBOR_TELEMETRY=off` was set.
+
+**Conclusion:** egress isolation and Harbor's Unix-socket control channel are verified together for this tested Rohan/Apptainer/Harbor configuration. The fresh check used a synthetic smoke image, not a benchmark task. This result does not prove every task image or launch path behaves identically, and it does not clear the separate benchmark licence/image-route or model-choice decisions. Keep the exact Apptainer flags and UDS provider path for any future isolated Harbor job and recheck them if either changes.
