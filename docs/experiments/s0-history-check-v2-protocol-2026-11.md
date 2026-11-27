@@ -83,3 +83,23 @@ After the gate: print the per-conversation ordered tables (categories, finish re
 ## 9. Provenance
 
 Inherits from v1: pinned model and server-image SHA-256 checks (as in the original sbatch), expected source commit supplied via `AAS_EXPECTED_SOURCE_COMMIT`, clean source tree, pinned Harbor 0.23.0 Python, VRAM guard (>= 1 GiB free) in the batch script and in the runner's monitor. Results file name: `s0-history-v2-results.json`, under a per-job directory on cluster scratch.
+
+## Result of job 4945016 (2026-11-27)
+
+Slurm `COMPLETED 0:0`, 103 s, L40S, source commit `8068ad46ef362f68920dab1279cd97edba66209a`, `effective_n_ctx=32768`. Result file (cluster scratch): `/scratch/<user>/aider-protocol-diagnostic/results/4945016-s0-history-v2/s0-history-v2-results.json`. Task-free engineering check with a command-discarding mock; not a benchmark or task result.
+
+**Validity: VALID.** 8/8 conversations completed (4 pairs, 2 short-first and 2 long-first); no incomplete or invalid reasons; 0 unexpected process spawns; no new Harbor runtime modules; no aggregate-only violations; minimum free VRAM 33,687 MiB; first-request category agreed in all 4 pairs.
+
+**Growth gate (the long condition now differs).** Median prompt growth per terminal turn: long 1,360 tokens, short 71 tokens (16 deltas per condition). Maximum prompt: long 6,796, short 1,292 tokens, against a 32,768 window. No context-guard stop occurred; at this scale the guard is never approached, so this run says nothing about behaviour near the window limit.
+
+**Outcomes (descriptive, n = 8 conversations, 43 requests).**
+- Every conversation made exactly four `terminal` calls and then called `submit` (8/8), i.e. the v2 instruction was followed in all conversations. Instruction-following is therefore part of what was measured.
+- No schema-invalid JSON in 43 requests (32 `valid_schema_A`, 8 `valid_schema_B`, 3 `no_tool_call`).
+- All 3 `no_tool_call` responses occurred at request 5, immediately after the fourth `terminal` call and before `submit`. In each, `finish_reason` was `stop` with 11-12 completion tokens (a short plain-text reply instead of the `submit` tool call). All 3 were `recovered`: the next request was a valid `submit`. Short condition: 2 of 4 conversations; long: 1 of 4. With n = 4 per arm this does not support any claim about history length.
+- Reasoning-token counts were `unavailable` in every request (the server returned none), as anticipated in Sec. 8.
+
+**Reading, with limits.** The pattern is consistent with the model sometimes ending its turn in prose at the moment it considers the task finished, rather than invoking the `submit` tool, and with the agent's single nudge recovering it. This is a hypothesis from 3 events in one run, not an established cause. It is consistent with v1's 35% no-tool rate, but v1 did not record request order, v1's instruction and README differ, and v1 used an 8,192 window, so v1 and v2 are not comparable (Sec. 8) and the v1 rate is not explained by this run. The 3 events could also reflect sampling variation.
+
+**Unexplained observation to check.** In the three conversations with a `no_tool_call`, the prompt-token count of the following (`submit`) request is lower than that of the `no_tool_call` request (e.g. 1,176 to 913; 6,294 to 6,066). Code check (`environments/harbor_agent.py`, lines ~299-304): after a reply without a tool call the agent appends the assistant message and then a user message, "Protocol error: return a terminal or submit tool call.", so the message list grows. The recovery is therefore a response to that fixed nudge, not spontaneous. The shorter token count must come from how the server renders or counts the prompt (a chat-template effect on earlier assistant turns is one candidate); this was not verified.
+
+**Not shown.** Behaviour on real task text, real tool output, long histories near the window, or any benchmark; throughput; reproducibility across seeds or model builds. Nothing here authorizes a task pilot.
